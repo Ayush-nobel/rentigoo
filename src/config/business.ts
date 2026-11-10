@@ -36,7 +36,8 @@ export const BUSINESS: BusinessDetails = {
   entityType: 'Sole proprietorship, not registered as a company',
   registrationNumber: null,
   gstin: null, // Not GST-registered: no GST may be charged (see shared/fees.ts).
-  address: null, // Still needed: full postal address in Bhopal (shown publicly).
+  // Founder's home address, published at their choice (2026-11-10). Swap for a business address any time.
+  address: 'Flat FF-2, Mahaveer Apartments, K-Sector, Ayodhya Bypass, Bhopal, Madhya Pradesh 462041',
   branches: [],
   supportEmail: 'support@rentigoo.in',
   supportPhone: '+91 93014 22919',
