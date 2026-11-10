@@ -88,12 +88,20 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Every price is in Indian rupees. The breakdown before you request shows the rent, any weekly or monthly saving, RentiGoo’s service fee (
-          {FEES.serviceFeePct}% of the rent){FEES.gstOnFeePct > 0 ? ' with GST on that fee' : ''}, any delivery fee, and the refundable deposit. We never add charges after you request.
+          Every price is in Indian rupees. The breakdown before you request shows the rent, any weekly or monthly saving, any delivery fee, and the refundable
+          deposit. We never add charges after you request.
         </p>
-        <p>
-          Owners pay RentiGoo a commission of {FEES.ownerCommissionPct}% of the rent they earn. Listing is free.
-        </p>
+        {FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0 ? (
+          <p>
+            <strong>Fees:</strong> RentiGoo currently charges no service fee to renters and takes no commission from owners. Listing is free. If we introduce
+            fees, we’ll update these terms first and show every fee in the breakdown before you request.
+          </p>
+        ) : (
+          <p>
+            <strong>Fees:</strong> renters pay RentiGoo’s service fee ({FEES.serviceFeePct}% of the rent){FEES.gstOnFeePct > 0 ? ' with GST on that fee' : ''},
+            shown in the breakdown. Owners pay a commission of {FEES.ownerCommissionPct}% of the rent they earn. Listing is free.
+          </p>
+        )}
         <p>
           <strong>How you pay today:</strong> RentiGoo doesn’t take online payments yet. You pay the owner the “Due at pickup” amount when you collect the item,
           by UPI or cash, and the owner gives you back the deposit when you return it. We’ll update these terms before online payments start.

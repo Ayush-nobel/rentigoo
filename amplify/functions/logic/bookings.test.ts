@@ -34,8 +34,9 @@ describe('requestBooking', () => {
     const b = await requestBooking(store, ask({ message: '  For Pachmarhi  ' }), 'renter', TODAY)
     expect(b).toMatchObject({ status: 'requested', renterId: 'renter', ownerId: 'owner', participants: ['renter', 'owner'], message: 'For Pachmarhi' })
     expect(b.quote.rentalSubtotal).toBe(900)
-    // rent 900 + 8% fee 72 + GST on the fee (0 while not GST-registered) + deposit 2500
-    expect(b.quote.totalDue).toBe(900 + 72 + Math.round((72 * FEES.gstOnFeePct) / 100) + 2500)
+    // rent 900 + service fee + GST on the fee + deposit 2500, at whatever the fee settings are
+    const fee = Math.round((900 * FEES.serviceFeePct) / 100)
+    expect(b.quote.totalDue).toBe(900 + fee + Math.round((fee * FEES.gstOnFeePct) / 100) + 2500)
   })
 
   it('refuses the owner, past dates and owner-blocked days', async () => {
@@ -150,6 +151,7 @@ describe('ownerStats', () => {
     for (const a of ['accept', 'handover', 'return'] as const) await respondToBooking(store, done.id, a, 'owner')
     await requestBooking(store, ask({ start: '2026-11-20', end: '2026-11-22' }), 'renter2', TODAY)
     const s = await ownerStats(store, 'owner', '2026-11')
-    expect(s).toEqual({ earnedThisMonth: 810, earnedTotal: 810, pendingRequests: 1, activeRentals: 0, upcomingRentals: 0 })
+    const earned = 900 - Math.round((900 * FEES.ownerCommissionPct) / 100) // rent after commission
+    expect(s).toEqual({ earnedThisMonth: earned, earnedTotal: earned, pendingRequests: 1, activeRentals: 0, upcomingRentals: 0 })
   })
 })

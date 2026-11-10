@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { ownerEarnings, rentVsBuy } from './calculators'
 import { FEES } from './fees'
 
-const WITH_GST = { ...FEES, gstOnFeePct: 18 }
+const PLANNED = { ...FEES, serviceFeePct: 8, ownerCommissionPct: 10, gstOnFeePct: 0 }
+const WITH_GST = { ...PLANNED, gstOnFeePct: 18 }
 
 describe('rentVsBuy', () => {
   const base = { purchasePrice: 80000, resalePct: 50, upkeepPerYear: 2000, years: 2, dailyRate: 1000, daysPerYear: 10 }
@@ -19,8 +20,12 @@ describe('rentVsBuy', () => {
     expect(r.breakEvenDaysPerYear).toBe(20)
   })
 
-  it('without GST, a rented day costs rate × 1.08', () => {
-    expect(rentVsBuy(base).rentCostPerDay).toBe(1080)
+  it('planned fee without GST: a rented day costs rate × 1.08', () => {
+    expect(rentVsBuy(base, PLANNED).rentCostPerDay).toBe(1080)
+  })
+
+  it('current settings (no fees): a rented day costs the daily rate', () => {
+    expect(rentVsBuy(base).rentCostPerDay).toBe(1000)
   })
 
   it('says buy when you use it a lot', () => {
@@ -37,12 +42,16 @@ describe('rentVsBuy', () => {
 
 describe('ownerEarnings', () => {
   it('takes commission off the gross', () => {
-    const r = ownerEarnings({ dailyRate: 900, daysPerMonth: 8, itemValue: 85000 })
+    const r = ownerEarnings({ dailyRate: 900, daysPerMonth: 8, itemValue: 85000 }, PLANNED)
     expect(r.grossMonthly).toBe(7200)
     expect(r.commissionMonthly).toBe(720)
     expect(r.netMonthly).toBe(6480)
     expect(r.netYearly).toBe(77760)
     expect(r.monthsToPayBack).toBe(13.2)
+  })
+
+  it('current settings: no commission, owner keeps it all', () => {
+    expect(ownerEarnings({ dailyRate: 900, daysPerMonth: 8, itemValue: 85000 })).toMatchObject({ grossMonthly: 7200, commissionMonthly: 0, netMonthly: 7200 })
   })
 
   it('returns null pay-back when nothing is rented', () => {

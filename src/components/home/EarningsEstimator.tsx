@@ -74,7 +74,9 @@ export function EarningsEstimator() {
         </p>
       </div>
       <p className="mt-4 text-[0.9375rem]">
-        An estimate, not a promise. It’s after our {FEES.ownerCommissionPct}% commission. Listing is free.
+        An estimate, not a promise.{' '}
+        {FEES.ownerCommissionPct > 0 ? `It’s after our ${FEES.ownerCommissionPct}% commission. ` : 'RentiGoo takes no commission right now, so you keep all of it. '}
+        Listing is free.
       </p>
       <ButtonLink to="/list" variant="ink" size="lg" className="mt-6">
         List an item
