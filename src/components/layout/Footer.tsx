@@ -21,7 +21,7 @@ const groups = [
   },
   {
     title: 'Near you',
-    links: AREAS.filter((a) => ['south-delhi', 'dwarka', 'noida', 'gurugram', 'ghaziabad', 'faridabad'].includes(a.id)).map((a) => ({
+    links: AREAS.map((a) => ({
       to: `/browse?areas=${a.id}`,
       label: a.name,
     })),
@@ -37,7 +37,7 @@ export function Footer() {
           <p className="mt-4 max-w-xs text-muted">
             Rent the things you need from people nearby. Earn from the things you don’t use every day.
           </p>
-          <p className="mt-6 text-muted">Made in Delhi, for Delhi NCR.</p>
+          <p className="mt-6 text-muted">Made in Bhopal, the city of lakes.</p>
         </div>
         {groups.map((g) => (
           <nav key={g.title} aria-label={g.title}>

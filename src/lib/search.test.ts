@@ -8,7 +8,7 @@ const make = (over: Partial<Listing>): Listing => ({
   title: 'Thing',
   description: '',
   categoryId: 'tools',
-  areaId: 'dwarka',
+  areaId: 'mp-nagar',
   photos: [],
   condition: 'good',
   pricing: { daily: 100 },
@@ -27,7 +27,7 @@ const make = (over: Partial<Listing>): Listing => ({
 
 const all = [
   make({ id: 'drill', title: 'Bosch drill', pricing: { daily: 200 }, deposit: 2000, ratingAvg: 5, ratingCount: 3 }),
-  make({ id: 'tent', title: 'Camping tent', categoryId: 'outdoor', areaId: 'noida', pricing: { daily: 350 }, pickupOptions: ['pickup', 'delivery'] }),
+  make({ id: 'tent', title: 'Camping tent', categoryId: 'outdoor', areaId: 'habibganj', pricing: { daily: 350 }, pickupOptions: ['pickup', 'delivery'] }),
   make({ id: 'cam', title: 'Sony camera', description: 'mirrorless body', categoryId: 'cameras', pricing: { daily: 1400 }, blockedDates: ['2026-11-11'], createdAt: '2026-06-01T00:00:00.000Z' }),
   make({ id: 'paused', title: 'Paused drill', status: 'paused' }),
 ]
@@ -45,7 +45,7 @@ describe('searchListings', () => {
   })
   it('filters by category, areas, price, deposit and delivery', () => {
     expect(ids(searchListings(all, { category: 'outdoor' }))).toEqual(['tent'])
-    expect(ids(searchListings(all, { areas: ['noida'] }))).toEqual(['tent'])
+    expect(ids(searchListings(all, { areas: ['habibganj'] }))).toEqual(['tent'])
     expect(ids(searchListings(all, { max: 400, sort: 'price-asc' }))).toEqual(['drill', 'tent'])
     expect(ids(searchListings(all, { noDeposit: true }))).not.toContain('drill')
     expect(ids(searchListings(all, { delivery: true }))).toEqual(['tent'])

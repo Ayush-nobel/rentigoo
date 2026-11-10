@@ -3,7 +3,8 @@ export type ISODate = string
 /** Full timestamp as ISO 8601. */
 export type ISODateTime = string
 
-export type RegionId = 'delhi' | 'noida' | 'gurugram' | 'ghaziabad' | 'faridabad'
+/** Cities we operate in. Add more as RentiGoo expands. */
+export type RegionId = 'bhopal'
 
 export interface Area {
   id: string

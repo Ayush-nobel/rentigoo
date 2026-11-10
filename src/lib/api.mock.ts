@@ -9,7 +9,8 @@ import { searchListings } from './search'
 import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 
-const DB_KEY = 'mock-db-v1'
+// Bump when seed data changes so browsers drop their old copy.
+const DB_KEY = 'mock-db-v2'
 
 let db: Snapshot = readJSON<Snapshot | null>(DB_KEY, null) ?? seedSnapshot()
 

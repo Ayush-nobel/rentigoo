@@ -49,7 +49,7 @@ export const BOOKINGS: Booking[] = [
   booking('b-3', 'l-air-purifier', DEMO_USER_ID, -3, 14, 'active', 60 * 24 * 4),
   booking('b-4', 'l-bosch-drill', DEMO_USER_ID, -31, 1, 'completed', 60 * 24 * 33),
   // Others renting from Ananya
-  booking('b-5', 'l-sleeping-bags', 'u-vikram', 20, 4, 'requested', 35, false, 'Heading to Kedarkantha with a friend. Are both bags available?'),
+  booking('b-5', 'l-sleeping-bags', 'u-vikram', 20, 4, 'requested', 35, false, 'Heading to Pachmarhi with a friend for the Dhoopgarh sunrise. Are both bags available?'),
   booking('b-6', 'l-sleeping-bags', 'u-simran', 9, 3, 'accepted', 60 * 30),
   booking('b-7', 'l-sleeping-bags', 'u-rohan', -48, 3, 'completed', 60 * 24 * 52),
 ]
@@ -63,10 +63,10 @@ export const CONVERSATIONS: Conversation[] = [
 type M = [conversationId: string, senderId: string, text: string, minsAgo: number, read: boolean]
 const rows: M[] = [
   ['c-1', DEMO_USER_ID, 'Hi Priya! I’ve sent a request for the A7 III for the 3 days around my brother’s engagement.', 92, true],
-  ['c-1', 'u-priya', 'Hi Ananya, congratulations to your brother! Those dates look fine. Are you okay picking up from Saket?', 85, true],
+  ['c-1', 'u-priya', 'Hi Ananya, congratulations to your brother! Those dates look fine. Are you okay picking up from MP Nagar?', 85, true],
   ['c-1', 'u-priya', 'I can do a 15-minute walkthrough of the autofocus modes when you come.', 80, false],
-  ['c-2', 'u-vikram', 'Hi! Requested both sleeping bags for Kedarkantha. Are they okay for −5° nights?', 36, false],
-  ['c-2', 'u-vikram', 'Also, is pickup from Rohini possible on a weekday evening?', 30, false],
+  ['c-2', 'u-vikram', 'Hi! Requested both sleeping bags for Pachmarhi. Are they warm enough for December nights up at Dhoopgarh?', 36, false],
+  ['c-2', 'u-vikram', 'Also, is pickup from Kolar Road possible on a weekday evening?', 30, false],
   ['c-3', 'u-arjun', 'Accepted! I’ll bring the PartyBox around 5 pm on the day, if that works.', 60 * 22, true],
   ['c-3', DEMO_USER_ID, 'Perfect, thank you. Third floor, there’s a lift.', 60 * 20, true],
 ]

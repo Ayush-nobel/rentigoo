@@ -92,7 +92,7 @@ export const FAQS: FaqItem[] = [
     id: 'f14',
     section: 'account',
     q: 'Which areas do you cover?',
-    a: 'All of Delhi NCR: every part of Delhi, Noida, Greater Noida, Gurugram, Ghaziabad and Faridabad. More cities once we’ve got Delhi right.',
+    a: 'We’re starting in Bhopal: MP Nagar, Arera Colony, New Market, Shahpura, Kolar Road, Habibganj and the neighbourhoods around them. More cities in Madhya Pradesh once we’ve got Bhopal right.',
   },
   {
     id: 'f15',

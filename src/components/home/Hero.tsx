@@ -33,7 +33,7 @@ export function Hero({ showcase }: { showcase: Listing[] }) {
             Why buy it when someone nearby has one?
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted sm:text-xl">
-            Rent cameras, tools, party gear and more from people across Delhi NCR. Pick it up today, give it back when you’re done.
+            Rent cameras, tools, party gear and more from people across Bhopal. Pick it up today, give it back when you’re done.
           </p>
 
           <form onSubmit={submit} role="search" aria-label="Find something to rent" className="mt-8 max-w-2xl">
@@ -57,7 +57,7 @@ export function Hero({ showcase }: { showcase: Listing[] }) {
                   onChange={(e) => setArea(e.target.value)}
                   className="w-full appearance-none bg-transparent text-lg outline-none"
                 >
-                  <option value="">All of Delhi NCR</option>
+                  <option value="">All of Bhopal</option>
                   {Object.entries(REGIONS).map(([region, name]) => (
                     <optgroup key={region} label={name}>
                       {AREAS.filter((a) => a.region === region).map((a) => (

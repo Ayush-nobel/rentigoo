@@ -15,7 +15,7 @@ export default function Home() {
   const areaId = user?.areaId
 
   const featured = useAsync(async () => {
-    // Prefer listings near the signed-in person; fall back to all of NCR.
+    // Prefer listings near the signed-in person; fall back to the whole city.
     if (areaId) {
       const near = await api.searchListings({ areas: [areaId], sort: 'relevance' })
       if (near.items.length >= 4) return { items: near.items.slice(0, 8), areaId }
