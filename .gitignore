@@ -10,6 +10,8 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+# Public production settings (no secrets) are committed.
+!.env.production
 
 # Logs
 npm-debug.log*
