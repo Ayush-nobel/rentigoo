@@ -10,8 +10,10 @@ import { getSessionUserId } from './session'
  * RentiGooApi over AWS AppSync. Signed-in calls use the Cognito user pool;
  * visitors read public data through the identity pool's guest role.
  */
-const client = generateClient<Schema>()
-const m = client.models
+// Created on first use: this module is imported before Amplify.configure() runs.
+let _client: ReturnType<typeof generateClient<Schema>> | null = null
+const client = () => (_client ??= generateClient<Schema>())
+const models = () => client().models
 const authMode = () => (getSessionUserId() ? 'userPool' : 'identityPool') as 'userPool' | 'identityPool'
 
 type Errs = { message: string }[] | undefined | null
@@ -137,7 +139,7 @@ function listingToDb(input: Partial<ListingInput>) {
 let listingCache: { at: number; items: Listing[] } | null = null
 async function activeListings(): Promise<Listing[]> {
   if (listingCache && Date.now() - listingCache.at < 30_000) return listingCache.items
-  const rows = await all((nextToken) => m.Listing.list({ filter: { status: { eq: 'active' } }, nextToken, limit: 200, authMode: authMode() }))
+  const rows = await all((nextToken) => models().Listing.list({ filter: { status: { eq: 'active' } }, nextToken, limit: 200, authMode: authMode() }))
   listingCache = { at: Date.now(), items: rows.map(listingFromDb) }
   return listingCache.items
 }
@@ -149,34 +151,34 @@ export const amplifyApi: RentiGooApi = {
   },
 
   async getListing(id) {
-    const l = check(await m.Listing.get({ id }, { authMode: authMode() }))
+    const l = check(await models().Listing.get({ id }, { authMode: authMode() }))
     if (!l) return null
     const listing = listingFromDb(l)
     return listing.status !== 'active' && listing.ownerId !== getSessionUserId() ? null : listing
   },
 
   async listListingsByOwner(ownerId) {
-    const rows = await all((nextToken) => m.Listing.listListingsByOwner({ ownerId }, { nextToken, authMode: authMode() }))
+    const rows = await all((nextToken) => models().Listing.listListingsByOwner({ ownerId }, { nextToken, authMode: authMode() }))
     const mine = ownerId === getSessionUserId()
     return rows.map(listingFromDb).filter((l) => mine || l.status === 'active').sort(byNewest)
   },
 
   async createListing(input) {
     me()
-    const created = check(await m.Listing.create(listingToDb(input) as never))
+    const created = check(await models().Listing.create(listingToDb(input) as never))
     listingCache = null
     return listingFromDb(created)
   },
 
   async updateListing(id, patch) {
     me()
-    const updated = check(await m.Listing.update({ id, ...listingToDb(patch) } as never))
+    const updated = check(await models().Listing.update({ id, ...listingToDb(patch) } as never))
     listingCache = null
     return listingFromDb(updated)
   },
 
   async getUser(id) {
-    const u = check(await m.UserProfile.get({ id }, { authMode: authMode() }))
+    const u = check(await models().UserProfile.get({ id }, { authMode: authMode() }))
     return u ? userFromDb(u) : null
   },
 
@@ -187,57 +189,57 @@ export const amplifyApi: RentiGooApi = {
 
   async updateMyProfile(patch) {
     const id = me()
-    return userFromDb(check(await m.UserProfile.update({ id, ...patch } as never)))
+    return userFromDb(check(await models().UserProfile.update({ id, ...patch } as never)))
   },
 
   async listReviewsForListing(listingId) {
-    return (await all((nextToken) => m.Review.listReviewsByListing({ listingId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
+    return (await all((nextToken) => models().Review.listReviewsByListing({ listingId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
   },
 
   async listReviewsForUser(userId) {
-    return (await all((nextToken) => m.Review.listReviewsByTarget({ targetUserId: userId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
+    return (await all((nextToken) => models().Review.listReviewsByTarget({ targetUserId: userId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
   },
 
   async requestBooking(req) {
     me()
-    const b = check(await client.mutations.requestBooking({ ...req, message: req.message ?? null }))
+    const b = check(await client().mutations.requestBooking({ ...req, message: req.message ?? null }))
     if (!b) throw new ApiError('Your request wasn’t sent. Please try again.', 'conflict')
     return bookingFromDb(b)
   },
 
   async respondToBooking(bookingId, accept) {
     me()
-    const b = check(await client.mutations.respondToBooking({ bookingId, action: accept ? 'accept' : 'decline' }))
+    const b = check(await client().mutations.respondToBooking({ bookingId, action: accept ? 'accept' : 'decline' }))
     listingCache = null
     return bookingFromDb(b)
   },
 
   async cancelBooking(bookingId) {
     me()
-    const b = check(await client.mutations.respondToBooking({ bookingId, action: 'cancel' }))
+    const b = check(await client().mutations.respondToBooking({ bookingId, action: 'cancel' }))
     listingCache = null
     return bookingFromDb(b)
   },
 
   async listMyBookings() {
     const renterId = me()
-    return (await all((nextToken) => m.Booking.listBookingsByRenter({ renterId }, { nextToken }))).map(bookingFromDb).sort(byNewest)
+    return (await all((nextToken) => models().Booking.listBookingsByRenter({ renterId }, { nextToken }))).map(bookingFromDb).sort(byNewest)
   },
 
   async listRequestsForMe() {
     const ownerId = me()
-    return (await all((nextToken) => m.Booking.listBookingsByOwner({ ownerId }, { nextToken }))).map(bookingFromDb).sort(byNewest)
+    return (await all((nextToken) => models().Booking.listBookingsByOwner({ ownerId }, { nextToken }))).map(bookingFromDb).sort(byNewest)
   },
 
   async listConversations() {
     me()
-    const rows = await all((nextToken) => m.Conversation.list({ nextToken }))
+    const rows = await all((nextToken) => models().Conversation.list({ nextToken }))
     return rows.map(conversationFromDb).sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
   },
 
   async listMessages(conversationId) {
     me()
-    const rows = await all((nextToken) => m.Message.listMessagesByConversation({ conversationId }, { nextToken, sortDirection: 'ASC' }))
+    const rows = await all((nextToken) => models().Message.listMessagesByConversation({ conversationId }, { nextToken, sortDirection: 'ASC' }))
     return rows.map(messageFromDb)
   },
 
@@ -246,22 +248,22 @@ export const amplifyApi: RentiGooApi = {
     const body = text.trim()
     if (!body) throw new ApiError('Write a message first.', 'invalid')
     if (body.length > 2000) throw new ApiError('That message is too long. Keep it under 2,000 characters.', 'invalid')
-    const convo = check(await m.Conversation.get({ id: conversationId }))
+    const convo = check(await models().Conversation.get({ id: conversationId }))
     if (!convo) throw new ApiError('Conversation not found.', 'not-found')
     const sentAt = new Date().toISOString()
-    const msg = check(await m.Message.create({ conversationId, senderId: uid, participantIds: clean(convo.participantIds), text: body, sentAt }))
-    await m.Conversation.update({ id: conversationId, lastMessageAt: sentAt, lastMessagePreview: body.slice(0, 140) })
+    const msg = check(await models().Message.create({ conversationId, senderId: uid, participantIds: clean(convo.participantIds), text: body, sentAt }))
+    await models().Conversation.update({ id: conversationId, lastMessageAt: sentAt, lastMessagePreview: body.slice(0, 140) })
     return messageFromDb(msg)
   },
 
   async openConversation(listingId, otherUserId) {
     const uid = me()
     if (uid === otherUserId) throw new ApiError('That’s your own listing.', 'invalid')
-    const mine = await all((nextToken) => m.Conversation.list({ filter: { listingId: { eq: listingId } }, nextToken }))
+    const mine = await all((nextToken) => models().Conversation.list({ filter: { listingId: { eq: listingId } }, nextToken }))
     const existing = mine.find((c) => clean(c.participantIds).includes(otherUserId))
     if (existing) return conversationFromDb(existing)
     const created = check(
-      await m.Conversation.create({ listingId, participantIds: [uid, otherUserId], lastMessageAt: new Date().toISOString(), lastMessagePreview: '' }),
+      await models().Conversation.create({ listingId, participantIds: [uid, otherUserId], lastMessageAt: new Date().toISOString(), lastMessagePreview: '' }),
     )
     return conversationFromDb(created)
   },
@@ -270,11 +272,11 @@ export const amplifyApi: RentiGooApi = {
     const uid = me()
     const msgs = await amplifyApi.listMessages(conversationId)
     const now = new Date().toISOString()
-    await Promise.all(msgs.filter((x) => x.senderId !== uid && !x.readAt).map((x) => m.Message.update({ id: x.id, readAt: now })))
+    await Promise.all(msgs.filter((x) => x.senderId !== uid && !x.readAt).map((x) => models().Message.update({ id: x.id, readAt: now })))
   },
 
   subscribeToMessages(conversationId, onMessage) {
-    const sub = m.Message.onCreate({ filter: { conversationId: { eq: conversationId } } }).subscribe({
+    const sub = models().Message.onCreate({ filter: { conversationId: { eq: conversationId } } }).subscribe({
       next: (x) => onMessage(messageFromDb(x)),
       error: (e) => console.warn('Live messages paused', e),
     })

@@ -54,7 +54,14 @@ const schema = a
     UserProfile: a
       .model({
         id: a.id().required(), // the person's Cognito sub
-        userId: a.string().required(), // same value, used for ownership
+        userId: a
+          .string()
+          .required() // same value, used for ownership; can't be handed to someone else
+          .authorization((allow) => [
+            allow.ownerDefinedIn('userId').identityClaim('sub').to(['read', 'create', 'delete']),
+            allow.guest().to(['read']),
+            allow.authenticated().to(['read']),
+          ]),
         name: a.string().required(),
         avatarKey: a.string(),
         areaId: a.string().required(),
@@ -168,7 +175,12 @@ const schema = a
       .model({
         conversationId: a.string().required(),
         senderId: a.string().required(),
-        participantIds: a.string().required().array().required(),
+        participantIds: a
+          .string()
+          .required()
+          .array()
+          .required()
+          .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create'])]),
         text: a.string().required(),
         sentAt: a.datetime().required(),
         readAt: a.datetime(),

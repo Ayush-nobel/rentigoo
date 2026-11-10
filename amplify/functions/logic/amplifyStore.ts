@@ -23,7 +23,8 @@ export function dataClient(env: Record<string, unknown>): Promise<Client> {
 }
 
 const toApp = (s: string) => s.replace(/_/g, '-')
-const toDb = <T extends string>(s: string) => s.replace(/-/g, '_') as T
+type DbPayment = 'unpaid' | 'pay_at_pickup' | 'paid'
+const toDb = (s: string) => s.replace(/-/g, '_') as DbPayment
 
 function check<T>(res: { data: T; errors?: { message: string }[] | undefined }): T {
   if (res.errors?.length) throw new Error(res.errors.map((e) => e.message).join('; '))
@@ -88,7 +89,7 @@ export function amplifyStore(client: Client): Store {
       return (await all((nextToken) => m.Booking.listBookingsByOwner({ ownerId }, { nextToken }))).map(bookingFromDb)
     },
     async createBooking(b) {
-      const created = check(await m.Booking.create({ ...b, paymentStatus: toDb(b.paymentStatus) }))
+      const created = check(await m.Booking.create({ ...b, paymentStatus: toDb(b.paymentStatus), message: b.message ?? null }))
       if (!created) throw new Error('Booking was not saved')
       return bookingFromDb(created)
     },

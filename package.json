@@ -9,7 +9,11 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sandbox": "ampx sandbox --identifier dev",
+    "sandbox:deploy": "ampx sandbox --once --identifier dev",
+    "sandbox:seed": "set -a && . ./.env.seed && set +a && ampx sandbox seed --identifier dev",
+    "check:access": "set -a && . ./.env.seed && set +a && tsx --tsconfig amplify/tsconfig.json scripts/check-access.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",
