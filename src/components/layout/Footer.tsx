@@ -33,7 +33,8 @@ export function Footer() {
     <footer className="mt-24 border-t border-line bg-sunken pb-24 md:pb-0">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_repeat(3,1fr)]">
         <div>
-          <Logo />
+          <Logo className="h-14! sm:h-16!" />
+          <p className="mt-2 text-sm font-semibold tracking-[0.18em] text-muted uppercase">Rent anything, anywhere</p>
           <p className="mt-4 max-w-xs text-muted">
             Rent the things you need from people nearby. Earn from the things you don’t use every day.
           </p>

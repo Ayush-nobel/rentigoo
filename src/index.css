@@ -23,6 +23,8 @@
   --accent-edge: #7a5c00;
   --ink: #24221b;
   --on-ink: #ffffff;
+  /* Dark parts of the logo: ink on light, white on dark (brand rule). */
+  --logo-ink: #24221b;
   /* Feature panels: dark in both themes. */
   --panel: #24221b;
   --on-panel: #ffffff;
@@ -46,6 +48,7 @@
     --accent-edge: transparent;
     --ink: #faf7f0;
     --on-ink: #24221b;
+    --logo-ink: #ffffff;
     --panel: #1c1a14;
     --danger: #ff8a7a;
     --success: #6fd48e;
@@ -67,6 +70,7 @@
   --accent-edge: transparent;
   --ink: #faf7f0;
   --on-ink: #24221b;
+  --logo-ink: #ffffff;
   --panel: #1c1a14;
   --danger: #ff8a7a;
   --success: #6fd48e;
