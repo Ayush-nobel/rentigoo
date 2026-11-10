@@ -3,10 +3,13 @@
  * Runs in the Amplify build for the production branch (see amplify.yml).
  *   npx tsx scripts/check-launch.ts
  */
+import { loadEnv } from 'vite'
 import { missingBusinessDetails } from '../src/config/business'
 
 const problems: string[] = []
-const env = process.env
+// Read the same settings the production build uses (.env, .env.production, and
+// .env.local if present), with real environment variables taking priority.
+const env = { ...loadEnv('production', process.cwd(), 'VITE_'), ...process.env }
 
 const missing = missingBusinessDetails()
 if (missing.length) problems.push(`Business details missing in src/config/business.ts: ${missing.join(', ')}.`)

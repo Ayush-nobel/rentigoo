@@ -3,11 +3,18 @@ backend:
   phases:
     build:
       commands:
+        # Our tools need Node 22.22+ (react-router, vite, vitest); don't rely on the image default.
+        - nvm install 22
+        - nvm use 22
+        - node --version
         - npm ci --cache .npm --prefer-offline
         # Deploys this branch's own backend (auth, data, storage, functions) and writes amplify_outputs.json.
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
+    preBuild:
+      commands:
+        - nvm use 22
     build:
       commands:
         # The production branch must pass the launch checks (business details, site address, no demo data).
