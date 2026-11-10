@@ -25,3 +25,4 @@ Human, warm copy (no corporate filler). Mobile-first. Accessible contrast and ke
 - Every page sets its metadata with <Seo/> from src/lib/seo.ts (STATIC_PAGES) or listingMeta; private, unfinished and error pages are noindex. New public pages: add to STATIC_PAGES.
 - Pages must render the same on the server and on first client render: no Date.now()/localStorage/window in render (use useHydrated or suppressHydrationWarning for "time ago"). Lazy pages use lazyPage() so they can be preloaded before hydration.
 - Never add robots rules by prefix that could catch /listing (e.g. use "/list$").
+- Amplify builds with Node 22 / npm 10; this Mac has npm 11, which writes lock files npm 10 rejects. After any dependency change, run `npx npm@10 install --package-lock-only` and check `npx npm@10 ci --dry-run` passes before pushing.
