@@ -103,10 +103,19 @@ if (SITE_URL) {
 }
 writeFileSync(join(DIST, 'robots.txt'), robots.join('\n') + '\n')
 
-// 5. Routing rule for Amplify Hosting: real files (including the prerendered .html pages) are
-// served as they are; any address without a file gets the app shell, so private pages and
-// listings added since the last build still work.
-const rewrites = [{ source: '/<*>', target: '/app.html', status: '404-200' }]
+// 5. App pages that are never prerendered (private) get a copy of the empty app shell as a
+// real file, so Amplify serves /account straight from account.html (no /account/ redirect).
+const APP_ROUTES = ['/account', '/dashboard', '/list', '/messages']
+const appShell = readFileSync(join(DIST, 'app.html'), 'utf8')
+for (const r of APP_ROUTES) writeFileSync(join(DIST, `${r}.html`), appShell)
+
+// 6. Routing rules for Amplify Hosting (rules run before files, first match wins):
+//  - /messages/<id> has no files under it, so it can always be the app shell (200)
+//  - anything else without a file falls back to the app shell (Amplify answers 404)
+const rewrites = [
+  { source: '/messages/<*>', target: '/app.html', status: '200' },
+  { source: '/<*>', target: '/app.html', status: '404-200' },
+]
 writeFileSync('amplify-rewrites.json', JSON.stringify(rewrites, null, 2) + '\n')
 
 console.log(`Prerendered ${written.length} pages (${Object.keys(STATIC_PAGES).length} static, ${listings.length} listings) in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
