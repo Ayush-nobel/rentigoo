@@ -69,7 +69,7 @@ export default function FAQ() {
 
 function Question({ item, open }: { item: FaqItem; open: boolean }) {
   return (
-    <details className="group px-5 py-1" open={open || undefined}>
+    <details className="smooth group px-5 py-1" open={open || undefined}>
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded font-semibold [&::-webkit-details-marker]:hidden">
         <h3 className="font-sans text-lg font-semibold">{item.q}</h3>
         <span aria-hidden="true" className="text-2xl leading-none text-muted transition-transform group-open:rotate-45">

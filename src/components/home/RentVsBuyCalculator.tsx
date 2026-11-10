@@ -4,6 +4,7 @@ import { CATEGORIES, getCategory } from '@shared/categories'
 import { FEES } from '@shared/fees'
 import { plural, rupees } from '@/lib/format'
 import { SelectField, SliderField } from '../ui/Field'
+import { AnimatedNumber } from '../ui/AnimatedNumber'
 import { NumberInput } from './NumberInput'
 
 const DEFAULT = 'cameras'
@@ -72,7 +73,7 @@ export function RentVsBuyCalculator() {
         <SliderField label="For how long" value={years} min={1} max={5} onChange={setYears} format={(v) => plural(v, 'year')} />
       </div>
 
-      <details className="group mt-5 rounded-2xl bg-sunken px-4 py-3">
+      <details className="smooth group mt-5 rounded-2xl bg-sunken px-4 py-3">
         <summary className="cursor-pointer rounded font-semibold">Resale value and upkeep</summary>
         <div className="mt-4 grid gap-5 pb-2 sm:grid-cols-2">
           <NumberInput
@@ -113,7 +114,7 @@ function CostBars({ buy, rent, years }: { buy: number; rent: number; years: numb
         <li key={row.label}>
           <div className="flex items-baseline justify-between gap-3">
             <span className="font-semibold">{row.label}</span>
-            <span className="font-display text-xl font-bold tabular-nums">{rupees(row.value)}</span>
+            <AnimatedNumber value={row.value} format={rupees} className="font-display text-xl font-bold tabular-nums" />
           </div>
           <div className="mt-1.5 h-3.5 rounded-[4px] bg-sunken" aria-hidden="true">
             <div

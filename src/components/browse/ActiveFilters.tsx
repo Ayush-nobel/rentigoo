@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { areaName } from '@shared/areas'
 import { categoryName } from '@shared/categories'
@@ -35,8 +36,14 @@ export function ActiveFilters({ filters: f, onChange, onClearAll }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="sr-only">Applied filters:</span>
+      <AnimatePresence initial={false} mode="popLayout">
       {chips.map((c) => (
-        <button
+        <motion.button
+          layout
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.85 }}
+          transition={{ duration: 0.16 }}
           key={c.key}
           type="button"
           onClick={c.remove}
@@ -45,8 +52,9 @@ export function ActiveFilters({ filters: f, onChange, onClearAll }: Props) {
           {c.label}
           <X aria-hidden="true" className="size-4" />
           <span className="sr-only">(remove)</span>
-        </button>
+        </motion.button>
       ))}
+      </AnimatePresence>
       {chips.length > 1 && (
         <button type="button" onClick={onClearAll} className="min-h-10 rounded px-2 font-semibold underline underline-offset-4">
           Clear all

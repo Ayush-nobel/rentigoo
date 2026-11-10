@@ -5,6 +5,7 @@ import { FEES } from '@shared/fees'
 import { plural, rupees } from '@/lib/format'
 import { ButtonLink } from '../ui/Button'
 import { SelectField, SliderField } from '../ui/Field'
+import { AnimatedNumber } from '../ui/AnimatedNumber'
 import { NumberInput } from './NumberInput'
 
 const DEFAULT = 'party'
@@ -65,7 +66,7 @@ export function EarningsEstimator() {
       <div className="mt-6" aria-live="polite">
         <p className="text-lg font-semibold">You could earn about</p>
         <p className="font-display text-6xl leading-none font-extrabold tabular-nums">
-          {rupees(r.netMonthly)}
+          <AnimatedNumber value={r.netMonthly} format={rupees} />
           <span className="ml-2 font-sans text-xl font-semibold">a month</span>
         </p>
         <p className="mt-3 text-lg">

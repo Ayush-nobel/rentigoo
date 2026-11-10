@@ -351,6 +351,50 @@
   font-weight: 700;
 }
 
+/* Smooth open/close for <details class="smooth"> (browsers without support just open instantly). */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+  details.smooth::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.22s ease,
+      content-visibility 0.22s allow-discrete;
+  }
+  details.smooth[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* The phone filter sheet slides up from the bottom; its backdrop fades in. */
+dialog.sheet {
+  transition:
+    transform 0.25s ease,
+    overlay 0.25s allow-discrete,
+    display 0.25s allow-discrete;
+}
+dialog.sheet:not([open]) {
+  transform: translateY(100%);
+}
+@starting-style {
+  dialog.sheet[open] {
+    transform: translateY(100%);
+  }
+}
+dialog.sheet::backdrop {
+  transition:
+    background-color 0.25s ease,
+    overlay 0.25s allow-discrete,
+    display 0.25s allow-discrete;
+}
+@starting-style {
+  dialog.sheet[open]::backdrop {
+    background-color: transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

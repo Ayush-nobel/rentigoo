@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion'
 import { CircleCheck, Truck } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router'
@@ -67,7 +68,9 @@ export function BookingPanel({ listing, onBooked }: Props) {
   if (booked) {
     return (
       <div className="rounded-[24px] border border-line bg-surface p-5 sm:p-6" role="status">
-        <CircleCheck aria-hidden="true" className="size-9 text-success" />
+        <motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 420, damping: 18 }} className="inline-block">
+          <CircleCheck aria-hidden="true" className="size-9 text-success" />
+        </motion.span>
         <h2 className="mt-3 text-2xl">Request sent</h2>
         <p className="mt-2">
           You’ve asked for {dateRange(booked.start, booked.end)}. We’ll show the owner’s answer on your dashboard.
@@ -142,7 +145,21 @@ export function BookingPanel({ listing, onBooked }: Props) {
         </p>
       )}
 
-      {quote && <PriceBreakdown quote={quote} className="mt-5 border-t border-line pt-4" />}
+      {/* Slides open when dates are picked, so the price is noticed. */}
+      <AnimatePresence initial={false}>
+        {quote && (
+          <motion.div
+            key="breakdown"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="overflow-hidden"
+          >
+            <PriceBreakdown quote={quote} className="mt-5 border-t border-line pt-4" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isOwner ? (
         <p className="mt-5 rounded-field bg-sunken p-3">This is your listing. Renters will see this panel.</p>
