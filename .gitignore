@@ -31,3 +31,8 @@ amplify/#current-cloud-backend
 amplify/.config/local-*
 amplify/backend/amplify-meta.json
 .amplify-hosting/
+
+# Amplify Gen 2 (generated)
+.amplify/
+amplify_outputs*
+amplifyconfiguration*

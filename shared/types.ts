@@ -81,7 +81,10 @@ export interface Listing {
   maxDays: number
   pickupOptions: PickupOption[]
   deliveryFee?: number
+  /** Every day that can't be booked: the owner's own blocked days plus accepted bookings. */
   blockedDates: ISODate[]
+  /** Only the days the owner blocked themselves (for the edit form). Absent in mock data. */
+  ownerBlockedDates?: ISODate[]
   rules: string[]
   ratingAvg: number
   ratingCount: number
