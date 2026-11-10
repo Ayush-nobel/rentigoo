@@ -1,5 +1,6 @@
 import {
   autoSignIn,
+  fetchUserAttributes,
   confirmResetPassword,
   confirmSignUp,
   getCurrentUser,
@@ -18,6 +19,7 @@ export type AuthNext = 'done' | 'confirm-email' | 'reset-password'
 
 export interface AuthService {
   currentUserId(): Promise<string | null>
+  currentEmail(): Promise<string | null>
   signIn(email: string, password: string): Promise<AuthNext>
   /** Starts sign-up and emails a code. */
   signUp(email: string, password: string): Promise<AuthNext>
@@ -73,6 +75,14 @@ export const cognitoAuth: AuthService = {
   async currentUserId() {
     try {
       return (await getCurrentUser()).userId
+    } catch {
+      return null
+    }
+  },
+
+  async currentEmail() {
+    try {
+      return (await fetchUserAttributes()).email ?? null
     } catch {
       return null
     }
@@ -158,6 +168,11 @@ const pause = () => new Promise((r) => setTimeout(r, 250))
 export const mockAuth: AuthService = {
   async currentUserId() {
     return readString(SESSION)
+  },
+  async currentEmail() {
+    const id = readString(SESSION)
+    if (id === DEMO_USER_ID) return DEMO_EMAIL
+    return Object.entries(accounts()).find(([, a]) => a.userId === id)?.[0] ?? null
   },
   async signIn(email, password) {
     await pause()

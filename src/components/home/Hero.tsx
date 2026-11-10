@@ -9,7 +9,7 @@ import { Button } from '../ui/Button'
 import { ListingImage } from '../ui/ListingImage'
 import { PriceTag } from '../ui/PriceTag'
 
-const POPULAR = ['Air purifier', 'Projector', 'Camping tent', 'Drill', 'PS5', 'Party speaker']
+const SEARCH_IDEAS = ['Air purifier', 'Projector', 'Camping tent', 'Drill', 'PS5', 'Party speaker']
 
 export function Hero({ showcase }: { showcase: Listing[] }) {
   const { user } = useAuth()
@@ -33,7 +33,7 @@ export function Hero({ showcase }: { showcase: Listing[] }) {
             Why buy it when someone nearby has one?
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted sm:text-xl">
-            Rent cameras, tools, party gear and more from people across Bhopal. Pick it up today, give it back when you’re done.
+            Rent cameras, tools, party gear and more from people across Bhopal. Pick it up, use it, give it back when you’re done.
           </p>
 
           <form onSubmit={submit} role="search" aria-label="Find something to rent" className="mt-8 max-w-2xl">
@@ -76,8 +76,8 @@ export function Hero({ showcase }: { showcase: Listing[] }) {
           </form>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="mr-1 text-[0.9375rem] text-muted">Popular this week:</span>
-            {POPULAR.map((p) => (
+            <span className="mr-1 text-[0.9375rem] text-muted">Ideas to search:</span>
+            {SEARCH_IDEAS.map((p) => (
               <Link
                 key={p}
                 to={`/browse?q=${encodeURIComponent(p)}`}

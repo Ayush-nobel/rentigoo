@@ -5,14 +5,24 @@ import { Hero } from '@/components/home/Hero'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { RentVsBuyCalculator } from '@/components/home/RentVsBuyCalculator'
 import { TrustStrip } from '@/components/home/TrustStrip'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router'
+import type { DeletionSummary } from '@shared/types'
 import { useAuth } from '@/context/AuthContext'
 import { useAsync, useTitle } from '@/hooks/useAsync'
 import { api } from '@/lib'
+import { plural } from '@/lib/format'
 
 export default function Home() {
   useTitle('')
-  const { user } = useAuth()
+  const { user, status, signOut } = useAuth()
   const areaId = user?.areaId
+  const deleted = (useLocation().state as { deleted?: DeletionSummary } | null)?.deleted
+
+  // Arriving here after deleting the account: finish by signing out.
+  useEffect(() => {
+    if (deleted && status === 'signed-in') void signOut()
+  }, [deleted, status, signOut])
 
   const featured = useAsync(async () => {
     // Prefer listings near the signed-in person; fall back to the whole city.
@@ -26,6 +36,11 @@ export default function Home() {
 
   return (
     <div className="space-y-20 sm:space-y-24">
+      {deleted && (
+        <p role="status" className="mx-auto mt-6 max-w-7xl rounded-field bg-sunken px-4 py-3 font-medium sm:px-6">
+          Your account is deleted. We removed {plural(deleted.deletedListings, 'listing')} and {plural(deleted.deletedReviews, 'review')}. Thanks for being part of RentiGoo.
+        </p>
+      )}
       <Hero showcase={featured.data?.items ?? []} />
       <CategoryGrid />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />

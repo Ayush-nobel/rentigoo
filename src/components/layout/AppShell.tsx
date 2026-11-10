@@ -1,6 +1,7 @@
 import { MotionConfig } from 'framer-motion'
 import { Suspense, useEffect, useRef } from 'react'
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
+import { DemoBanner } from './DemoBanner'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { MobileNav } from './MobileNav'
@@ -14,6 +15,7 @@ export function AppShell() {
       >
         Skip to content
       </a>
+      <DemoBanner />
       <Header />
       <main id="main" tabIndex={-1} className="min-h-[60vh] outline-none">
         <RouteFocus />

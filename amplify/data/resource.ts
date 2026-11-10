@@ -1,5 +1,6 @@
 import { a, defineData, type ClientSchema } from '@aws-amplify/backend'
 import { createProfileFn } from '../functions/create-profile/resource'
+import { deleteAccountFn } from '../functions/delete-account/resource'
 import { ownerStatsFn } from '../functions/owner-stats/resource'
 import { requestBookingFn } from '../functions/request-booking/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
@@ -17,6 +18,8 @@ import { submitReviewFn } from '../functions/submit-review/resource'
  */
 // oxlint-disable-next-line typescript/no-explicit-any
 const readOnlyForPeople = (allow: any) => [allow.guest().to(['read']), allow.authenticated().to(['read'])]
+// oxlint-disable-next-line typescript/no-explicit-any
+const ownerReadOnly = (allow: any) => [allow.ownerDefinedIn('userId').identityClaim('sub').to(['read'])]
 
 const schema = a
   .schema({
@@ -63,9 +66,19 @@ const schema = a
             allow.guest().to(['read']),
             allow.authenticated().to(['read']),
           ]),
-        name: a.string().required(),
+        // Full name: only the person themselves can see it. Everyone else sees displayName.
+        // Optional at the database level (Amplify requires that for private fields);
+        // createMyProfile always sets it, after validating it.
+        name: a
+          .string()
+          .authorization((allow) => [allow.ownerDefinedIn('userId').identityClaim('sub').to(['read', 'update'])]),
+        displayName: a.string().authorization(readOnlyForPeople), // "Meera J.", set by the server
         avatarKey: a.string(),
         areaId: a.string().required(),
+        // Consent record (DPDP Act): which documents they agreed to, and when. Private.
+        termsVersion: a.string().authorization(ownerReadOnly),
+        privacyVersion: a.string().authorization(ownerReadOnly),
+        consentAt: a.datetime().authorization(ownerReadOnly),
         bio: a.string(),
         languages: a.string().array(),
         verifiedEmail: a.boolean().authorization(readOnlyForPeople),
@@ -155,6 +168,7 @@ const schema = a
         index('listingId').queryField('listReviewsByListing'),
         index('targetUserId').queryField('listReviewsByTarget'),
         index('bookingId').queryField('listReviewsByBooking'),
+        index('authorId').queryField('listReviewsByAuthor'),
       ])
       .authorization((allow) => [allow.guest().to(['read']), allow.authenticated().to(['read'])]),
 
@@ -187,7 +201,10 @@ const schema = a
         sentAt: a.datetime().required(),
         readAt: a.datetime(),
       })
-      .secondaryIndexes((index) => [index('conversationId').sortKeys(['sentAt']).queryField('listMessagesByConversation')])
+      .secondaryIndexes((index) => [
+        index('conversationId').sortKeys(['sentAt']).queryField('listMessagesByConversation'),
+        index('senderId').queryField('listMessagesBySender'),
+      ])
       .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create', 'update'])]),
 
     // ---------- server-side operations ----------
@@ -220,10 +237,28 @@ const schema = a
 
     createMyProfile: a
       .mutation()
-      .arguments({ name: a.string().required(), areaId: a.string().required() })
+      .arguments({
+        name: a.string().required(),
+        areaId: a.string().required(),
+        termsVersion: a.string().required(),
+        privacyVersion: a.string().required(),
+      })
       .returns(a.ref('UserProfile'))
       .authorization((allow) => [allow.authenticated()])
       .handler(a.handler.function(createProfileFn)),
+
+    DeletionSummary: a.customType({
+      cancelledBookings: a.integer().required(),
+      deletedListings: a.integer().required(),
+      deletedReviews: a.integer().required(),
+      redactedMessages: a.integer().required(),
+    }),
+
+    deleteMyAccount: a
+      .mutation()
+      .returns(a.ref('DeletionSummary'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(deleteAccountFn)),
 
     ownerStats: a
       .query()
@@ -232,7 +267,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

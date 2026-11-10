@@ -67,10 +67,12 @@ export function OwnerCard({ owner, listingId }: { owner: UserProfile; listingId:
             <Rating value={owner.ratingAvg} count={owner.ratingCount} className="text-base" />
           </dd>
         </div>
-        <div>
-          <dt className="text-[0.9375rem] text-muted">Usually replies</dt>
-          <dd className="mt-0.5 font-semibold">{replyTime(owner.responseTimeHrs)}</dd>
-        </div>
+        {owner.responseTimeHrs !== null && (
+          <div>
+            <dt className="text-[0.9375rem] text-muted">Usually replies</dt>
+            <dd className="mt-0.5 font-semibold">{replyTime(owner.responseTimeHrs)}</dd>
+          </div>
+        )}
       </dl>
 
       {checks.length > 0 && (

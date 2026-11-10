@@ -13,9 +13,12 @@
     "sandbox": "ampx sandbox --identifier dev",
     "sandbox:deploy": "ampx sandbox --once --identifier dev",
     "sandbox:seed": "set -a && . ./.env.seed && set +a && ampx sandbox seed --identifier dev",
-    "check:access": "set -a && . ./.env.seed && set +a && tsx --tsconfig amplify/tsconfig.json scripts/check-access.ts"
+    "check:access": "set -a && . ./.env.seed && set +a && tsx --tsconfig amplify/tsconfig.json scripts/check-access.ts",
+    "check:launch": "tsx scripts/check-launch.ts"
   },
   "dependencies": {
+    "@fontsource/baloo-2": "^5.3.0",
+    "@fontsource/mukta": "^5.3.0",
     "@hookform/resolvers": "^7.0.5",
     "aws-amplify": "^6.22.2",
     "date-fns": "^4.4.0",

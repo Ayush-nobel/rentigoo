@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function FeaturedListings({ listings, areaId, failed }: Props) {
-  const title = areaId ? `Popular around ${areaName(areaId)}` : 'Popular across Bhopal'
+  const title = areaId ? `Rentals around ${areaName(areaId)}` : 'Rentals across Bhopal'
   return (
     <section aria-labelledby="featured-title" className="mx-auto max-w-7xl px-4 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">

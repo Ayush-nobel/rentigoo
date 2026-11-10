@@ -8,6 +8,12 @@ const Home = lazy(() => import('./pages/Home'))
 const Browse = lazy(() => import('./pages/Browse'))
 const ListingDetail = lazy(() => import('./pages/ListingDetail'))
 const Login = lazy(() => import('./pages/Login'))
+const Account = lazy(() => import('./pages/Account'))
+const Privacy = lazy(() => import('./pages/legal/Privacy'))
+const Terms = lazy(() => import('./pages/legal/Terms'))
+const Refunds = lazy(() => import('./pages/legal/Refunds'))
+const Cookies = lazy(() => import('./pages/legal/Cookies'))
+const Contact = lazy(() => import('./pages/legal/Contact'))
 const Signup = lazy(() => import('./pages/Signup'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -25,6 +31,12 @@ export const router = createBrowserRouter([
       { path: 'list', element: <ProtectedRoute><ComingSoon title="List an item" /></ProtectedRoute> },
       { path: 'dashboard', element: <ProtectedRoute><ComingSoon title="Dashboard" /></ProtectedRoute> },
       { path: 'messages/:conversationId?', element: <ProtectedRoute><ComingSoon title="Messages" /></ProtectedRoute> },
+      { path: 'privacy', element: <Privacy /> },
+      { path: 'terms', element: <Terms /> },
+      { path: 'refunds', element: <Refunds /> },
+      { path: 'cookies', element: <Cookies /> },
+      { path: 'contact', element: <Contact /> },
+      { path: 'account', element: <ProtectedRoute><Account /></ProtectedRoute> },
       { path: 'how-it-works', element: <ComingSoon title="How it works" /> },
       { path: 'trust-and-safety', element: <ComingSoon title="Trust and safety" /> },
       { path: 'faq', element: <ComingSoon title="Questions and answers" /> },

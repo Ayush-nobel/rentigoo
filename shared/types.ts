@@ -35,6 +35,7 @@ export interface Verification {
 
 export interface UserProfile {
   id: string
+  /** Your own full name when it's you; otherwise the public name ("Meera J."). */
   name: string
   /** S3 key, URL, or null for an initials avatar. */
   avatarKey: string | null
@@ -42,12 +43,22 @@ export interface UserProfile {
   bio: string
   languages: string[]
   verified: Verification
-  /** 0–100 */
-  responseRate: number
-  responseTimeHrs: number
+  /** 0–100. Null until we've measured real replies; never show a made-up figure. */
+  responseRate: number | null
+  /** Typical hours to reply. Null until measured. */
+  responseTimeHrs: number | null
   ratingAvg: number
   ratingCount: number
   joinedAt: ISODateTime
+  /** Only present on your own profile: what you agreed to, and when. */
+  consent?: { termsVersion: string; privacyVersion: string; at: ISODateTime } | null
+}
+
+export interface DeletionSummary {
+  cancelledBookings: number
+  deletedListings: number
+  deletedReviews: number
+  redactedMessages: number
 }
 
 export interface Photo {

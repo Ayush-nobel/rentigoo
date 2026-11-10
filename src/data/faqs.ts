@@ -14,7 +14,7 @@ export const FAQS: FaqItem[] = [
     id: 'f1',
     section: 'renting',
     q: 'How does renting work?',
-    a: 'Find something nearby, pick your dates and send a request. The owner usually replies within a few hours. Once they accept, you agree a pickup time in Messages, check the item together, and you’re off.',
+    a: 'Find something nearby, pick your dates and send a request. Once the owner accepts, you agree a pickup time in Messages, check the item together, and you’re off.',
   },
   {
     id: 'f2',
@@ -68,19 +68,19 @@ export const FAQS: FaqItem[] = [
     id: 'f10',
     section: 'payments',
     q: 'How does the deposit work?',
-    a: 'The deposit is set by the owner and shown before you request. You hand it over at pickup and get it back in full when the item comes back in the same condition.',
+    a: 'The deposit is set by the owner and shown before you request. You hand it over at pickup. Our terms require the owner to return it when the item comes back in the same condition, apart from normal wear.',
   },
   {
     id: 'f11',
     section: 'safety',
     q: 'What if something gets damaged?',
-    a: 'Tell the owner straight away and take photos. Small wear is expected. For real damage, the owner can keep part of the deposit to cover the repair, and needs to show the receipt or quote. If you can’t agree, our team will look at the photos from both sides.',
+    a: 'Tell the owner straight away and take photos. Normal wear is expected. For real damage, the owner can keep part of the deposit to cover the repair, and must show you the repair bill or quote. If you can’t agree, contact our grievance officer (details on our Contact page). We acknowledge complaints within 24 hours.',
   },
   {
     id: 'f12',
     section: 'safety',
     q: 'How do you check people?',
-    a: 'Everyone verifies their email. Phone and government ID checks show up as badges on profiles, and many owners only accept fully verified renters. Reviews after every rental build up a track record.',
+    a: 'Everyone confirms their email address before they can rent or list. That’s the only check we do today, so read reviews, chat first, and meet somewhere public for a first rental. We’ll tell you here when we add more checks.',
   },
   {
     id: 'f13',
@@ -98,6 +98,6 @@ export const FAQS: FaqItem[] = [
     id: 'f15',
     section: 'account',
     q: 'How do I delete my account?',
-    a: 'Write to us from the email on your account and we’ll delete it within 7 days, once any open bookings are finished.',
+    a: 'Go to Account, then “Delete my account”. It removes your profile, listings and reviews straight away. We keep a minimal record of past bookings for as long as the law requires (see our Privacy Policy).',
   },
 ]

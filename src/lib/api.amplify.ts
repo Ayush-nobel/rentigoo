@@ -78,20 +78,27 @@ function listingFromDb(l: any): Listing {
   }
 }
 
+// What anyone may read about someone else (full name and consent stay private).
+const PUBLIC_PROFILE = [
+  'id', 'displayName', 'avatarKey', 'areaId', 'bio', 'languages', 'verifiedEmail', 'verifiedPhone',
+  'verifiedGovtId', 'responseRate', 'responseTimeHrs', 'ratingAvg', 'ratingCount', 'createdAt',
+] as const
+
 function userFromDb(u: any): UserProfile {
   return {
     id: u.id,
-    name: u.name,
+    name: u.name ?? u.displayName ?? 'RentiGoo member',
     avatarKey: u.avatarKey ?? null,
     areaId: u.areaId,
     bio: u.bio ?? '',
     languages: clean(u.languages),
     verified: { email: Boolean(u.verifiedEmail), phone: Boolean(u.verifiedPhone), govtId: Boolean(u.verifiedGovtId) },
-    responseRate: u.responseRate ?? 0,
-    responseTimeHrs: u.responseTimeHrs ?? 24,
+    responseRate: u.responseRate ?? null,
+    responseTimeHrs: u.responseTimeHrs ?? null,
     ratingAvg: u.ratingAvg ?? 0,
     ratingCount: u.ratingCount ?? 0,
     joinedAt: u.createdAt,
+    consent: u.consentAt ? { termsVersion: u.termsVersion, privacyVersion: u.privacyVersion, at: u.consentAt } : null,
   }
 }
 
@@ -178,7 +185,9 @@ export const amplifyApi: RentiGooApi = {
   },
 
   async getUser(id) {
-    const u = check(await models().UserProfile.get({ id }, { authMode: authMode() }))
+    const self = id === getSessionUserId()
+    const opts = self ? {} : { authMode: authMode(), selectionSet: PUBLIC_PROFILE }
+    const u = check(await models().UserProfile.get({ id }, opts as never))
     return u ? userFromDb(u) : null
   },
 
@@ -192,6 +201,18 @@ export const amplifyApi: RentiGooApi = {
     const u = check(await client().mutations.createMyProfile(input))
     if (!u) throw new ApiError('Your profile wasn’t saved. Please try again.', 'conflict')
     return userFromDb(u)
+  },
+
+  async deleteMyAccount() {
+    me()
+    const summary = check(await client().mutations.deleteMyAccount())
+    if (!summary) throw new ApiError('Your account wasn’t deleted. Please try again.', 'conflict')
+    listingCache = null
+    return summary
+  },
+
+  async listReviewsByAuthor(authorId) {
+    return (await all((nextToken) => models().Review.listReviewsByAuthor({ authorId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
   },
 
   async updateMyProfile(patch) {

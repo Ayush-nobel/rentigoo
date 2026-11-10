@@ -4,6 +4,7 @@ import { CATEGORIES } from '@shared/categories'
 import { todayIST } from '@/lib/format'
 import type { SearchFilters } from '@/lib/search'
 import { cx } from '@/lib/cx'
+import { Checkbox, Radio } from '../ui/Checkbox'
 import { fieldClasses } from '../ui/Field'
 
 interface Props {
@@ -11,8 +12,6 @@ interface Props {
   onChange: (patch: Partial<SearchFilters>) => void
 }
 
-const optionRow = 'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-sunken'
-const box = 'size-5 shrink-0 accent-ink'
 
 function Group({ legend, children }: { legend: string; children: ReactNode }) {
   return (
@@ -37,16 +36,13 @@ export function FilterPanel({ filters, onChange }: Props) {
       <Group legend="Category">
         <div className="grid">
           {[{ id: '', name: 'Everything' }, ...CATEGORIES].map((c) => (
-            <label key={c.id || 'all'} className={optionRow}>
-              <input
-                type="radio"
-                name="category"
-                className={box}
-                checked={(filters.category ?? '') === c.id}
-                onChange={() => onChange({ category: c.id || undefined })}
-              />
-              {c.name}
-            </label>
+            <Radio
+              key={c.id || 'all'}
+              name="category"
+              label={c.name}
+              checked={(filters.category ?? '') === c.id}
+              onChange={() => onChange({ category: c.id || undefined })}
+            />
           ))}
         </div>
       </Group>
@@ -54,10 +50,7 @@ export function FilterPanel({ filters, onChange }: Props) {
       <Group legend="Area">
         <div className="grid">
           {AREAS.map((a) => (
-            <label key={a.id} className={optionRow}>
-              <input type="checkbox" className={box} checked={areas.has(a.id)} onChange={() => toggleArea(a.id)} />
-              {a.name}
-            </label>
+            <Checkbox key={a.id} label={a.name} checked={areas.has(a.id)} onChange={() => toggleArea(a.id)} />
           ))}
         </div>
       </Group>
@@ -71,14 +64,8 @@ export function FilterPanel({ filters, onChange }: Props) {
       </Group>
 
       <Group legend="Options">
-        <label className={optionRow}>
-          <input type="checkbox" className={box} checked={Boolean(filters.delivery)} onChange={(e) => onChange({ delivery: e.target.checked || undefined })} />
-          Delivery available
-        </label>
-        <label className={optionRow}>
-          <input type="checkbox" className={box} checked={Boolean(filters.noDeposit)} onChange={(e) => onChange({ noDeposit: e.target.checked || undefined })} />
-          No deposit
-        </label>
+        <Checkbox label="Delivery available" checked={Boolean(filters.delivery)} onChange={(e) => onChange({ delivery: e.target.checked || undefined })} />
+        <Checkbox label="No deposit" checked={Boolean(filters.noDeposit)} onChange={(e) => onChange({ noDeposit: e.target.checked || undefined })} />
       </Group>
     </div>
   )

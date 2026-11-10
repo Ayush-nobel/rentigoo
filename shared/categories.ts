@@ -1,6 +1,9 @@
 import type { Category } from './types'
 
-/** Typical prices are rough Bhopal figures used to prefill the calculators. */
+/**
+ * Prices here are our own rough estimates for Bhopal, used only to prefill the
+ * calculators. They are not RentiGoo data; the UI labels them as estimates.
+ */
 export const CATEGORIES: Category[] = [
   {
     id: 'cameras',

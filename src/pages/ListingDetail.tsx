@@ -132,7 +132,7 @@ export default function ListingDetail() {
               <Fact
                 icon={<span aria-hidden="true" className="grid size-6 place-items-center font-display text-lg font-extrabold">₹</span>}
                 title="Deposit"
-                body={listing.deposit > 0 ? `${rupees(listing.deposit)}, returned in full when it comes back` : 'No deposit needed'}
+                body={listing.deposit > 0 ? `${rupees(listing.deposit)}, refundable when the item comes back as it left` : 'No deposit needed'}
               />
             </ul>
           </section>

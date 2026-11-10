@@ -11,6 +11,7 @@ import { Amplify } from 'aws-amplify'
 import { getCurrentUser, signOut } from 'aws-amplify/auth'
 import { generateClient } from 'aws-amplify/data'
 import { createAndSignUpUser, signInUser } from '@aws-amplify/seed'
+import { LEGAL } from '../../shared/legal'
 import { addDays } from '../../shared/pricing'
 import type { Listing } from '../../shared/types'
 import { CONVERSATIONS, MESSAGES } from '../../src/data/activity'
@@ -64,7 +65,7 @@ async function main() {
       console.log(`Already seeded (${u.name} has listings). Delete the sandbox data to seed again.`)
       return
     }
-    ok(await client.mutations.createMyProfile({ name: u.name, areaId: u.areaId }), `profile ${u.name}`)
+    ok(await client.mutations.createMyProfile({ name: u.name, areaId: u.areaId, termsVersion: LEGAL.terms.version, privacyVersion: LEGAL.privacy.version }), `profile ${u.name}`)
     ok(await client.models.UserProfile.update({ id: sub, bio: u.bio, languages: u.languages } as never), `profile details ${u.name}`)
     for (const l of LISTINGS.filter((x) => x.ownerId === u.id)) {
       const created = ok(

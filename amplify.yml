@@ -8,6 +8,8 @@ frontend:
         - npm ci
     build:
       commands:
+        # The production branch must pass the launch checks (business details, no demo data).
+        - if [ "$AWS_BRANCH" = "main" ]; then npm run check:launch; fi
         - npm run build
   artifacts:
     baseDirectory: dist

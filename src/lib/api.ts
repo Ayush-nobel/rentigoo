@@ -1,4 +1,4 @@
-import type { Booking, Conversation, ISODate, Listing, Message, Review, UserProfile } from '@shared/types'
+import type { Booking, Conversation, DeletionSummary, ISODate, Listing, Message, Review, UserProfile } from '@shared/types'
 import type { SearchFilters, SearchResult } from './search'
 
 /** Fields an owner fills in when creating or editing a listing. */
@@ -58,7 +58,10 @@ export interface RentiGooApi {
   getUser(id: string): Promise<UserProfile | null>
   getUsers(ids: string[]): Promise<UserProfile[]>
   /** First-time profile for the signed-in person (server checks name and area). */
-  createMyProfile(input: { name: string; areaId: string }): Promise<UserProfile>
+  createMyProfile(input: { name: string; areaId: string; termsVersion: string; privacyVersion: string }): Promise<UserProfile>
+  /** Permanently deletes the signed-in person's account and personal data. */
+  deleteMyAccount(): Promise<DeletionSummary>
+  listReviewsByAuthor(userId: string): Promise<Review[]>
   updateMyProfile(patch: Partial<Pick<UserProfile, 'name' | 'areaId' | 'bio' | 'languages' | 'avatarKey'>>): Promise<UserProfile>
   listReviewsForListing(listingId: string): Promise<Review[]>
   listReviewsForUser(userId: string): Promise<Review[]>

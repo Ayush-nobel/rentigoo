@@ -68,7 +68,7 @@ export function BookingPanel({ listing, onBooked }: Props) {
         <CircleCheck aria-hidden="true" className="size-9 text-success" />
         <h2 className="mt-3 text-2xl">Request sent</h2>
         <p className="mt-2">
-          You’ve asked for {dateRange(booked.start, booked.end)}. Most owners reply within a few hours. We’ll show their answer on your dashboard.
+          You’ve asked for {dateRange(booked.start, booked.end)}. We’ll show the owner’s answer on your dashboard.
         </p>
         <p className="mt-3 font-semibold">Due at pickup if accepted: {rupees(booked.quote.totalDue)}</p>
         <div className="mt-5 flex flex-wrap gap-3">

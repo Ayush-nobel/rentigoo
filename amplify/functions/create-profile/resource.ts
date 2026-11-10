@@ -7,4 +7,6 @@ export const createProfileFn = defineFunction({
   memoryMB: 256,
   runtime: 22,
   resourceGroupName: 'data',
+  // Logs can hold personal data in error details: keep them a month, then AWS deletes them.
+  logging: { retention: '1 month' },
 })

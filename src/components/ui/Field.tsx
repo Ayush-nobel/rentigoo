@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { cx } from '@/lib/cx'
 
 export const fieldClasses =
-  'w-full min-h-12 rounded-field border border-line-strong bg-surface px-3.5 text-base text-text placeholder:text-muted hover:border-text focus-visible:border-text focus-visible:outline-2 focus-visible:outline-offset-0 aria-invalid:border-danger'
+  'w-full min-h-12 rounded-field border border-line-strong bg-surface px-3.5 text-base text-text placeholder:text-muted hover:border-text focus-within:border-text focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-solid focus-within:[outline-color:var(--focus)] aria-invalid:border-danger'
 
 interface FieldShellProps {
   label: string

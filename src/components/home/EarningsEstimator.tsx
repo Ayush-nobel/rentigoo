@@ -50,7 +50,7 @@ export function EarningsEstimator() {
         </SelectField>
         <div className="grid gap-5 sm:grid-cols-2">
           <NumberInput label="What it’s worth" value={itemValue} onChange={setItemValue} />
-          <NumberInput label="Your daily rate" value={dailyRate} onChange={setDailyRate} hint="Prefilled with the typical rate" />
+          <NumberInput label="Your daily rate" value={dailyRate} onChange={setDailyRate} hint="Prefilled with our rough estimate" />
         </div>
         <SliderField
           label="Days rented each month"

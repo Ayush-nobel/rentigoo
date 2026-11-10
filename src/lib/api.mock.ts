@@ -1,8 +1,9 @@
 import { profileProblem, tidyName } from '@shared/accountRules'
+import { LEGAL, publicName } from '@shared/legal'
 import { bookingProblem, canTransition } from '@shared/bookingRules'
 import { categoryName } from '@shared/categories'
 import { isRangeAvailable, quoteListing } from '@shared/pricing'
-import type { Booking, Conversation, Listing, Message, UserProfile } from '@shared/types'
+import type { Booking, Conversation, DeletionSummary, Listing, Message, UserProfile } from '@shared/types'
 import { deriveSnapshot, seedSnapshot, type Snapshot } from '@/data'
 import { ApiError, type RentiGooApi } from './api'
 import { todayIST } from './format'
@@ -59,6 +60,11 @@ function findConversationForMe(conversationId: string): Conversation {
   return c
 }
 
+/** Others see the public name only, as on the real backend. */
+function asSeenBy(u: UserProfile): UserProfile {
+  return u.id === getSessionUserId() ? u : { ...u, name: publicName(u.name), consent: null }
+}
+
 const byNewest = <T extends { createdAt: string }>(a: T, b: T) => b.createdAt.localeCompare(a.createdAt)
 
 export const mockApi: RentiGooApi = {
@@ -101,18 +107,22 @@ export const mockApi: RentiGooApi = {
   },
 
   async getUser(userId) {
-    return delay(db.users.find((u) => u.id === userId) ?? null)
+    const u = db.users.find((x) => x.id === userId) ?? null
+    return delay(u && asSeenBy(u))
   },
 
   async getUsers(ids) {
     const set = new Set(ids)
-    return delay(db.users.filter((u) => set.has(u.id)))
+    return delay(db.users.filter((u) => set.has(u.id)).map(asSeenBy))
   },
 
   async createMyProfile(input) {
     const uid = me()
     const existing = db.users.find((u) => u.id === uid)
     if (existing) return delay(existing)
+    if (input.termsVersion !== LEGAL.terms.version || input.privacyVersion !== LEGAL.privacy.version) {
+      throw new ApiError('Please agree to the latest Terms and Privacy Policy to continue.', 'invalid')
+    }
     const name = tidyName(input.name)
     const problem = profileProblem({ name, areaId: input.areaId })
     if (problem) throw new ApiError(problem, 'invalid')
@@ -124,11 +134,12 @@ export const mockApi: RentiGooApi = {
       bio: '',
       languages: [],
       verified: { email: true, phone: false, govtId: false },
-      responseRate: 0,
-      responseTimeHrs: 24,
+      responseRate: null,
+      responseTimeHrs: null,
       ratingAvg: 0,
       ratingCount: 0,
       joinedAt: new Date().toISOString(),
+      consent: { termsVersion: input.termsVersion, privacyVersion: input.privacyVersion, at: new Date().toISOString() },
     }
     db.users.push(user)
     save()
@@ -147,6 +158,36 @@ export const mockApi: RentiGooApi = {
 
   async listReviewsForListing(listingId) {
     return delay(db.reviews.filter((r) => r.listingId === listingId).sort(byNewest))
+  },
+
+  async listReviewsByAuthor(userId) {
+    return delay(db.reviews.filter((r) => r.authorId === userId).sort(byNewest))
+  },
+
+  async deleteMyAccount() {
+    const uid = me()
+    const mine = db.bookings.filter((b) => b.renterId === uid || b.ownerId === uid)
+    if (mine.some((b) => b.status === 'active')) {
+      throw new ApiError('You have a rental in progress. Once the item is returned and marked as returned, you can delete your account.', 'conflict')
+    }
+    const open = mine.filter((b) => b.status === 'requested' || b.status === 'accepted')
+    open.forEach((b) => (b.status = 'cancelled'))
+    const ownedIds = new Set(db.listings.filter((l) => l.ownerId === uid).map((l) => l.id))
+    db.listings = db.listings.filter((l) => !ownedIds.has(l.id))
+    const before = db.reviews.length
+    db.reviews = db.reviews.filter((r) => r.authorId !== uid && r.targetUserId !== uid)
+    let redacted = 0
+    for (const m of db.messages) {
+      if (m.senderId === uid) {
+        m.text = 'This message was removed when its sender deleted their account.'
+        redacted++
+      }
+    }
+    for (const b of db.bookings) if (b.renterId === uid) delete b.message
+    db.users = db.users.filter((u) => u.id !== uid)
+    save()
+    const summary: DeletionSummary = { cancelledBookings: open.length, deletedListings: ownedIds.size, deletedReviews: before - db.reviews.length, redactedMessages: redacted }
+    return delay(summary)
   },
 
   async listReviewsForUser(userId) {

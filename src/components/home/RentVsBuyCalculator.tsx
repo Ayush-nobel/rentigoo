@@ -60,7 +60,7 @@ export function RentVsBuyCalculator() {
           ))}
         </SelectField>
         <NumberInput label="Price to buy new" value={values.purchasePrice} onChange={set('purchasePrice')} />
-        <NumberInput label="Rent per day" value={values.dailyRate} onChange={set('dailyRate')} hint="Typical on RentiGoo for this category" />
+        <NumberInput label="Rent per day" value={values.dailyRate} onChange={set('dailyRate')} hint="Prefilled with our rough estimate" />
         <SliderField
           label="Days you’d use it"
           value={daysPerYear}

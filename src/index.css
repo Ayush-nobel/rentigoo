@@ -12,7 +12,8 @@
   --surface: #ffffff;
   --surface-sunken: #f3eee2;
   --line: #e4ddcc;
-  --line-strong: #cfc6b1;
+  /* Input and control outlines: ≥3:1 on every surface (WCAG 1.4.11). */
+  --line-strong: #857e6e;
   --text: #24221b;
   --muted: #5f5a4c;
   --accent: #f2d04e;
@@ -41,7 +42,7 @@
     --surface: #2f2c24;
     --surface-sunken: #1c1a14;
     --line: #433f33;
-    --line-strong: #5a5545;
+    --line-strong: #8a8473;
     --text: #ffffff;
     --muted: #b9b3a3;
     --accent-text: #f2d04e;
@@ -63,7 +64,7 @@
   --surface: #2f2c24;
   --surface-sunken: #1c1a14;
   --line: #433f33;
-  --line-strong: #5a5545;
+  --line-strong: #8a8473;
   --text: #ffffff;
   --muted: #b9b3a3;
   --accent-text: #f2d04e;
@@ -212,6 +213,97 @@
   }
   .range-input:focus-visible {
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* One checkbox/radio style everywhere: 22px, 3:1 outline, ink when on, clear focus ring. */
+  .check-control {
+    appearance: none;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background-color 120ms, border-color 120ms;
+  }
+  .check-control.rounded-full {
+    border-radius: 999px;
+  }
+  .check-control:hover {
+    border-color: var(--text);
+  }
+  .check-control:checked {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  /* Tick for checkboxes, dot for radios, drawn in the on-ink colour. */
+  .check-control[type='checkbox']:checked::after {
+    content: '';
+    width: 6px;
+    height: 11px;
+    margin-top: -2px;
+    border: solid var(--on-ink);
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
+  .check-control[type='radio']:checked::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--on-ink);
+  }
+  .check-control:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .check-control[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+}
+
+@layer components {
+  /* Readable long-form text for the legal pages. */
+  .legal-prose p,
+  .legal-prose li {
+    max-width: 68ch;
+  }
+  .legal-prose ul {
+    list-style: disc;
+    padding-left: 1.4rem;
+  }
+  .legal-prose ol.steps {
+    list-style: decimal;
+    padding-left: 1.4rem;
+  }
+  .legal-prose li + li {
+    margin-top: 0.35rem;
+  }
+  .legal-prose h3 {
+    font-family: var(--font-sans);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+  }
+  .legal-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.97rem;
+  }
+  .legal-prose th,
+  .legal-prose td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .legal-prose th {
+    font-weight: 600;
   }
 }
 

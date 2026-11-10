@@ -1,15 +1,21 @@
 import type { Review } from '../../../shared/types'
-import type { Store, StoredBooking, StoredListing } from './bookings'
+import type { StoredBooking, StoredListing } from './bookings'
+import type { AccountStore } from './account'
 
 /** In-memory Store for tests. */
-export function memoryStore(seed: { listings?: StoredListing[]; bookings?: StoredBooking[]; reviews?: Review[] } = {}) {
+export function memoryStore(
+  seed: { listings?: StoredListing[]; bookings?: StoredBooking[]; reviews?: Review[]; messages?: { id: string; senderId: string; text: string }[]; profiles?: string[] } = {},
+) {
   const listings = new Map((seed.listings ?? []).map((l) => [l.id, structuredClone(l)]))
   const bookings = new Map((seed.bookings ?? []).map((b) => [b.id, structuredClone(b)]))
   const reviews: Review[] = structuredClone(seed.reviews ?? [])
   const userRatings = new Map<string, { avg: number; count: number }>()
+  const messages = structuredClone(seed.messages ?? [])
+  const profiles = new Set(seed.profiles ?? [])
+  const logins = new Set(seed.profiles ?? [])
   let n = 0
 
-  const store: Store = {
+  const store: AccountStore = {
     async getListing(id) {
       return structuredClone(listings.get(id) ?? null)
     },
@@ -56,6 +62,38 @@ export function memoryStore(seed: { listings?: StoredListing[]; bookings?: Store
     async setUserRating(userId, avg, count) {
       userRatings.set(userId, { avg, count })
     },
+    async listBookingsAsRenter(userId) {
+      return [...bookings.values()].filter((b) => b.renterId === userId).map((b) => structuredClone(b))
+    },
+    async listListingsOwnedBy(userId) {
+      return [...listings.values()].filter((l) => l.ownerId === userId).map((l) => structuredClone(l))
+    },
+    async deleteListing(id) {
+      listings.delete(id)
+    },
+    async listReviewsByAuthor(userId) {
+      return reviews.filter((r) => r.authorId === userId)
+    },
+    async deleteReview(id) {
+      const i = reviews.findIndex((r) => r.id === id)
+      if (i >= 0) reviews.splice(i, 1)
+    },
+    async listMessageIdsBySender(userId) {
+      return messages.filter((m) => m.senderId === userId).map((m) => m.id)
+    },
+    async redactMessage(id, text) {
+      const m = messages.find((x) => x.id === id)
+      if (m) m.text = text
+    },
+    async clearBookingMessage(id) {
+      delete bookings.get(id)!.message
+    },
+    async deleteProfile(id) {
+      profiles.delete(id)
+    },
+    async deleteLogin(id) {
+      logins.delete(id)
+    },
   }
-  return { store, listings, bookings, reviews, userRatings }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins }
 }

@@ -8,6 +8,7 @@ import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtim
 import type { Schema } from '../../data/resource'
 import type { Booking, Review } from '../../../shared/types'
 import type { Store, StoredBooking, StoredListing } from './bookings'
+import type { AccountStore } from './account'
 
 type Client = ReturnType<typeof generateClient<Schema>>
 
@@ -115,5 +116,43 @@ export function amplifyStore(client: Client): Store {
     async setUserRating(userId, avg, count) {
       check(await m.UserProfile.update({ id: userId, ratingAvg: avg, ratingCount: count } as never))
     },
+  }
+}
+
+/** Store with the extra operations account deletion needs. */
+export function accountStore(client: Client, deleteLogin: (id: string) => Promise<void>): AccountStore {
+  const base = amplifyStore(client)
+  const m = client.models
+  return {
+    ...base,
+    async listBookingsAsRenter(userId) {
+      return (await all((nextToken) => m.Booking.listBookingsByRenter({ renterId: userId }, { nextToken }))).map(bookingFromDb)
+    },
+    async listListingsOwnedBy(userId) {
+      return (await all((nextToken) => m.Listing.listListingsByOwner({ ownerId: userId }, { nextToken }))).map(listingFromDb)
+    },
+    async deleteListing(id) {
+      check(await m.Listing.delete({ id }))
+    },
+    async listReviewsByAuthor(userId) {
+      return (await all((nextToken) => m.Review.listReviewsByAuthor({ authorId: userId }, { nextToken }))).map(reviewFromDb)
+    },
+    async deleteReview(id) {
+      check(await m.Review.delete({ id }))
+    },
+    async listMessageIdsBySender(userId) {
+      return (await all((nextToken) => m.Message.listMessagesBySender({ senderId: userId }, { nextToken }))).map((x) => x.id)
+    },
+    async redactMessage(id, text) {
+      check(await m.Message.update({ id, text } as never))
+    },
+    async clearBookingMessage(id) {
+      check(await m.Booking.update({ id, message: null } as never))
+    },
+    async deleteProfile(id) {
+      const res = await m.UserProfile.delete({ id })
+      if (res.errors?.length && !/not found|conditional/i.test(res.errors[0]!.message)) check(res)
+    },
+    deleteLogin,
   }
 }

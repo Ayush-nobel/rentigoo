@@ -16,6 +16,6 @@
       "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["./**/*.ts", "../shared/**/*.ts"],
+  "include": ["./**/*.ts", "../shared/**/*.ts", "../scripts/**/*.ts"],
   "exclude": ["./**/*.test.ts", "./functions/logic/memoryStore.ts", "../shared/**/*.test.ts"]
 }

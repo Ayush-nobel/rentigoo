@@ -8,7 +8,7 @@ const STEPS = [
   },
   {
     title: 'Ask the owner',
-    body: 'Pick your dates and send a request. Most owners reply within a few hours, and you can chat before you commit.',
+    body: 'Pick your dates and send a request. You can chat with the owner before you commit, and you pay nothing until they accept.',
   },
   {
     title: 'Pick up, use, return',

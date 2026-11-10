@@ -2,10 +2,10 @@ import { BadgeCheck, HandCoins, MessagesSquare, Star } from 'lucide-react'
 import { Link } from 'react-router'
 
 const POINTS = [
-  { icon: BadgeCheck, title: 'Verified people', body: 'Email for everyone. Phone and government ID badges show who has gone further.' },
-  { icon: HandCoins, title: 'Deposits come back', body: 'Every deposit is shown upfront and returned in full when the item does.' },
-  { icon: Star, title: 'Reviews both ways', body: 'Renters review owners and owners review renters, after every rental.' },
-  { icon: MessagesSquare, title: 'Help if it goes wrong', body: 'If you can’t agree on damage, our team looks at the photos from both sides.' },
+  { icon: BadgeCheck, title: 'Checked email for everyone', body: 'Every account confirms its email address before it can rent or list anything.' },
+  { icon: HandCoins, title: 'Deposits shown upfront', body: 'Every listing shows its deposit before you ask. Our terms require owners to return it when the item comes back as it left.' },
+  { icon: Star, title: 'Reviews both ways', body: 'Once an item is returned, the renter can review the owner and the owner can review the renter. Only people who rented can review.' },
+  { icon: MessagesSquare, title: 'Someone to complain to', body: 'If something goes wrong, our grievance officer acknowledges your complaint within 24 hours.' },
 ]
 
 export function TrustStrip() {

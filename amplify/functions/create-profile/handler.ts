@@ -28,8 +28,8 @@ export const handler: Schema['createMyProfile']['functionHandler'] = (event) =>
         if (res.errors?.length || !res.data) throw new Error(res.errors?.map((e) => e.message).join('; ') ?? 'Profile not saved')
         return res.data as never
       },
-      async setVerifiedEmail(id, verified) {
-        return (await m.UserProfile.update({ id, verifiedEmail: verified } as never)).data as never
+      async updateServerFields(id, fields) {
+        return (await m.UserProfile.update({ id, ...fields } as never)).data as never
       },
     }
     const sub = callerId(event.identity)

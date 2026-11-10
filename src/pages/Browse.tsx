@@ -98,8 +98,8 @@ export default function Browse() {
               }
             >
               {filters.q && count === 0
-                ? 'Try a different word, or browse a category. New things get listed every week.'
-                : 'Try fewer filters, other dates or a wider area. New things get listed every week.'}
+                ? 'Try a different word, or browse a category.'
+                : 'Try fewer filters, other dates or a wider area.'}
             </EmptyState>
           ) : (
             <>

@@ -2,8 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { emailProblem, nameProblem, passwordProblem, areaProblem } from '@shared/accountRules'
 import { AREAS, LAUNCH_CITY } from '@shared/areas'
+import { LEGAL, MIN_AGE } from '@shared/legal'
 import { AuthFrame, CodeField, FormError, PasswordField } from '@/components/auth/AuthFields'
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { SelectField, TextField } from '@/components/ui/Field'
 import { useAuth } from '@/context/AuthContext'
 import { useTitle } from '@/hooks/useAsync'
@@ -14,6 +16,8 @@ interface Pending {
   name: string
   areaId: string
   email: string
+  /** Both consent boxes were ticked on the details step. */
+  agreed: boolean
 }
 
 // Name and area wait here between "sign up" and "email confirmed".
@@ -52,6 +56,8 @@ export default function Signup() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cooldown, setCooldown] = useState(0)
   const [notice, setNotice] = useState<string | null>(null)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
 
   useTitle(step === 'confirm' ? 'Check your email' : step === 'profile' ? 'Finish your profile' : 'Create your account')
 
@@ -78,13 +84,20 @@ export default function Signup() {
     }
   }
 
+  const consentErrors = () => {
+    const errs: Record<string, string> = {}
+    if (!agreeTerms) errs.terms = `Please confirm you’re ${MIN_AGE} or older and agree to the Terms.`
+    if (!agreePrivacy) errs.privacy = 'We need your agreement to use your details, or we can’t run your account.'
+    return errs
+  }
+
   const finishProfile = async (p: { name: string; areaId: string }) => {
     // Pick up the session that sign-in just created before writing as this person.
     if ((await refresh()) === 'signed-out') {
       navigate(`/login?notice=confirmed&email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`, { replace: true })
       return
     }
-    await api.createMyProfile(p)
+    await api.createMyProfile({ ...p, termsVersion: LEGAL.terms.version, privacyVersion: LEGAL.privacy.version })
     writePending(null)
     await refresh()
     navigate(next, { replace: true })
@@ -100,16 +113,18 @@ export default function Signup() {
       ['password', passwordProblem(password)],
     ]
     for (const [k, v] of checks) if (v) errs[k] = v
+    Object.assign(errs, consentErrors())
     setFieldErrors(errs)
     if (Object.keys(errs).length) return
     void run(async () => {
-      writePending({ name, areaId, email: email.trim() })
+      writePending({ name, areaId, email: email.trim(), agreed: agreeTerms && agreePrivacy })
       const result = await auth.signUp(email, password)
       if (result === 'done') {
         await auth.signIn(email, password)
         await finishProfile({ name, areaId })
         return
       }
+      // (consent is checked above, before sign-up starts)
       setCooldown(30)
       go('confirm', { email: email.trim() })
     })
@@ -128,8 +143,9 @@ export default function Signup() {
         navigate(`/login?notice=confirmed&email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`, { replace: true })
         return
       }
+      // Only create the profile here if consent was given; otherwise ask on the profile step.
       const p = readPending()
-      if (p) await finishProfile(p)
+      if (p?.agreed) await finishProfile(p)
       else {
         await refresh()
         go('profile')
@@ -151,6 +167,7 @@ export default function Signup() {
     const ap = areaProblem(areaId)
     if (np) errs.name = np
     if (ap) errs.areaId = ap
+    Object.assign(errs, consentErrors())
     setFieldErrors(errs)
     if (Object.keys(errs).length) return
     void run(() => finishProfile({ name, areaId }))
@@ -165,6 +182,42 @@ export default function Signup() {
         </option>
       ))}
     </SelectField>
+  )
+  const consentBlock = (
+    <fieldset className="space-y-1">
+      <legend className="mb-1 font-semibold">Before you join</legend>
+      <Checkbox
+        checked={agreeTerms}
+        onChange={(e) => setAgreeTerms(e.target.checked)}
+        error={fieldErrors.terms}
+        required
+        label={
+          <>
+            I’m {MIN_AGE} or older and I agree to the{' '}
+            <Link to={LEGAL.terms.path} target="_blank" className="font-semibold underline underline-offset-4">
+              Terms and Conditions
+            </Link>
+            .
+          </>
+        }
+      />
+      <Checkbox
+        checked={agreePrivacy}
+        onChange={(e) => setAgreePrivacy(e.target.checked)}
+        error={fieldErrors.privacy}
+        required
+        label={
+          <>
+            I agree to RentiGoo using my details as explained in the{' '}
+            <Link to={LEGAL.privacy.path} target="_blank" className="font-semibold underline underline-offset-4">
+              Privacy Policy
+            </Link>
+            .
+          </>
+        }
+        description="Only what’s needed to run your account. You can download or delete your data any time from Account."
+      />
+    </fieldset>
   )
   const nameField = <TextField label="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} error={fieldErrors.name} hint="Owners and renters will see your first name." />
 
@@ -206,6 +259,7 @@ export default function Signup() {
           <FormError>{error}</FormError>
           {nameField}
           {areaSelect}
+          {consentBlock}
           <Button type="submit" size="lg" disabled={busy}>
             {busy ? 'Saving…' : 'Finish'}
           </Button>
@@ -242,10 +296,10 @@ export default function Signup() {
         <TextField label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={fieldErrors.email} hint="We’ll send a code to check it’s yours." />
         {areaSelect}
         <PasswordField label="Create a password" autoComplete="new-password" value={password} onChange={setPassword} error={fieldErrors.password} showRules />
+        {consentBlock}
         <Button type="submit" size="lg" disabled={busy}>
           {busy ? 'Creating your account…' : 'Create account'}
         </Button>
-        <p className="text-[0.9375rem] text-muted">By joining you agree to rent and lend kindly, and to follow our <Link to="/trust-and-safety" className="underline underline-offset-4">safety guidelines</Link>.</p>
       </form>
     </AuthFrame>
   )
