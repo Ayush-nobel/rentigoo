@@ -18,8 +18,13 @@
   --accent-hover: #e8c23a;
   --on-accent: #24221b;
   --accent-text: #7a5c00;
+  /* Edge on yellow marks so they hold 3:1 against white/cream. */
+  --accent-edge: #7a5c00;
   --ink: #24221b;
   --on-ink: #ffffff;
+  /* Feature panels: dark in both themes. */
+  --panel: #24221b;
+  --on-panel: #ffffff;
   --danger: #b42318;
   --success: #1f7a3d;
   --focus: #24221b;
@@ -37,8 +42,10 @@
     --text: #ffffff;
     --muted: #b9b3a3;
     --accent-text: #f2d04e;
+    --accent-edge: transparent;
     --ink: #faf7f0;
     --on-ink: #24221b;
+    --panel: #1c1a14;
     --danger: #ff8a7a;
     --success: #6fd48e;
     --focus: #f2d04e;
@@ -56,8 +63,10 @@
   --text: #ffffff;
   --muted: #b9b3a3;
   --accent-text: #f2d04e;
+  --accent-edge: transparent;
   --ink: #faf7f0;
   --on-ink: #24221b;
+  --panel: #1c1a14;
   --danger: #ff8a7a;
   --success: #6fd48e;
   --focus: #f2d04e;
@@ -76,8 +85,11 @@
   --color-accent-hover: var(--accent-hover);
   --color-on-accent: var(--on-accent);
   --color-accent-text: var(--accent-text);
+  --color-accent-edge: var(--accent-edge);
   --color-ink: var(--ink);
   --color-on-ink: var(--on-ink);
+  --color-panel: var(--panel);
+  --color-on-panel: var(--on-panel);
   --color-danger: var(--danger);
   --color-success: var(--success);
   --shadow-card: var(--shadow);
@@ -149,6 +161,52 @@
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.75em;
+  }
+}
+
+@layer components {
+  /* Range slider: ink track filled with yellow up to the thumb. */
+  .range-input {
+    appearance: none;
+    height: 44px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .range-input::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--line-strong) var(--fill, 50%));
+  }
+  .range-input::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--line-strong);
+  }
+  .range-input::-moz-range-progress {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent);
+  }
+  .range-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 26px;
+    height: 26px;
+    margin-top: -9px;
+    border-radius: 999px;
+    background: var(--ink);
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  .range-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--ink);
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  .range-input:focus-visible {
+    outline-offset: 2px;
   }
 }
 

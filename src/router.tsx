@@ -4,6 +4,7 @@ import { AppShell } from './components/layout/AppShell'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { ComingSoon } from './pages/ComingSoon'
 
+const Home = lazy(() => import('./pages/Home'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 /**
@@ -14,7 +15,7 @@ export const router = createBrowserRouter([
   {
     element: <AppShell />,
     children: [
-      { index: true, element: <ComingSoon title="Home" /> },
+      { index: true, element: <Home /> },
       { path: 'browse', element: <ComingSoon title="Browse rentals" /> },
       { path: 'listing/:id', element: <ComingSoon title="Listing" /> },
       { path: 'list', element: <ProtectedRoute><ComingSoon title="List an item" /></ProtectedRoute> },

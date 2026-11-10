@@ -31,7 +31,7 @@ export function Header() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <ButtonLink to="/list" variant="primary" size="sm" icon={<Plus aria-hidden="true" className="size-4" />} className="hidden md:inline-flex">
+          <ButtonLink to="/list" variant="primary" size="sm" icon={<Plus aria-hidden="true" className="size-4" />} className="max-md:hidden">
             List an item
           </ButtonLink>
           <ThemeToggle />
