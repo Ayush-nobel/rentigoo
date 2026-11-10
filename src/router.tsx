@@ -6,6 +6,7 @@ import { ComingSoon } from './pages/ComingSoon'
 
 const Home = lazy(() => import('./pages/Home'))
 const Browse = lazy(() => import('./pages/Browse'))
+const ListingDetail = lazy(() => import('./pages/ListingDetail'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 /**
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'browse', element: <Browse /> },
-      { path: 'listing/:id', element: <ComingSoon title="Listing" /> },
+      { path: 'listing/:id', element: <ListingDetail /> },
       { path: 'list', element: <ProtectedRoute><ComingSoon title="List an item" /></ProtectedRoute> },
       { path: 'dashboard', element: <ProtectedRoute><ComingSoon title="Dashboard" /></ProtectedRoute> },
       { path: 'messages/:conversationId?', element: <ProtectedRoute><ComingSoon title="Messages" /></ProtectedRoute> },

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'react-day-picker/style.css';
 
 /*
  * Brand colours come from the logo (see CLAUDE.md). Yellow is a fill colour
@@ -208,6 +209,50 @@
   .range-input:focus-visible {
     outline-offset: 2px;
   }
+}
+
+/* Availability calendar (react-day-picker). Unlayered on purpose: the
+   library's own stylesheet is unlayered, so layered rules would lose. */
+.rdp-root {
+  --rdp-accent-color: var(--ink);
+  --rdp-accent-background-color: var(--accent);
+  --rdp-range_middle-background-color: var(--accent);
+  --rdp-range_middle-color: var(--on-accent);
+  --rdp-range_start-color: var(--on-ink);
+  --rdp-range_end-color: var(--on-ink);
+  --rdp-today-color: var(--accent-text);
+  --rdp-day-height: 44px;
+  --rdp-day-width: 44px;
+  --rdp-day_button-height: 42px;
+  --rdp-day_button-width: 42px;
+  --rdp-disabled-opacity: 1;
+  --rdp-months-gap: 2rem;
+  font-family: var(--font-sans);
+}
+.rdp-caption_label {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.rdp-chevron {
+  fill: var(--text);
+}
+.rdp-day_button:hover:not(:disabled) {
+  background: var(--surface-sunken);
+}
+.rdp-day_button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+/* Booked or past days: muted and struck through, so it's not colour alone. */
+.rdp-disabled:not(.rdp-outside) .rdp-day_button {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  cursor: not-allowed;
+}
+.rdp-today:not(.rdp-outside) .rdp-day_button {
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

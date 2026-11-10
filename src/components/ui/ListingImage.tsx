@@ -9,6 +9,8 @@ interface ListingImageProps {
   /** Eager-load images above the fold. */
   priority?: boolean
   sizes?: string
+  /** Hide from screen readers when a surrounding control already names it. */
+  decorative?: boolean
 }
 
 /** Placeholder art variants: icon position and scale per photo index. */
@@ -23,12 +25,12 @@ const VARIANTS = [
  * Shows a real photo (URL or S3 key, wired up in step 7) or, for seed data,
  * a built-in illustration keyed `ph:<categoryId>:<n>`.
  */
-export function ListingImage({ photo, className, priority, sizes }: ListingImageProps) {
+export function ListingImage({ photo, className, priority, sizes, decorative }: ListingImageProps) {
   if (photo && !photo.key.startsWith('ph:')) {
     return (
       <img
         src={photo.key}
-        alt={photo.alt}
+        alt={decorative ? '' : photo.alt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         sizes={sizes}
@@ -43,8 +45,9 @@ export function ListingImage({ photo, className, priority, sizes }: ListingImage
 
   return (
     <div
-      role="img"
-      aria-label={photo?.alt ?? 'No photo yet'}
+      role={decorative ? undefined : 'img'}
+      aria-label={decorative ? undefined : (photo?.alt ?? 'No photo yet')}
+      aria-hidden={decorative || undefined}
       className={cx('relative h-full w-full overflow-hidden', className)}
       style={{ background: `color-mix(in oklab, ${tone} 38%, var(--surface))` }}
     >
