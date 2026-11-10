@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { FEES } from './fees'
 import { bestRent, isRangeAvailable, occupiedDates, parseISODate, quote, rentalDays } from './pricing'
+
+// The maths when GST applies (after registration), checked explicitly.
+const WITH_GST = { ...FEES, gstOnFeePct: 18 }
 
 describe('rentalDays', () => {
   it('counts nights between pickup and return', () => {
@@ -63,7 +67,7 @@ describe('quote', () => {
       start: '2026-11-10',
       end: '2026-11-13',
       delivery: true,
-    })
+    }, WITH_GST)
     expect(q).toMatchObject({
       days: 3,
       rentalSubtotal: 3000,
@@ -76,6 +80,11 @@ describe('quote', () => {
       totalDue: 8483,
       ownerPayout: 2700 + 200, // 10% commission, delivery fee to owner
     })
+  })
+  it('charges no GST while RentiGoo is not GST-registered (current setting)', () => {
+    const q = quote({ pricing: { daily: 1000 }, deposit: 5000, start: '2026-11-10', end: '2026-11-13', delivery: false })
+    expect(FEES.gstOnFeePct).toBe(0)
+    expect(q).toMatchObject({ serviceFee: 240, gstOnFee: 0, totalRent: 3240, totalDue: 8240 })
   })
   it('skips the delivery fee for pickup', () => {
     const q = quote({ pricing: { daily: 1000 }, deposit: 0, deliveryFee: 200, start: '2026-11-10', end: '2026-11-11', delivery: false })

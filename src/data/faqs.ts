@@ -56,7 +56,7 @@ export const FAQS: FaqItem[] = [
     id: 'f8',
     section: 'payments',
     q: 'What fees does RentiGoo charge?',
-    a: `Renters pay a ${FEES.serviceFeePct}% service fee on the rent, plus ${FEES.gstOnFeePct}% GST on that fee. Owners pay a ${FEES.ownerCommissionPct}% commission on the rent they earn. There’s no fee to list, and the deposit is never charged a fee.`,
+    a: `Renters pay a ${FEES.serviceFeePct}% service fee on the rent${FEES.gstOnFeePct > 0 ? `, plus ${FEES.gstOnFeePct}% GST on that fee` : ''}. Owners pay a ${FEES.ownerCommissionPct}% commission on the rent they earn. There’s no fee to list, and the deposit is never charged a fee.`,
   },
   {
     id: 'f9',

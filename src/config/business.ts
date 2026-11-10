@@ -29,17 +29,24 @@ export interface BusinessDetails {
   jurisdictionCity: string | null
 }
 
+// Provided by the founder on 2026-11-10. An unregistered business run by one
+// person is in law a sole proprietorship: the legal person is the proprietor.
 export const BUSINESS: BusinessDetails = {
-  legalName: null,
-  entityType: null,
+  legalName: 'Rentigoo Technologies (proprietor: Ayush Shukla)',
+  entityType: 'Sole proprietorship, not registered as a company',
   registrationNumber: null,
-  gstin: null,
-  address: null,
+  gstin: null, // Not GST-registered: no GST may be charged (see shared/fees.ts).
+  address: null, // Still needed: full postal address in Bhopal (shown publicly).
   branches: [],
-  supportEmail: null,
-  supportPhone: null,
-  grievanceOfficer: { name: null, designation: null, email: null, phone: null },
-  jurisdictionCity: null,
+  supportEmail: 'support@rentigoo.in',
+  supportPhone: '+91 93014 22919',
+  grievanceOfficer: {
+    name: 'Ayush Shukla',
+    designation: 'Founder and CEO',
+    email: 'support@rentigoo.in',
+    phone: '+91 93014 22919',
+  },
+  jurisdictionCity: 'Bhopal',
 }
 
 /** Fields that must be filled before launch (GSTIN and registration number are conditional). */

@@ -93,7 +93,7 @@ export function RentVsBuyCalculator() {
         </p>
         <CostBars buy={r.buyCost} rent={r.rentCost} years={years} />
         <p className="mt-4 text-sm text-muted">
-          Renting includes our {FEES.serviceFeePct}% service fee and GST on it. Buying is the price minus what you’d sell it for, plus upkeep. Deposits come back, so they’re not counted.
+          Renting includes our {FEES.serviceFeePct}% service fee{FEES.gstOnFeePct > 0 ? ' and GST on it' : ''}. Buying is the price minus what you’d sell it for, plus upkeep. Deposits come back, so they’re not counted.
         </p>
       </div>
     </section>

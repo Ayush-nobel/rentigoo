@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ownerStats, requestBooking, respondToBooking, RuleError, submitReview, type StoredListing } from './bookings'
+import { FEES } from '../../../shared/fees'
 import { memoryStore } from './memoryStore'
 
 const TODAY = '2026-11-10'
@@ -33,7 +34,8 @@ describe('requestBooking', () => {
     const b = await requestBooking(store, ask({ message: '  For Pachmarhi  ' }), 'renter', TODAY)
     expect(b).toMatchObject({ status: 'requested', renterId: 'renter', ownerId: 'owner', participants: ['renter', 'owner'], message: 'For Pachmarhi' })
     expect(b.quote.rentalSubtotal).toBe(900)
-    expect(b.quote.totalDue).toBe(900 + 72 + 13 + 2500)
+    // rent 900 + 8% fee 72 + GST on the fee (0 while not GST-registered) + deposit 2500
+    expect(b.quote.totalDue).toBe(900 + 72 + Math.round((72 * FEES.gstOnFeePct) / 100) + 2500)
   })
 
   it('refuses the owner, past dates and owner-blocked days', async () => {

@@ -89,7 +89,7 @@ const sections: LegalSection[] = [
       <>
         <p>
           Every price is in Indian rupees. The breakdown before you request shows the rent, any weekly or monthly saving, RentiGoo’s service fee (
-          {FEES.serviceFeePct}% of the rent) with GST on that fee, any delivery fee, and the refundable deposit. We never add charges after you request.
+          {FEES.serviceFeePct}% of the rent){FEES.gstOnFeePct > 0 ? ' with GST on that fee' : ''}, any delivery fee, and the refundable deposit. We never add charges after you request.
         </p>
         <p>
           Owners pay RentiGoo a commission of {FEES.ownerCommissionPct}% of the rent they earn. Listing is free.

@@ -10,7 +10,8 @@ export function PriceBreakdown({ quote, className }: { quote: PriceQuote; classN
   ]
   if (quote.longStayDiscount > 0) rows.push({ label: 'Weekly/monthly rate saving', value: `−${rupees(quote.longStayDiscount)}`, tone: 'saving' })
   rows.push({ label: `Service fee (${FEES.serviceFeePct}%)`, value: rupees(quote.serviceFee) })
-  rows.push({ label: `GST on service fee (${FEES.gstOnFeePct}%)`, value: rupees(quote.gstOnFee) })
+  // Only shown when GST applies (RentiGoo isn't GST-registered yet, so it's 0).
+  if (quote.gstOnFee > 0) rows.push({ label: `GST on service fee (${FEES.gstOnFeePct}%)`, value: rupees(quote.gstOnFee) })
   if (quote.deliveryFee > 0) rows.push({ label: 'Delivery', value: rupees(quote.deliveryFee) })
 
   return (

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { ownerEarnings, rentVsBuy } from './calculators'
+import { FEES } from './fees'
+
+const WITH_GST = { ...FEES, gstOnFeePct: 18 }
 
 describe('rentVsBuy', () => {
   const base = { purchasePrice: 80000, resalePct: 50, upkeepPerYear: 2000, years: 2, dailyRate: 1000, daysPerYear: 10 }
 
   it('compares buying and renting', () => {
-    const r = rentVsBuy(base)
+    const r = rentVsBuy(base, WITH_GST)
     // buy: 80000 − 40000 + 4000 = 44000
     expect(r.buyCost).toBe(44000)
     // rent per day: 1000 × (1 + 0.08 × 1.18) = 1094.4 → 20 days = 21888
@@ -14,6 +17,10 @@ describe('rentVsBuy', () => {
     expect(r.savings).toBe(44000 - 21888)
     // 44000 / (1094.4 × 2) = 20.1 → 20
     expect(r.breakEvenDaysPerYear).toBe(20)
+  })
+
+  it('without GST, a rented day costs rate × 1.08', () => {
+    expect(rentVsBuy(base).rentCostPerDay).toBe(1080)
   })
 
   it('says buy when you use it a lot', () => {
