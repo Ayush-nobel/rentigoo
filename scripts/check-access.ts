@@ -92,6 +92,18 @@ report(!refused(allowedEdit), 'Can edit her own listing', firstError(allowedEdit
 const reviewForNothing = await client.mutations.submitReview({ bookingId: selfAccept?.id ?? 'nope', rating: 5, text: 'Five stars for a rental that never happened' })
 report(refused(reviewForNothing), 'Cannot review a rental that didn’t happen', firstError(reviewForNothing))
 
+const directProfile = await m.UserProfile.create({ id: 'someone-else', userId: ananya, name: 'Fake', areaId: 'mp-nagar' } as never)
+report(refused(directProfile), 'Cannot create a profile directly (must go through the server)', firstError(directProfile))
+
+const again = await client.mutations.createMyProfile({ name: 'Different Name', areaId: 'mp-nagar' })
+report(!refused(again) && again.data?.name === 'Ananya Gupta', 'Creating a profile twice returns the existing one', again.data?.name ?? firstError(again))
+// Seeded demo accounts were created by an admin with unverified example.com
+// emails, so Cognito says "not verified" and the server must agree.
+report(!again.data?.verifiedEmail, 'Email badge follows Cognito (seeded emails are unverified)', `verifiedEmail=${again.data?.verifiedEmail}`)
+
+const badName = await client.mutations.createMyProfile({ name: '<script>', areaId: 'nowhere' })
+report(!refused(badName), 'Existing profile is unaffected by junk input', badName.data?.name ?? firstError(badName))
+
 // --- Neha (not part of Ananya's conversations) ---
 await as('neha')
 const others = (await m.Conversation.list()).data

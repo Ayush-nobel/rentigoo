@@ -93,7 +93,7 @@ function AccountMenu() {
           <Link to="/dashboard" className={item}>Dashboard</Link>
           <Link to="/messages" className={item}>Messages</Link>
           <Link to="/list" className={item}>List an item</Link>
-          <button type="button" onClick={signOut} className={cx(item, 'text-muted')}>
+          <button type="button" onClick={() => void signOut()} className={cx(item, 'text-muted')}>
             <LogOut aria-hidden="true" className="size-4" /> Log out
           </button>
         </div>

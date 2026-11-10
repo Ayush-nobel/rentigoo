@@ -187,6 +187,13 @@ export const amplifyApi: RentiGooApi = {
     return users.filter((u): u is UserProfile => u !== null)
   },
 
+  async createMyProfile(input) {
+    me()
+    const u = check(await client().mutations.createMyProfile(input))
+    if (!u) throw new ApiError('Your profile wasn’t saved. Please try again.', 'conflict')
+    return userFromDb(u)
+  },
+
   async updateMyProfile(patch) {
     const id = me()
     return userFromDb(check(await models().UserProfile.update({ id, ...patch } as never)))

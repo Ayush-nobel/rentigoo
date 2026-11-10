@@ -2,6 +2,7 @@ import { Amplify } from 'aws-amplify'
 import type { RentiGooApi } from './api'
 import { amplifyApi } from './api.amplify'
 import { mockApi } from './api.mock'
+import { cognitoAuth, mockAuth, type AuthService } from './auth'
 
 /**
  * The data source for the whole app.
@@ -23,6 +24,8 @@ if (wantsAmplify && !hasBackend) {
 
 export const DATA_MODE: 'amplify' | 'mock' = wantsAmplify && hasBackend ? 'amplify' : 'mock'
 export const api: RentiGooApi = DATA_MODE === 'amplify' ? amplifyApi : mockApi
+export const auth: AuthService = DATA_MODE === 'amplify' ? cognitoAuth : mockAuth
 
 export { ApiError } from './api'
+export { AuthError, safeNext } from './auth'
 export type { BookingRequest, ListingInput } from './api'

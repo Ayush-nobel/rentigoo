@@ -7,6 +7,8 @@ import { ComingSoon } from './pages/ComingSoon'
 const Home = lazy(() => import('./pages/Home'))
 const Browse = lazy(() => import('./pages/Browse'))
 const ListingDetail = lazy(() => import('./pages/ListingDetail'))
+const Login = lazy(() => import('./pages/Login'))
+const Signup = lazy(() => import('./pages/Signup'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 /**
@@ -27,8 +29,8 @@ export const router = createBrowserRouter([
       { path: 'trust-and-safety', element: <ComingSoon title="Trust and safety" /> },
       { path: 'faq', element: <ComingSoon title="Questions and answers" /> },
       { path: 'about', element: <ComingSoon title="About RentiGoo" /> },
-      { path: 'login', element: <ComingSoon title="Log in" /> },
-      { path: 'signup', element: <ComingSoon title="Sign up" /> },
+      { path: 'login', element: <Login /> },
+      { path: 'signup', element: <Signup /> },
       { path: '*', element: <NotFound /> },
     ],
   },

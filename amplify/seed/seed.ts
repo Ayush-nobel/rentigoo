@@ -64,10 +64,8 @@ async function main() {
       console.log(`Already seeded (${u.name} has listings). Delete the sandbox data to seed again.`)
       return
     }
-    ok(
-      await client.models.UserProfile.create({ id: sub, userId: sub, name: u.name, areaId: u.areaId, bio: u.bio, languages: u.languages, avatarKey: null } as never),
-      `profile ${u.name}`,
-    )
+    ok(await client.mutations.createMyProfile({ name: u.name, areaId: u.areaId }), `profile ${u.name}`)
+    ok(await client.models.UserProfile.update({ id: sub, bio: u.bio, languages: u.languages } as never), `profile details ${u.name}`)
     for (const l of LISTINGS.filter((x) => x.ownerId === u.id)) {
       const created = ok(
         await client.models.Listing.create({

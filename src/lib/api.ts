@@ -57,6 +57,8 @@ export interface RentiGooApi {
   // People and reviews
   getUser(id: string): Promise<UserProfile | null>
   getUsers(ids: string[]): Promise<UserProfile[]>
+  /** First-time profile for the signed-in person (server checks name and area). */
+  createMyProfile(input: { name: string; areaId: string }): Promise<UserProfile>
   updateMyProfile(patch: Partial<Pick<UserProfile, 'name' | 'areaId' | 'bio' | 'languages' | 'avatarKey'>>): Promise<UserProfile>
   listReviewsForListing(listingId: string): Promise<Review[]>
   listReviewsForUser(userId: string): Promise<Review[]>

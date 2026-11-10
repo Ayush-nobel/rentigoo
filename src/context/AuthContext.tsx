@@ -1,66 +1,70 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { UserProfile } from '@shared/types'
-import { DEMO_USER_ID } from '@/data/users'
-import { api } from '@/lib'
+import { api, auth } from '@/lib'
 import { setSessionUserId } from '@/lib/session'
-import { readString, writeString } from '@/lib/storage'
+
+type Status = 'loading' | 'signed-out' | 'needs-profile' | 'signed-in'
 
 interface AuthState {
+  status: Status
+  /** The profile, once signed in and set up. */
   user: UserProfile | null
   /** True until we know whether someone is signed in. */
   loading: boolean
-  /** Mock sign-in as the demo account. Replaced by Cognito in build step 6. */
-  signInDemo: () => Promise<void>
-  signOut: () => void
-  refresh: () => Promise<void>
+  /** Signed in, but hasn't told us their name and area yet. */
+  needsProfile: boolean
+  /** Re-read the session and profile (after sign-in, sign-up or profile changes). */
+  refresh: () => Promise<Status>
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
-const KEY = 'session-user'
+
+async function readSession(): Promise<{ status: Exclude<Status, 'loading'>; user: UserProfile | null }> {
+  const id = await auth.currentUserId()
+  setSessionUserId(id)
+  if (!id) return { status: 'signed-out', user: null }
+  const user = await api.getUser(id).catch(() => null)
+  return { status: user ? 'signed-in' : 'needs-profile', user }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Read the saved session once, and tell the data layer straight away so
-  // children's first data calls already know who is signed in.
-  const [initialId] = useState(() => {
-    const id = readString(KEY)
-    setSessionUserId(id)
-    return id
-  })
+  const [status, setStatus] = useState<Status>('loading')
   const [user, setUser] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(initialId !== null)
 
-  const load = useCallback(async (userId: string | null) => {
-    setSessionUserId(userId)
-    const profile = userId ? await api.getUser(userId) : null
-    setUser(profile)
+  const refresh = useCallback(async (): Promise<Status> => {
+    const s = await readSession()
+    setUser(s.user)
+    setStatus(s.status)
+    return s.status
   }, [])
 
   useEffect(() => {
-    if (!initialId) return
     let live = true
-    api
-      .getUser(initialId)
-      .then((u) => live && setUser(u))
-      .finally(() => live && setLoading(false))
+    readSession().then((s) => {
+      if (!live) return
+      setUser(s.user)
+      setStatus(s.status)
+    })
+    // Signed out in another tab, or the session expired.
+    const off = auth.onChange(() => void refresh())
     return () => {
       live = false
+      off()
     }
-  }, [initialId])
+  }, [refresh])
 
-  const signInDemo = useCallback(async () => {
-    writeString(KEY, DEMO_USER_ID)
-    await load(DEMO_USER_ID)
-  }, [load])
-
-  const signOut = useCallback(() => {
-    writeString(KEY, null)
+  const signOut = useCallback(async () => {
+    await auth.signOut().catch(() => {})
     setSessionUserId(null)
     setUser(null)
+    setStatus('signed-out')
   }, [])
 
-  const refresh = useCallback(() => load(user?.id ?? null), [load, user?.id])
-
-  const value = useMemo(() => ({ user, loading, signInDemo, signOut, refresh }), [user, loading, signInDemo, signOut, refresh])
+  const value = useMemo<AuthState>(
+    () => ({ status, user, loading: status === 'loading', needsProfile: status === 'needs-profile', refresh, signOut }),
+    [status, user, refresh, signOut],
+  )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

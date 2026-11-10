@@ -1,4 +1,5 @@
 import { a, defineData, type ClientSchema } from '@aws-amplify/backend'
+import { createProfileFn } from '../functions/create-profile/resource'
 import { ownerStatsFn } from '../functions/owner-stats/resource'
 import { requestBookingFn } from '../functions/request-booking/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
@@ -76,7 +77,8 @@ const schema = a
         ratingCount: a.integer().authorization(readOnlyForPeople),
       })
       .authorization((allow) => [
-        allow.ownerDefinedIn('userId').identityClaim('sub'),
+        // Created only through createMyProfile, so the server checks it first.
+        allow.ownerDefinedIn('userId').identityClaim('sub').to(['read', 'update', 'delete']),
         allow.guest().to(['read']),
         allow.authenticated().to(['read']),
       ]),
@@ -216,6 +218,13 @@ const schema = a
       .authorization((allow) => [allow.authenticated()])
       .handler(a.handler.function(submitReviewFn)),
 
+    createMyProfile: a
+      .mutation()
+      .arguments({ name: a.string().required(), areaId: a.string().required() })
+      .returns(a.ref('UserProfile'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(createProfileFn)),
+
     ownerStats: a
       .query()
       .returns(a.ref('OwnerStats'))
@@ -223,7 +232,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

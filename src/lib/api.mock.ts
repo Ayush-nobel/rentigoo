@@ -1,7 +1,8 @@
+import { profileProblem, tidyName } from '@shared/accountRules'
 import { bookingProblem, canTransition } from '@shared/bookingRules'
 import { categoryName } from '@shared/categories'
 import { isRangeAvailable, quoteListing } from '@shared/pricing'
-import type { Booking, Conversation, Listing, Message } from '@shared/types'
+import type { Booking, Conversation, Listing, Message, UserProfile } from '@shared/types'
 import { deriveSnapshot, seedSnapshot, type Snapshot } from '@/data'
 import { ApiError, type RentiGooApi } from './api'
 import { todayIST } from './format'
@@ -106,6 +107,32 @@ export const mockApi: RentiGooApi = {
   async getUsers(ids) {
     const set = new Set(ids)
     return delay(db.users.filter((u) => set.has(u.id)))
+  },
+
+  async createMyProfile(input) {
+    const uid = me()
+    const existing = db.users.find((u) => u.id === uid)
+    if (existing) return delay(existing)
+    const name = tidyName(input.name)
+    const problem = profileProblem({ name, areaId: input.areaId })
+    if (problem) throw new ApiError(problem, 'invalid')
+    const user: UserProfile = {
+      id: uid,
+      name,
+      avatarKey: null,
+      areaId: input.areaId,
+      bio: '',
+      languages: [],
+      verified: { email: true, phone: false, govtId: false },
+      responseRate: 0,
+      responseTimeHrs: 24,
+      ratingAvg: 0,
+      ratingCount: 0,
+      joinedAt: new Date().toISOString(),
+    }
+    db.users.push(user)
+    save()
+    return delay(user)
   },
 
   async updateMyProfile(patch) {
