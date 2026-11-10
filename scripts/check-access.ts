@@ -18,7 +18,8 @@ const m = client.models
 let pass = 0
 let fail = 0
 function report(ok: boolean, label: string, detail = '') {
-  ok ? pass++ : fail++
+  if (ok) pass++
+  else fail++
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? `  (${detail})` : ''}`)
 }
 type Res = { data?: unknown; errors?: { message: string }[] | null }
