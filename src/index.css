@@ -1,0 +1,164 @@
+@import 'tailwindcss';
+
+/*
+ * Brand colours come from the logo (see CLAUDE.md). Yellow is a fill colour
+ * only: never put it as text or a thin icon on cream/white (1.4:1). For
+ * yellow-family text on light backgrounds use --accent-text (5.8:1 on cream).
+ */
+:root {
+  color-scheme: light;
+  --bg: #faf7f0;
+  --surface: #ffffff;
+  --surface-sunken: #f3eee2;
+  --line: #e4ddcc;
+  --line-strong: #cfc6b1;
+  --text: #24221b;
+  --muted: #5f5a4c;
+  --accent: #f2d04e;
+  --accent-hover: #e8c23a;
+  --on-accent: #24221b;
+  --accent-text: #7a5c00;
+  --ink: #24221b;
+  --on-ink: #ffffff;
+  --danger: #b42318;
+  --success: #1f7a3d;
+  --focus: #24221b;
+  --shadow: 0 1px 2px rgb(36 34 27 / 0.06), 0 8px 24px -12px rgb(36 34 27 / 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #24221b;
+    --surface: #2f2c24;
+    --surface-sunken: #1c1a14;
+    --line: #433f33;
+    --line-strong: #5a5545;
+    --text: #ffffff;
+    --muted: #b9b3a3;
+    --accent-text: #f2d04e;
+    --ink: #faf7f0;
+    --on-ink: #24221b;
+    --danger: #ff8a7a;
+    --success: #6fd48e;
+    --focus: #f2d04e;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #24221b;
+  --surface: #2f2c24;
+  --surface-sunken: #1c1a14;
+  --line: #433f33;
+  --line-strong: #5a5545;
+  --text: #ffffff;
+  --muted: #b9b3a3;
+  --accent-text: #f2d04e;
+  --ink: #faf7f0;
+  --on-ink: #24221b;
+  --danger: #ff8a7a;
+  --success: #6fd48e;
+  --focus: #f2d04e;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-text: var(--accent-text);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --shadow-card: var(--shadow);
+}
+
+@theme {
+  --font-display: 'Baloo 2', ui-rounded, system-ui, sans-serif;
+  --font-sans: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius-photo: 20px;
+  --radius-field: 12px;
+  --breakpoint-xs: 26rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.15;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+}
+
+@layer components {
+  /* The signature rental tag: yellow fill, notched left edge, punched hole. */
+  .price-tag {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2em;
+    padding: 0.15em 0.75em 0.1em 1.25em;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.4;
+    border-radius: 0 6px 6px 0;
+    clip-path: polygon(0.6em 0, 100% 0, 100% 100%, 0.6em 100%, 0 50%);
+    -webkit-mask: radial-gradient(circle 0.18em at 0.62em 50%, transparent 98%, #000 100%);
+    mask: radial-gradient(circle 0.18em at 0.62em 50%, transparent 98%, #000 100%);
+  }
+  .price-tag small {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.75em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
