@@ -19,12 +19,14 @@ function fileFor(pathname) {
 }
 function matches(source, pathname) {
   if (source.startsWith('</') && source.endsWith('/>')) return new RegExp(source.slice(2, -2)).test(pathname)
+  if (source.endsWith('<*>')) return pathname.startsWith(source.slice(0, -3))
   return source === pathname
 }
 
 createServer((req, res) => {
   const { pathname } = new URL(req.url, 'http://x')
-  let file = pathname === '/' ? join(DIST, 'index.html') : fileFor(pathname)
+  // Like Amplify: the exact file, else <path>.html (clean URLs), else the rules.
+  let file = pathname === '/' ? join(DIST, 'index.html') : (fileFor(pathname) ?? fileFor(`${pathname.replace(/\/$/, '')}.html`))
   if (!file) {
     const rule = rules.find((r) => matches(r.source, pathname))
     file = rule ? fileFor(rule.target) : null

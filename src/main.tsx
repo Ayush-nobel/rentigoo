@@ -44,9 +44,10 @@ const root = document.getElementById('root')!
 // instead of drawing it again, but only if it was made for this exact address (a host
 // falling back to another page's HTML must never be hydrated as this page).
 const prerenderedFor = root.dataset.prerendered
-if (root.hasChildNodes() && prerenderedFor === window.location.pathname) {
+const here = window.location.pathname.replace(/(.)\/+$/, '$1') // "/privacy/" and "/privacy" are the same page
+if (root.hasChildNodes() && prerenderedFor === here) {
   // Load this page's code first, so the whole page is taken over in one pass.
-  await preloadPage(window.location.pathname)
+  await preloadPage(here)
   hydrateRoot(root, app, {
     // React recovers by re-rendering; say so, so mismatches get noticed and fixed.
     onRecoverableError: (e) => console.warn('Hydration recovered:', e instanceof Error ? e.message : e),

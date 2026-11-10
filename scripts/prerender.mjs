@@ -42,8 +42,10 @@ function page(head, body, path, data) {
 // The empty app shell: served for every address that isn't prerendered (private
 // pages, listings added since the last build). Never the Home page's HTML.
 writeFileSync(join(DIST, 'app.html'), shell.replace('<link rel="manifest"', `${preloads}\n    <link rel="manifest"`))
+// Flat files (/privacy -> privacy.html): Amplify serves those at the clean address with no
+// redirect. Folders (privacy/index.html) would make it 301 to /privacy/ first.
 function write(path, html) {
-  const file = path === '/' ? join(DIST, 'index.html') : join(DIST, path, 'index.html')
+  const file = path === '/' ? join(DIST, 'index.html') : join(DIST, `${path}.html`)
   mkdirSync(dirname(file), { recursive: true })
   writeFileSync(file, html)
 }
@@ -101,11 +103,10 @@ if (SITE_URL) {
 }
 writeFileSync(join(DIST, 'robots.txt'), robots.join('\n') + '\n')
 
-// 5. Routing rules for Amplify Hosting: serve each prerendered file, then fall back to the app.
-const rewrites = [
-  ...written.filter((p) => p !== '/').map((p) => ({ source: p, target: `${p}/index.html`, status: '200' })),
-  { source: '</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|json|png|svg|txt|webmanifest|webp|woff|woff2|xml)$)([^.]+$)/>', target: '/app.html', status: '200' },
-]
+// 5. Routing rule for Amplify Hosting: real files (including the prerendered .html pages) are
+// served as they are; any address without a file gets the app shell, so private pages and
+// listings added since the last build still work.
+const rewrites = [{ source: '/<*>', target: '/app.html', status: '404-200' }]
 writeFileSync('amplify-rewrites.json', JSON.stringify(rewrites, null, 2) + '\n')
 
 console.log(`Prerendered ${written.length} pages (${Object.keys(STATIC_PAGES).length} static, ${listings.length} listings) in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
