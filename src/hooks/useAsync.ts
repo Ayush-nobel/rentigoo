@@ -9,8 +9,17 @@ export type AsyncState<T> =
  * Run an async loader when `deps` change; ignores stale results.
  * `reload()` re-runs it (e.g. after a mutation).
  */
-export function useAsync<T>(loader: () => Promise<T>, deps: DependencyList): AsyncState<T> & { reload: () => void } {
-  const [state, setState] = useState<AsyncState<T>>({ status: 'loading', data: undefined, error: undefined })
+export function useAsync<T>(
+  loader: () => Promise<T>,
+  deps: DependencyList,
+  opts: { initial?: T } = {},
+): AsyncState<T> & { reload: () => void } {
+  // With initial data (from the prerender) we show it at once and refresh quietly.
+  const [state, setState] = useState<AsyncState<T>>(() =>
+    opts.initial !== undefined
+      ? { status: 'success', data: opts.initial, error: undefined }
+      : { status: 'loading', data: undefined, error: undefined },
+  )
   const [tick, setTick] = useState(0)
 
   useEffect(() => {

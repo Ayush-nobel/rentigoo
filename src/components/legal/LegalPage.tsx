@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { useTitle } from '@/hooks/useAsync'
+import { STATIC_PAGES } from '@/lib/seo'
+import { Seo } from '@/components/layout/Seo'
 import { BUSINESS, missingBusinessDetails, shown } from '@/config/business'
 import { longDate } from '@/lib/format'
 
@@ -11,6 +12,8 @@ export interface LegalSection {
 }
 
 interface Props {
+  /** Route path, for search metadata (must be in STATIC_PAGES). */
+  path: string
   title: string
   version: string
   intro: ReactNode
@@ -18,11 +21,11 @@ interface Props {
 }
 
 /** Shared layout for the legal pages: version, contents list, anchored sections. */
-export function LegalPage({ title, version, intro, sections }: Props) {
-  useTitle(title)
+export function LegalPage({ path, title, version, intro, sections }: Props) {
   const missing = missingBusinessDetails()
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:py-14">
+      <Seo {...(STATIC_PAGES[path] ?? { title, description: '', path })} />
       <header>
         <h1 className="text-4xl sm:text-5xl">{title}</h1>
         <p className="mt-2 text-muted">Last updated {longDate(version)}</p>

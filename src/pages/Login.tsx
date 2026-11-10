@@ -2,10 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { emailProblem, passwordProblem } from '@shared/accountRules'
 import { AuthFrame, CodeField, FormError, PasswordField } from '@/components/auth/AuthFields'
+import { Seo } from '@/components/layout/Seo'
+import { STATIC_PAGES } from '@/lib/seo'
 import { Button } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/Field'
 import { useAuth } from '@/context/AuthContext'
-import { useTitle } from '@/hooks/useAsync'
 import { auth, AuthError, DATA_MODE, safeNext } from '@/lib'
 
 type Mode = 'login' | 'forgot' | 'reset'
@@ -30,7 +31,6 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState<string | null>(NOTICES[params.get('notice') ?? ''] ?? null)
 
-  useTitle(mode === 'login' ? 'Log in' : 'Reset your password')
 
   if (status === 'signed-in') return <Navigate to={next} replace />
 
@@ -100,6 +100,8 @@ export default function Login() {
   }
 
   return (
+    <>
+    <Seo {...STATIC_PAGES['/login']!} title={mode === 'login' ? 'Log in' : 'Reset your password'} />
     <AuthFrame
       title={mode === 'login' ? 'Welcome back' : 'Reset your password'}
       intro={
@@ -177,6 +179,7 @@ export default function Login() {
         )}
       </div>
     </AuthFrame>
+    </>
   )
 }
 

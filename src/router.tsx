@@ -1,27 +1,29 @@
-import { lazy } from 'react'
-import { createBrowserRouter } from 'react-router'
+import { lazyPage } from './lib/lazyPage'
+import type { RouteObject } from 'react-router'
 import { AppShell } from './components/layout/AppShell'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { ComingSoon } from './pages/ComingSoon'
 
-const Home = lazy(() => import('./pages/Home'))
-const Browse = lazy(() => import('./pages/Browse'))
-const ListingDetail = lazy(() => import('./pages/ListingDetail'))
-const Login = lazy(() => import('./pages/Login'))
-const Account = lazy(() => import('./pages/Account'))
-const Privacy = lazy(() => import('./pages/legal/Privacy'))
-const Terms = lazy(() => import('./pages/legal/Terms'))
-const Refunds = lazy(() => import('./pages/legal/Refunds'))
-const Cookies = lazy(() => import('./pages/legal/Cookies'))
-const Contact = lazy(() => import('./pages/legal/Contact'))
-const Signup = lazy(() => import('./pages/Signup'))
-const NotFound = lazy(() => import('./pages/NotFound'))
+const Home = lazyPage(() => import('./pages/Home'))
+const Browse = lazyPage(() => import('./pages/Browse'))
+const ListingDetail = lazyPage(() => import('./pages/ListingDetail'))
+const Login = lazyPage(() => import('./pages/Login'))
+const Account = lazyPage(() => import('./pages/Account'))
+const FAQ = lazyPage(() => import('./pages/FAQ'))
+const Privacy = lazyPage(() => import('./pages/legal/Privacy'))
+const Terms = lazyPage(() => import('./pages/legal/Terms'))
+const Refunds = lazyPage(() => import('./pages/legal/Refunds'))
+const Cookies = lazyPage(() => import('./pages/legal/Cookies'))
+const Contact = lazyPage(() => import('./pages/legal/Contact'))
+const Signup = lazyPage(() => import('./pages/Signup'))
+const NotFound = lazyPage(() => import('./pages/NotFound'))
 
 /**
- * Every route in the plan. Pages still marked ComingSoon are swapped for
- * lazy-loaded real pages as each build step lands.
+ * Every route. Used by the browser router (main.tsx) and the build-time
+ * prerender (entry-server.tsx). Pages still marked ComingSoon are noindexed
+ * and swapped for real pages as each build step lands.
  */
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
     element: <AppShell />,
     children: [
@@ -39,11 +41,11 @@ export const router = createBrowserRouter([
       { path: 'account', element: <ProtectedRoute><Account /></ProtectedRoute> },
       { path: 'how-it-works', element: <ComingSoon title="How it works" /> },
       { path: 'trust-and-safety', element: <ComingSoon title="Trust and safety" /> },
-      { path: 'faq', element: <ComingSoon title="Questions and answers" /> },
+      { path: 'faq', element: <FAQ /> },
       { path: 'about', element: <ComingSoon title="About RentiGoo" /> },
       { path: 'login', element: <Login /> },
       { path: 'signup', element: <Signup /> },
       { path: '*', element: <NotFound /> },
     ],
   },
-])
+]

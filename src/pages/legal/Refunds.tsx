@@ -74,6 +74,7 @@ const sections: LegalSection[] = [
 export default function Refunds() {
   return (
     <LegalPage
+      path="/refunds"
       title="Cancellation and Refund Policy"
       version={LEGAL.refunds.version}
       intro={

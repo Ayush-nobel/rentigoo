@@ -9,6 +9,7 @@ import { api, ApiError } from '@/lib'
 import { dateRange, plural, rupees, todayIST } from '@/lib/format'
 import { Button, ButtonLink } from '../ui/Button'
 import { PriceTag } from '../ui/PriceTag'
+import { useHydrated } from '@/lib/initialData'
 import { AvailabilityCalendar, type IsoRange } from './AvailabilityCalendar'
 import { PriceBreakdown } from './PriceBreakdown'
 
@@ -21,6 +22,7 @@ export function BookingPanel({ listing, onBooked }: Props) {
   const { user } = useAuth()
   const location = useLocation()
   const today = todayIST()
+  const hydrated = useHydrated()
   const offersDelivery = listing.pickupOptions.includes('delivery')
   const offersPickup = listing.pickupOptions.includes('pickup')
 
@@ -98,8 +100,13 @@ export function BookingPanel({ listing, onBooked }: Props) {
         </p>
       )}
 
-      <div className="mt-4 -mx-2 overflow-x-auto">
+      <div className="mt-4 -mx-2 min-h-[22rem] overflow-x-auto">
+        {/* Which days are past depends on today, so draw the calendar in the browser only. */}
+        {hydrated ? (
         <AvailabilityCalendar blockedDates={listing.blockedDates} today={today} value={range} onChange={(r) => { setRange(r); setError(null) }} />
+        ) : (
+          <div aria-hidden="true" className="mx-2 h-[20rem] animate-pulse rounded-field bg-sunken" />
+        )}
       </div>
 
       <p id="booking-status" className={problem ? 'mt-3 font-medium text-danger' : 'mt-3 font-semibold'} aria-live="polite">

@@ -13,8 +13,12 @@ import { ButtonLink } from '@/components/ui/Button'
 import { Badge, EmptyState } from '@/components/ui/Feedback'
 import { PriceTag } from '@/components/ui/PriceTag'
 import { Rating } from '@/components/ui/Rating'
-import { useAsync, useTitle } from '@/hooks/useAsync'
-import { api } from '@/lib'
+import { Seo } from '@/components/layout/Seo'
+import { useMemo } from 'react'
+import { useAsync } from '@/hooks/useAsync'
+import { useInitialData } from '@/lib/initialData'
+import { loadListingPage, type ListingPageData } from '@/lib/listingPage'
+import { listingMeta } from '@/lib/listingMeta'
 import { plural, rupees } from '@/lib/format'
 
 const CONDITION: Record<Condition, string> = {
@@ -24,33 +28,18 @@ const CONDITION: Record<Condition, string> = {
   fair: 'Fair, works fine but shows wear',
 }
 
-async function loadListingPage(id: string) {
-  const listing = await api.getListing(id)
-  if (!listing) return null
-  const [owner, reviews, related] = await Promise.all([
-    api.getUser(listing.ownerId),
-    api.listReviewsForListing(id),
-    api.searchListings({ category: listing.categoryId }),
-  ])
-  const authors = await api.getUsers([...new Set(reviews.map((r) => r.authorId))])
-  return {
-    listing,
-    owner,
-    reviews,
-    authors: new Map(authors.map((u) => [u.id, u])),
-    related: related.items.filter((l) => l.id !== id).slice(0, 4),
-  }
-}
-
 export default function ListingDetail() {
   const { id = '' } = useParams()
-  const page = useAsync(() => loadListingPage(id), [id])
-  useTitle(page.data?.listing.title ?? (page.status === 'success' ? 'Listing not found' : 'Listing'))
+  const initial = useInitialData<ListingPageData>(`listing:${id}`)
+  const page = useAsync(() => loadListingPage(id), [id], { initial })
+  const authorsById = useMemo(() => new Map((page.data?.authors ?? []).map((u) => [u.id, u])), [page.data?.authors])
 
   if (page.status === 'loading') return <PageLoading />
+  const notFoundSeo = <Seo title="Listing not available" description="" noindex />
   if (page.status === 'error') {
     return (
       <EmptyState title="This listing didn’t load" action={<ButtonLink to="/browse">Back to browsing</ButtonLink>}>
+        {notFoundSeo}
         Check your connection and refresh the page.
       </EmptyState>
     )
@@ -62,15 +51,17 @@ export default function ListingDetail() {
         title="This listing isn’t available"
         action={<ButtonLink to="/browse">Find something similar</ButtonLink>}
       >
+        {notFoundSeo}
         The owner may have paused or removed it.
       </EmptyState>
     )
   }
 
-  const { listing, owner, reviews, authors, related } = page.data
+  const { listing, owner, reviews, related } = page.data
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-6 pb-28 sm:px-6 md:pb-0">
+      <Seo {...listingMeta(listing)} image={undefined} />
       <nav aria-label="Breadcrumb" className="mb-4 text-[0.9375rem]">
         <ol className="flex flex-wrap items-center gap-1 text-muted">
           <li>
@@ -159,7 +150,7 @@ export default function ListingDetail() {
 
           {owner && <OwnerCard owner={owner} listingId={listing.id} />}
 
-          <Reviews reviews={reviews} authors={authors} ratingAvg={listing.ratingAvg} />
+          <Reviews reviews={reviews} authors={authorsById} ratingAvg={listing.ratingAvg} />
         </div>
 
         <aside id="book" aria-label="Book this item" className="scroll-mt-24">

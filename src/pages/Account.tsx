@@ -3,16 +3,16 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { areaName } from '@shared/areas'
 import { LEGAL } from '@shared/legal'
+import { Seo } from '@/components/layout/Seo'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { useAuth } from '@/context/AuthContext'
-import { useAsync, useTitle } from '@/hooks/useAsync'
+import { useAsync } from '@/hooks/useAsync'
 import { api, ApiError, auth } from '@/lib'
 import { collectMyData, downloadJSON } from '@/lib/exportData'
 import { longDate } from '@/lib/format'
 
 export default function Account() {
-  useTitle('Your account')
   const { user } = useAuth()
   const navigate = useNavigate()
   const email = useAsync(() => auth.currentEmail(), [user?.id])
@@ -57,6 +57,7 @@ export default function Account() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-12 px-4 py-10 sm:px-6 md:py-14">
+      <Seo title="Your account" description="" noindex />
       <header>
         <h1 className="text-4xl sm:text-5xl">Your account</h1>
         <p className="mt-2 text-lg text-muted">Your details, and control over the data we hold about you.</p>

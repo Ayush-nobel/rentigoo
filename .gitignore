@@ -36,3 +36,7 @@ amplify/backend/amplify-meta.json
 .amplify/
 amplify_outputs*
 amplifyconfiguration*
+
+# Build-time renderer output and generated hosting rules
+dist-ssr/
+amplify-rewrites.json

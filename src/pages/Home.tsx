@@ -9,12 +9,14 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 import type { DeletionSummary } from '@shared/types'
 import { useAuth } from '@/context/AuthContext'
-import { useAsync, useTitle } from '@/hooks/useAsync'
+import { Seo } from '@/components/layout/Seo'
+import { useAsync } from '@/hooks/useAsync'
+import { STATIC_PAGES } from '@/lib/seo'
+import { organization, present, website } from '@/lib/structuredData'
 import { api } from '@/lib'
 import { plural } from '@/lib/format'
 
 export default function Home() {
-  useTitle('')
   const { user, status, signOut } = useAuth()
   const areaId = user?.areaId
   const deleted = (useLocation().state as { deleted?: DeletionSummary } | null)?.deleted
@@ -36,6 +38,7 @@ export default function Home() {
 
   return (
     <div className="space-y-20 sm:space-y-24">
+      <Seo {...STATIC_PAGES['/']!} jsonLd={present([organization(), website()])} />
       {deleted && (
         <p role="status" className="mx-auto mt-6 max-w-7xl rounded-field bg-sunken px-4 py-3 font-medium sm:px-6">
           Your account is deleted. We removed {plural(deleted.deletedListings, 'listing')} and {plural(deleted.deletedReviews, 'review')}. Thanks for being part of RentiGoo.

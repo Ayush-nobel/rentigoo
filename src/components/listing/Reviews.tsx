@@ -49,7 +49,10 @@ export function Reviews({ reviews, authors, ratingAvg }: Props) {
                     <Avatar name={author?.name ?? 'Renter'} src={author?.avatarKey} size="md" />
                     <div>
                       <p className="font-semibold">{name}</p>
-                      <p className="text-[0.9375rem] text-muted">{relativeTime(r.createdAt)}</p>
+                      {/* "3 days ago" differs between build time and visit time; that's expected. */}
+                      <p className="text-[0.9375rem] text-muted" suppressHydrationWarning>
+                        {relativeTime(r.createdAt)}
+                      </p>
                     </div>
                   </div>
                   <p className="mt-2 flex items-center gap-0.5" aria-label={`${r.rating} out of 5 stars`}>

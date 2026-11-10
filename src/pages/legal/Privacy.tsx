@@ -242,6 +242,7 @@ const sections: LegalSection[] = [
 export default function Privacy() {
   return (
     <LegalPage
+      path="/privacy"
       title="Privacy Policy"
       version={LEGAL.privacy.version}
       intro={

@@ -18,3 +18,10 @@ Human, warm copy (no corporate filler). Mobile-first. Accessible contrast and ke
 - Every form control uses the shared components (ui/Field, ui/Checkbox); consent boxes are never pre-ticked.
 - Business details live only in src/config/business.ts; never invent them.
 - Accessibility: text ≥4.5:1, control outlines ≥3:1, visible focus on every tab stop, alt text on every image.
+
+## Search and rendering (keep these working)
+- `npm run build` = SPA build + SSR build (src/entry-server.tsx) + scripts/prerender.mjs, which writes HTML for public pages and every active listing, plus robots.txt, sitemap.xml and amplify-rewrites.json. Set VITE_SITE_URL (https, no path) in Amplify; check:launch requires it.
+- Amplify Hosting must use the rules in amplify-rewrites.json (prerendered files first, then /app.html). Test locally with `npm run preview:static` (applies the same rules); `vite preview` does NOT serve the prerendered files.
+- Every page sets its metadata with <Seo/> from src/lib/seo.ts (STATIC_PAGES) or listingMeta; private, unfinished and error pages are noindex. New public pages: add to STATIC_PAGES.
+- Pages must render the same on the server and on first client render: no Date.now()/localStorage/window in render (use useHydrated or suppressHydrationWarning for "time ago"). Lazy pages use lazyPage() so they can be preloaded before hydration.
+- Never add robots rules by prefix that could catch /listing (e.g. use "/list$").

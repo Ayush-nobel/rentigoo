@@ -1,14 +1,17 @@
 import { PackageSearch, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { categoryName } from '@shared/categories'
 import { ActiveFilters } from '@/components/browse/ActiveFilters'
 import { FilterPanel } from '@/components/browse/FilterPanel'
 import { ListingCard, ListingCardSkeleton } from '@/components/listing/ListingCard'
 import { Button } from '@/components/ui/Button'
+import { buttonClasses } from '@/components/ui/buttonStyles'
 import { EmptyState } from '@/components/ui/Feedback'
 import { Sheet } from '@/components/ui/Sheet'
-import { useAsync, useTitle } from '@/hooks/useAsync'
+import { Seo } from '@/components/layout/Seo'
+import { useAsync } from '@/hooks/useAsync'
+import { STATIC_PAGES } from '@/lib/seo'
 import { api } from '@/lib'
 import { activeFilterCount, parseBrowseParams, toBrowseParams } from '@/lib/browseParams'
 import { cx } from '@/lib/cx'
@@ -22,7 +25,6 @@ export default function Browse() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const filtersButton = useRef<HTMLButtonElement>(null)
 
-  useTitle(filters.q ? `“${filters.q}” to rent` : filters.category ? `${categoryName(filters.category)} to rent` : `Rent in ${LAUNCH_CITY}`)
 
   /** Apply a change; anything other than "load more" goes back to page 1. */
   const update = (patch: Partial<SearchFilters>, opts: { replace?: boolean } = {}) => {
@@ -45,6 +47,13 @@ export default function Browse() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 md:pt-10">
+      <Seo
+        {...STATIC_PAGES['/browse']!}
+        title={filters.q ? `“${filters.q}” to rent in ${LAUNCH_CITY}` : filters.category ? `${categoryName(filters.category)} to rent in ${LAUNCH_CITY}` : STATIC_PAGES['/browse']!.title}
+        // One canonical per category; other filter combinations point back to it, and searches aren't indexed.
+        path={filters.category && !filters.q ? `/browse?category=${filters.category}` : '/browse'}
+        noindex={Boolean(filters.q)}
+      />
       <h1 className="text-4xl sm:text-5xl">{heading}</h1>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -71,9 +80,12 @@ export default function Browse() {
 
         <section aria-labelledby="results-count" aria-busy={loading}>
           <div className="mb-5 space-y-3">
-            <p id="results-count" role="status" className="font-semibold">
-              {shown ? plural(shown.total, 'rental') : 'Finding rentals…'}
-            </p>
+            <h2 className="font-sans text-base font-semibold">
+              {/* Live region inside the heading: a role on the h2 itself would remove its heading role. */}
+              <span id="results-count" role="status">
+                {shown ? plural(shown.total, 'rental') : 'Finding rentals…'}
+              </span>
+            </h2>
             <ActiveFilters filters={filters} onChange={(p) => update(p)} onClearAll={clearAll} />
           </div>
 
@@ -115,9 +127,16 @@ export default function Browse() {
                   <p className="text-muted">
                     Showing {shown.items.length} of {shown.total}
                   </p>
-                  <Button variant="outline" disabled={loading} onClick={() => update({ page: (filters.page ?? 1) + 1 }, { replace: true })}>
+                  {/* A real link, so search engines can reach every listing, not just the first page. */}
+                  <Link
+                    to={`?${toBrowseParams({ ...filters, page: (filters.page ?? 1) + 1 })}`}
+                    replace
+                    preventScrollReset
+                    aria-disabled={loading || undefined}
+                    className={buttonClasses('outline', 'md', loading ? 'pointer-events-none opacity-60' : undefined)}
+                  >
                     {loading ? 'Loading…' : 'Show more'}
-                  </Button>
+                  </Link>
                 </div>
               )}
             </>

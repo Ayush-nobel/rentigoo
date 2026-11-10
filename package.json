@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,7 +14,9 @@
     "sandbox:deploy": "ampx sandbox --once --identifier dev",
     "sandbox:seed": "set -a && . ./.env.seed && set +a && ampx sandbox seed --identifier dev",
     "check:access": "set -a && . ./.env.seed && set +a && tsx --tsconfig amplify/tsconfig.json scripts/check-access.ts",
-    "check:launch": "tsx scripts/check-launch.ts"
+    "check:launch": "tsx scripts/check-launch.ts",
+    "build:spa": "tsc -b && vite build",
+    "preview:static": "node scripts/serve-dist.mjs"
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.3.0",

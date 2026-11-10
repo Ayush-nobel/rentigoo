@@ -62,6 +62,7 @@ const sections: LegalSection[] = [
 export default function Contact() {
   return (
     <LegalPage
+      path="/contact"
       title="Contact and complaints"
       version={LEGAL.terms.version}
       intro={<p>Who runs RentiGoo, how to reach us, and how to complain if something goes wrong.</p>}

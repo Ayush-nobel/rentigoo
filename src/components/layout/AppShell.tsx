@@ -17,7 +17,7 @@ export function AppShell() {
       </a>
       <DemoBanner />
       <Header />
-      <main id="main" tabIndex={-1} className="min-h-[60vh] outline-none">
+      <main id="main" tabIndex={-1} className="min-h-[100dvh] outline-none">
         <RouteFocus />
         <Suspense fallback={<PageLoading />}>
           <Outlet />

@@ -103,6 +103,7 @@ const sections: LegalSection[] = [
 export default function Cookies() {
   return (
     <LegalPage
+      path="/cookies"
       title="Cookie and Storage Policy"
       version={LEGAL.cookies.version}
       intro={<p>What RentiGoo stores in your browser, and why. It’s a short list.</p>}

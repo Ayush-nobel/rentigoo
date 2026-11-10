@@ -219,6 +219,7 @@ const sections: LegalSection[] = [
 export default function Terms() {
   return (
     <LegalPage
+      path="/terms"
       title="Terms and Conditions"
       version={LEGAL.terms.version}
       intro={<p>The rules for renting and lending on RentiGoo, in plain language. Please read them before you use the site.</p>}

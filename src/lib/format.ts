@@ -26,8 +26,8 @@ const trim = (n: number) => n.toFixed(1).replace(/\.0$/, '')
 
 const dayFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const dayYearFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
-const monthYearFmt = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' })
-const timeFmt = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' })
+const monthYearFmt = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })
+const timeFmt = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
 
 /** 12 Nov */
 export function shortDate(d: ISODate): string {

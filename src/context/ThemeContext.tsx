@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ReactNode } from 'react'
 import { readString, writeString } from '@/lib/storage'
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
@@ -14,36 +14,51 @@ interface ThemeState {
 
 const ThemeContext = createContext<ThemeState | null>(null)
 const KEY = 'theme'
-const media = () => window.matchMedia('(prefers-color-scheme: dark)')
+const QUERY = '(prefers-color-scheme: dark)'
 
-function initialChoice(): ThemeChoice {
+// The saved choice lives in localStorage; this tiny store lets React read it in
+// a hydration-safe way (the server, and the first client render, see "system").
+const listeners = new Set<() => void>()
+const notify = () => listeners.forEach((l) => l())
+
+function readChoice(): ThemeChoice {
   const saved = readString(KEY)
   return saved === 'light' || saved === 'dark' ? saved : 'system'
 }
 
+function writeChoice(c: ThemeChoice) {
+  const root = document.documentElement
+  if (c === 'system') delete root.dataset.theme
+  else root.dataset.theme = c
+  writeString(KEY, c === 'system' ? null : c)
+  notify()
+}
+
+function subscribeChoice(cb: () => void) {
+  listeners.add(cb)
+  const onStorage = (e: StorageEvent) => e.key?.endsWith(KEY) && cb()
+  window.addEventListener('storage', onStorage)
+  return () => {
+    listeners.delete(cb)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+
+function subscribeSystem(cb: () => void) {
+  const mq = window.matchMedia(QUERY)
+  mq.addEventListener('change', cb)
+  return () => mq.removeEventListener('change', cb)
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [choice, setChoiceState] = useState<ThemeChoice>(initialChoice)
-  const [systemDark, setSystemDark] = useState(() => media().matches)
+  const choice = useSyncExternalStore(subscribeChoice, readChoice, () => 'system' as ThemeChoice)
+  const systemDark = useSyncExternalStore(subscribeSystem, () => window.matchMedia(QUERY).matches, () => false)
 
-  useEffect(() => {
-    const mq = media()
-    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+  const setChoice = useCallback((c: ThemeChoice) => writeChoice(c), [])
+  const cycle = useCallback(() => {
+    const c = readChoice()
+    writeChoice(c === 'system' ? 'light' : c === 'light' ? 'dark' : 'system')
   }, [])
-
-  useEffect(() => {
-    const root = document.documentElement
-    if (choice === 'system') delete root.dataset.theme
-    else root.dataset.theme = choice
-    writeString(KEY, choice === 'system' ? null : choice)
-  }, [choice])
-
-  const setChoice = useCallback((c: ThemeChoice) => setChoiceState(c), [])
-  const cycle = useCallback(
-    () => setChoiceState((c) => (c === 'system' ? 'light' : c === 'light' ? 'dark' : 'system')),
-    [],
-  )
 
   const value = useMemo<ThemeState>(
     () => ({ choice, resolved: choice === 'system' ? (systemDark ? 'dark' : 'light') : choice, setChoice, cycle }),

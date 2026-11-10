@@ -4,11 +4,12 @@ import { emailProblem, nameProblem, passwordProblem, areaProblem } from '@shared
 import { AREAS, LAUNCH_CITY } from '@shared/areas'
 import { LEGAL, MIN_AGE } from '@shared/legal'
 import { AuthFrame, CodeField, FormError, PasswordField } from '@/components/auth/AuthFields'
+import { Seo } from '@/components/layout/Seo'
+import { STATIC_PAGES } from '@/lib/seo'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { SelectField, TextField } from '@/components/ui/Field'
 import { useAuth } from '@/context/AuthContext'
-import { useTitle } from '@/hooks/useAsync'
 import { api, ApiError, auth, AuthError, DATA_MODE, safeNext } from '@/lib'
 
 type Step = 'details' | 'confirm' | 'profile'
@@ -59,13 +60,14 @@ export default function Signup() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
 
-  useTitle(step === 'confirm' ? 'Check your email' : step === 'profile' ? 'Finish your profile' : 'Create your account')
 
   useEffect(() => {
     if (cooldown <= 0) return
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [cooldown])
+
+  const seo = <Seo {...STATIC_PAGES['/signup']!} title={step === 'confirm' ? 'Check your email' : step === 'profile' ? 'Finish your profile' : 'Create your account'} noindex={step !== 'details'} />
 
   if (status === 'signed-in') return <Navigate to={next} replace />
   if (step === 'profile' && status === 'signed-out') return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />
@@ -223,7 +225,7 @@ export default function Signup() {
 
   if (step === 'confirm') {
     return (
-      <AuthFrame title="Check your email" intro={<>We’ve sent a 6-digit code to <strong className="text-text">{email || 'your email'}</strong>. It can take a minute to arrive, and it sometimes lands in spam.</>}>
+      <>{seo}<AuthFrame title="Check your email" intro={<>We’ve sent a 6-digit code to <strong className="text-text">{email || 'your email'}</strong>. It can take a minute to arrive, and it sometimes lands in spam.</>}>
         <form onSubmit={submitCode} noValidate className="space-y-5">
           {notice && (
             <p role="status" className="rounded-field bg-sunken p-3 font-medium">
@@ -248,13 +250,13 @@ export default function Signup() {
             </button>
           </p>
         </form>
-      </AuthFrame>
+      </AuthFrame></>
     )
   }
 
   if (step === 'profile') {
     return (
-      <AuthFrame title="One last thing" intro="Tell people who they’re renting from.">
+      <>{seo}<AuthFrame title="One last thing" intro="Tell people who they’re renting from.">
         <form onSubmit={submitProfile} noValidate className="space-y-5">
           <FormError>{error}</FormError>
           {nameField}
@@ -264,12 +266,12 @@ export default function Signup() {
             {busy ? 'Saving…' : 'Finish'}
           </Button>
         </form>
-      </AuthFrame>
+      </AuthFrame></>
     )
   }
 
   return (
-    <AuthFrame
+    <>{seo}<AuthFrame
       title="Create your account"
       intro={
         <>
@@ -301,6 +303,6 @@ export default function Signup() {
           {busy ? 'Creating your account…' : 'Create account'}
         </Button>
       </form>
-    </AuthFrame>
+    </AuthFrame></>
   )
 }

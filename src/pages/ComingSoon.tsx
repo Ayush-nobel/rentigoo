@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
+import { Seo } from '@/components/layout/Seo'
 import { ButtonLink } from '@/components/ui/Button'
 
 /** Stand-in for pages that haven't been built yet. Removed once every page exists. */
 export function ComingSoon({ title }: { title: string }) {
-  useEffect(() => {
-    document.title = `${title} · RentiGoo`
-  }, [title])
   return (
     <section className="mx-auto max-w-2xl px-4 py-20 text-center sm:px-6">
+      {/* Unfinished pages stay out of search results until they have real content. */}
+      <Seo title={title} description="" noindex />
       <h1 className="text-4xl sm:text-5xl">{title}</h1>
       <p className="mt-4 text-lg text-muted">We’re still building this page. Everything else will join it soon.</p>
       <ButtonLink to="/" variant="outline" className="mt-8">

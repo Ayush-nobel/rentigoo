@@ -1,12 +1,11 @@
-import { useEffect } from 'react'
+import { Seo } from '@/components/layout/Seo'
 import { ButtonLink } from '@/components/ui/Button'
 
 export default function NotFound() {
-  useEffect(() => {
-    document.title = 'Page not found · RentiGoo'
-  }, [])
   return (
     <section className="mx-auto max-w-xl px-4 py-24 text-center sm:px-6">
+      {/* Single-page apps answer unknown addresses with "200 OK"; noindex stops them being treated as real pages. */}
+      <Seo title="Page not found" description="" noindex />
       <p className="price-tag text-lg">404</p>
       <h1 className="mt-6 text-4xl sm:text-5xl">This page has been returned</h1>
       <p className="mt-4 text-lg text-muted">
