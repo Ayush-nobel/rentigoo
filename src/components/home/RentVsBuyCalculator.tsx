@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { rentVsBuy } from '@shared/calculators'
+import { rentVsBuy, rentVsBuyMonthly } from '@shared/calculators'
 import { CATEGORIES, getCategory } from '@shared/categories'
 import { FEES } from '@shared/fees'
 import { plural, rupees } from '@/lib/format'
 import { SelectField, SliderField } from '../ui/Field'
 import { AnimatedNumber } from '../ui/AnimatedNumber'
 import { NumberInput } from './NumberInput'
+import { TermSwitch } from '../ui/TermSwitch'
+import type { RentalTerm } from '@shared/types'
 
 const DEFAULT = 'cameras'
 
@@ -14,6 +16,7 @@ function defaultsFor(categoryId: string) {
   return {
     purchasePrice: c.avgPurchasePrice,
     dailyRate: c.avgDailyRate,
+    monthlyRate: c.avgMonthlyRate,
     resalePct: c.typicalResalePct,
     upkeepPerYear: c.typicalUpkeepPerYear,
   }
@@ -24,13 +27,28 @@ export function RentVsBuyCalculator() {
   const [values, setValues] = useState(() => defaultsFor(DEFAULT))
   const [daysPerYear, setDaysPerYear] = useState(10)
   const [years, setYears] = useState(2)
+  const [term, setTerm] = useState<RentalTerm>('days')
+  const [months, setMonths] = useState(6)
 
   const set = (k: keyof typeof values) => (n: number) => setValues((v) => ({ ...v, [k]: n }))
   const r = useMemo(() => rentVsBuy({ ...values, daysPerYear, years }), [values, daysPerYear, years])
+  const m = useMemo(() => rentVsBuyMonthly({ ...values, months }), [values, months])
   const yearsText = plural(years, 'year')
+  const monthsText = plural(months, 'month')
 
   let verdict: string
-  if (r.buyCost === 0 && r.rentCost === 0) verdict = 'Add a price to see which works out cheaper.'
+  if (term === 'months') {
+    if (m.buyCost === 0 && m.rentCost === 0) verdict = 'Add a price to see which works out cheaper.'
+    else if (m.cheaper === 'rent')
+      verdict = `Rent it. You’d save ${rupees(m.savings)} over ${monthsText}. ${
+        m.breakEvenMonths === null ? 'Renting stays cheaper however long you need it.' : `Buying only wins if you need it for more than ${plural(m.breakEvenMonths, 'month')}.`
+      }`
+    else if (m.cheaper === 'buy')
+      verdict = `Buy it. For ${monthsText}, renting would cost ${rupees(-m.savings)} more. ${
+        m.breakEvenMonths ? `Renting wins for ${plural(m.breakEvenMonths, 'month')} or less.` : 'Renting only makes sense for a very short time.'
+      }`
+    else verdict = 'It’s a draw. Rent if you’d rather not sell it afterwards.'
+  } else if (r.buyCost === 0 && r.rentCost === 0) verdict = 'Add a price to see which works out cheaper.'
   else if (r.cheaper === 'rent')
     verdict = `Rent it. You’d save ${rupees(r.savings)} over ${yearsText}. Buying only wins if you need it more than ${plural(r.breakEvenDaysPerYear, 'day')} a year.`
   else if (r.cheaper === 'buy')
@@ -42,7 +60,9 @@ export function RentVsBuyCalculator() {
       <h2 id="rvb-title" className="text-3xl">
         Rent it or buy it?
       </h2>
-      <p className="mt-2 text-muted">Most things get used a few days a year. Put in yours and see what makes sense.</p>
+      <p className="mt-2 text-muted">Most things get used a few days a year, or for a few months while you’re somewhere. Put in yours and see what makes sense.</p>
+
+      <TermSwitch className="mt-5 max-w-sm" legend="How you’d rent it" value={term} onChange={setTerm} />
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <SelectField
@@ -61,16 +81,33 @@ export function RentVsBuyCalculator() {
           ))}
         </SelectField>
         <NumberInput label="Price to buy new" value={values.purchasePrice} onChange={set('purchasePrice')} />
-        <NumberInput label="Rent per day" value={values.dailyRate} onChange={set('dailyRate')} hint="Prefilled with our rough estimate" />
-        <SliderField
-          label="Days you’d use it"
-          value={daysPerYear}
-          min={1}
-          max={120}
-          onChange={setDaysPerYear}
-          format={(v) => `${plural(v, 'day')} a year`}
-        />
-        <SliderField label="For how long" value={years} min={1} max={5} onChange={setYears} format={(v) => plural(v, 'year')} />
+        {term === 'months' ? (
+          <>
+            <NumberInput label="Rent per month" value={values.monthlyRate} onChange={set('monthlyRate')} hint="Prefilled with our rough estimate" />
+            <SliderField
+              label="How long you need it"
+              value={months}
+              min={1}
+              max={24}
+              onChange={setMonths}
+              format={(v) => plural(v, 'month')}
+              className="sm:col-span-2"
+            />
+          </>
+        ) : (
+          <>
+            <NumberInput label="Rent per day" value={values.dailyRate} onChange={set('dailyRate')} hint="Prefilled with our rough estimate" />
+            <SliderField
+              label="Days you’d use it"
+              value={daysPerYear}
+              min={1}
+              max={120}
+              onChange={setDaysPerYear}
+              format={(v) => `${plural(v, 'day')} a year`}
+            />
+            <SliderField label="For how long" value={years} min={1} max={5} onChange={setYears} format={(v) => plural(v, 'year')} />
+          </>
+        )}
       </div>
 
       <details className="smooth group mt-5 rounded-2xl bg-sunken px-4 py-3">
@@ -92,12 +129,12 @@ export function RentVsBuyCalculator() {
         <p aria-live="polite" className="font-display text-2xl leading-snug font-bold text-balance">
           {verdict}
         </p>
-        <CostBars buy={r.buyCost} rent={r.rentCost} years={years} />
+        <CostBars buy={term === 'months' ? m.buyCost : r.buyCost} rent={term === 'months' ? m.rentCost : r.rentCost} over={term === 'months' ? monthsText : yearsText} />
         <p className="mt-4 text-sm text-muted">
           {FEES.serviceFeePct > 0
             ? `Renting includes our ${FEES.serviceFeePct}% service fee${FEES.gstOnFeePct > 0 ? ' and GST on it' : ''}.`
             : 'RentiGoo charges no fees right now, so renting costs just the owner’s price.'}{' '}
-          Buying is the price minus what you’d sell it for, plus upkeep. Deposits come back, so they’re not counted.
+          Buying is the price minus what you’d sell it for, plus upkeep{term === 'months' ? ' while you have it' : ''}. Deposits come back, so they’re not counted.
         </p>
       </div>
     </section>
@@ -105,14 +142,14 @@ export function RentVsBuyCalculator() {
 }
 
 /** Two labelled bars: values are always written out, so the bars only support the text. */
-function CostBars({ buy, rent, years }: { buy: number; rent: number; years: number }) {
+function CostBars({ buy, rent, over }: { buy: number; rent: number; over: string }) {
   const max = Math.max(buy, rent, 1)
   const rows = [
     { label: 'Buying', value: buy, bar: 'bg-ink' },
     { label: 'Renting on RentiGoo', value: rent, bar: 'bg-accent border border-accent-edge' },
   ]
   return (
-    <ul className="mt-6 space-y-4" aria-label={`Total cost over ${plural(years, 'year')}`}>
+    <ul className="mt-6 space-y-4" aria-label={`Total cost over ${over}`}>
       {rows.map((row) => (
         <li key={row.label}>
           <div className="flex items-baseline justify-between gap-3">

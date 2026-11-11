@@ -80,3 +80,72 @@ export function ownerEarnings(input: EarningsInput, fees: Fees = FEES): Earnings
     monthsToPayBack: netMonthly > 0 && value > 0 ? Math.ceil((value / netMonthly) * 10) / 10 : null,
   }
 }
+
+export interface RentVsBuyMonthlyInput {
+  purchasePrice: number
+  /** Share of the price you'd get back selling it at the end, 0–100. */
+  resalePct: number
+  upkeepPerYear: number
+  monthlyRate: number
+  /** How many months you need it. */
+  months: number
+}
+
+export interface RentVsBuyMonthlyResult {
+  buyCost: number
+  rentCost: number
+  savings: number
+  cheaper: 'rent' | 'buy' | 'same'
+  /**
+   * Months after which buying works out cheaper (for a stay longer than this,
+   * buy). Null when renting always wins, e.g. upkeep costs more than the rent.
+   */
+  breakEvenMonths: number | null
+}
+
+/** Renting by the month vs buying it and selling it again when you're done. */
+export function rentVsBuyMonthly(input: RentVsBuyMonthlyInput, fees: Fees = FEES): RentVsBuyMonthlyResult {
+  const price = safe(input.purchasePrice)
+  const resale = clamp(safe(input.resalePct), 0, 100)
+  const months = Math.max(1, Math.round(safe(input.months)))
+  const upkeepMonthly = safe(input.upkeepPerYear) / 12
+  const loss = price - (price * resale) / 100
+  const buyCost = Math.round(loss + upkeepMonthly * months)
+
+  const feeMultiplier = 1 + (fees.serviceFeePct / 100) * (1 + fees.gstOnFeePct / 100)
+  const rentPerMonth = safe(input.monthlyRate) * feeMultiplier
+  const rentCost = Math.round(rentPerMonth * months)
+  const savings = buyCost - rentCost
+
+  // Buying costs `loss` once plus upkeep each month; renting costs the rent each month.
+  const gap = rentPerMonth - upkeepMonthly
+  const breakEvenMonths = gap > 0 ? Math.floor(loss / gap) : null
+
+  return { buyCost, rentCost, savings, cheaper: savings > 0 ? 'rent' : savings < 0 ? 'buy' : 'same', breakEvenMonths }
+}
+
+export interface MonthlyEarningsInput {
+  monthlyRate: number
+  /** Months a year it's rented out, 0–12. */
+  monthsPerYear: number
+  itemValue: number
+}
+
+/** An owner renting by the month: the yearly total, and the average per month. */
+export function ownerEarningsMonthly(input: MonthlyEarningsInput, fees: Fees = FEES): EarningsResult {
+  const months = clamp(Math.round(safe(input.monthsPerYear)), 0, 12)
+  const grossYearly = safe(input.monthlyRate) * months
+  const commissionYearly = Math.round((grossYearly * fees.ownerCommissionPct) / 100)
+  const netYearly = Math.round(grossYearly - commissionYearly)
+  const netMonthly = Math.round(netYearly / 12)
+  const value = safe(input.itemValue)
+  // Pay-back counts the months it's actually rented.
+  const perRentedMonth = months ? netYearly / months : 0
+  return {
+    grossMonthly: Math.round(grossYearly / 12),
+    commissionMonthly: Math.round(commissionYearly / 12),
+    netMonthly,
+    netYearly,
+    monthsToPayBack: perRentedMonth > 0 && value > 0 ? Math.ceil((value / perRentedMonth) * 10) / 10 : null,
+  }
+}

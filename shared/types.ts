@@ -19,6 +19,8 @@ export interface Category {
   blurb: string
   /** Typical daily rent in rupees, used to prefill the calculators. */
   avgDailyRate: number
+  /** Typical monthly rent in rupees, used to prefill the calculators. */
+  avgMonthlyRate: number
   /** Typical new purchase price in rupees. */
   avgPurchasePrice: number
   /** Share of the purchase price you'd get back selling it after ~2 years. */

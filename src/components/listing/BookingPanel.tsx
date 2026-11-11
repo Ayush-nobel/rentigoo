@@ -13,6 +13,7 @@ import { PriceTag } from '../ui/PriceTag'
 import { useHydrated } from '@/lib/initialData'
 import { AvailabilityCalendar, StartDateCalendar, type IsoRange } from './AvailabilityCalendar'
 import { SelectField } from '../ui/Field'
+import { TermSwitch } from '../ui/TermSwitch'
 import { PriceBreakdown } from './PriceBreakdown'
 
 interface Props {
@@ -113,25 +114,7 @@ export function BookingPanel({ listing, onBooked }: Props) {
       </div>
 
       {byDay && byMonth && (
-        <fieldset className="mt-4">
-          <legend className="sr-only">Rent it</legend>
-          <div className="grid grid-cols-2 gap-1 rounded-full bg-sunken p-1">
-            {(
-              [
-                ['days', 'By the day'],
-                ['months', 'By the month'],
-              ] as const
-            ).map(([t, label]) => (
-              <label
-                key={t}
-                className="flex min-h-11 cursor-pointer items-center justify-center rounded-full font-semibold has-checked:bg-surface has-checked:shadow-card has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-solid has-focus-visible:[outline-color:var(--focus)]"
-              >
-                <input type="radio" name="term" className="sr-only" checked={term === t} onChange={() => { setTerm(t); setError(null) }} />
-                {label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <TermSwitch className="mt-4" legend="Rent it" value={term} onChange={(t) => { setTerm(t); setError(null) }} />
       )}
 
       {!monthly && (listing.pricing.weekly || (listing.pricing.monthly && !byMonth)) && (
