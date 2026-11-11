@@ -181,6 +181,13 @@ export const amplifyApi: RentiGooApi = {
     return listingFromDb(saved)
   },
 
+  async deleteListing(id) {
+    me()
+    const r = check(await client().mutations.deleteMyListing({ id }))
+    listingCache = null
+    return { declinedRequests: r?.declinedRequests ?? 0 }
+  },
+
   async uploadListingPhoto({ blob, ext }) {
     me()
     const name = `${crypto.randomUUID()}.${ext}`
@@ -268,6 +275,31 @@ export const amplifyApi: RentiGooApi = {
     const b = check(await client().mutations.respondToBooking({ bookingId, action: 'cancel' }))
     listingCache = null
     return bookingFromDb(b)
+  },
+
+  async markHandedOver(bookingId) {
+    me()
+    return bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'handover' })))
+  },
+
+  async markReturned(bookingId) {
+    me()
+    const b = bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'return' })))
+    listingCache = null
+    return b
+  },
+
+  async submitReview(bookingId, rating, text) {
+    me()
+    const r = check(await client().mutations.submitReview({ bookingId, rating, text }))
+    if (!r) throw new ApiError('Your review wasn’t saved. Please try again.', 'conflict')
+    return reviewFromDb(r)
+  },
+
+  async getOwnerStats() {
+    me()
+    const s = check(await client().queries.ownerStats())
+    return s ?? { earnedThisMonth: 0, earnedTotal: 0, pendingRequests: 0, activeRentals: 0, upcomingRentals: 0 }
   },
 
   async listMyBookings() {

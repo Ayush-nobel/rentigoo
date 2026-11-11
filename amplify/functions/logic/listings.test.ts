@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { saveListing } from './listings'
+import { deleteMyListing, saveListing } from './listings'
+import { requestBooking, respondToBooking } from './bookings'
 import { memoryStore } from './memoryStore'
 import { deleteMyAccount } from './account'
 
@@ -64,5 +65,26 @@ describe('saveListing', () => {
     await deleteMyAccount(m.store, 'owner')
     expect(m.deletedPhotos).toEqual([`${folder}/`])
     expect(m.listings.size).toBe(0)
+  })
+})
+
+describe('deleteMyListing', () => {
+  it('deletes the listing and its photos, declining open requests', async () => {
+    const m = memoryStore()
+    const saved = await saveListing(m.store, { listing }, 'owner', TODAY)
+    await requestBooking(m.store, { listingId: saved.id, start: '2026-11-20', end: '2026-11-22', delivery: false }, 'renter', TODAY)
+    await expect(deleteMyListing(m.store, saved.id, 'renter')).rejects.toThrow(/wasn’t found/)
+    expect(await deleteMyListing(m.store, saved.id, 'owner')).toEqual({ declinedRequests: 1 })
+    expect(m.listings.has(saved.id)).toBe(false)
+    expect(m.deletedPhotos).toEqual([key(1)])
+    expect([...m.bookings.values()][0]!.status).toBe('declined')
+  })
+
+  it('refuses while a rental is booked or in progress', async () => {
+    const m = memoryStore()
+    const saved = await saveListing(m.store, { listing }, 'owner', TODAY)
+    const b = await requestBooking(m.store, { listingId: saved.id, start: '2026-11-20', end: '2026-11-22', delivery: false }, 'renter', TODAY)
+    await respondToBooking(m.store, b.id, 'accept', 'owner')
+    await expect(deleteMyListing(m.store, saved.id, 'owner')).rejects.toThrow(/Pause it instead/)
   })
 })

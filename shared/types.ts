@@ -177,3 +177,12 @@ export interface FaqItem {
   q: string
   a: string
 }
+
+/** An owner's numbers for the dashboard. Rent counts once an item is marked returned. */
+export interface OwnerStats {
+  earnedThisMonth: number
+  earnedTotal: number
+  pendingRequests: number
+  activeRentals: number
+  upcomingRentals: number
+}

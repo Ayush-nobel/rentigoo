@@ -5,7 +5,7 @@
 import { bookingProblem, canTransition } from '../../../shared/bookingRules'
 import { FEES } from '../../../shared/fees'
 import { occupiedDates, quoteListing } from '../../../shared/pricing'
-import type { Booking, BookingStatus, ISODate, Listing, Review } from '../../../shared/types'
+import type { Booking, BookingStatus, ISODate, Listing, OwnerStats, Review } from '../../../shared/types'
 
 /** Listing as stored: owner-set blocked days plus server-maintained booked days. */
 export type StoredListing = Listing & { bookedDates: ISODate[] }
@@ -156,13 +156,7 @@ export async function submitReview(store: Store, input: ReviewInput, actorId: st
   return review
 }
 
-export interface OwnerStats {
-  earnedThisMonth: number
-  earnedTotal: number
-  pendingRequests: number
-  activeRentals: number
-  upcomingRentals: number
-}
+export type { OwnerStats }
 
 /** Owner dashboard figures. `month` is `YYYY-MM` in India time. */
 export async function ownerStats(store: Store, ownerId: string, month: string): Promise<OwnerStats> {

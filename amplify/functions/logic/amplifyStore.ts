@@ -9,7 +9,7 @@ import type { Schema } from '../../data/resource'
 import type { Booking, Review } from '../../../shared/types'
 import type { Store, StoredBooking, StoredListing } from './bookings'
 import type { AccountStore } from './account'
-import type { ListingStore } from './listings'
+import type { DeleteListingStore } from './listings'
 import type { ListingDraft } from '../../../shared/listingRules'
 
 type Client = ReturnType<typeof generateClient<Schema>>
@@ -121,7 +121,7 @@ export function amplifyStore(client: Client): Store {
   }
 }
 
-type Photos = Pick<ListingStore, 'deletePhotos'> & Pick<AccountStore, 'deletePhotoFolders'>
+type Photos = Pick<DeleteListingStore, 'deletePhotos'> & Pick<AccountStore, 'deletePhotoFolders'>
 
 const listingToDb = (l: ListingDraft) => ({
   ...l,
@@ -131,8 +131,8 @@ const listingToDb = (l: ListingDraft) => ({
   pricing: { daily: l.pricing.daily, weekly: l.pricing.weekly ?? null, monthly: l.pricing.monthly ?? null },
 })
 
-/** Store for saveListing. */
-export function listingStore(client: Client, base: Store, photos: Photos): ListingStore {
+/** Store for saveListing and deleteMyListing. */
+export function listingStore(client: Client, base: Store, photos: Photos): DeleteListingStore {
   const m = client.models
   return {
     getListing: base.getListing,
@@ -147,6 +147,11 @@ export function listingStore(client: Client, base: Store, photos: Photos): Listi
       return listingFromDb(updated)
     },
     deletePhotos: photos.deletePhotos,
+    listBookingsForListing: base.listBookingsForListing,
+    setBookingStatus: base.setBookingStatus,
+    async deleteListing(id) {
+      check(await m.Listing.delete({ id }))
+    },
   }
 }
 

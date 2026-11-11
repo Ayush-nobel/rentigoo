@@ -5,7 +5,7 @@
  */
 import { cleanDraft, listingErrors, PHOTO_KEY, type ListingDraft } from '../../../shared/listingRules'
 import type { ISODate } from '../../../shared/types'
-import { RuleError, type StoredListing } from './bookings'
+import { RuleError, type Store, type StoredListing } from './bookings'
 
 export interface ListingStore {
   getListing(id: string): Promise<StoredListing | null>
@@ -66,4 +66,33 @@ function existingDraft(l: StoredListing): ListingDraft {
   const draft: Record<string, unknown> = {}
   for (const f of FIELDS) if (l[f] !== undefined) draft[f] = l[f]
   return draft as unknown as ListingDraft
+}
+
+export interface DeleteListingStore extends ListingStore {
+  listBookingsForListing: Store['listBookingsForListing']
+  setBookingStatus: Store['setBookingStatus']
+  deleteListing(id: string): Promise<void>
+}
+
+/**
+ * Deletes a listing and its photos. Not while someone has it booked or has it
+ * now; open requests are declined so renters aren't left waiting. Past
+ * bookings stay as records (they keep the listing id, not the listing).
+ */
+export async function deleteMyListing(store: DeleteListingStore, id: string, actorId: string): Promise<{ declinedRequests: number }> {
+  const listing = await store.getListing(id)
+  if (!listing || listing.ownerId !== actorId) throw new RuleError('That listing wasn’t found.')
+  const bookings = await store.listBookingsForListing(id)
+  const busy = bookings.filter((b) => b.status === 'accepted' || b.status === 'active')
+  if (busy.length) {
+    throw new RuleError(
+      `This listing has ${busy.length === 1 ? 'a booking' : `${busy.length} bookings`} that ${busy.length === 1 ? 'isn’t' : 'aren’t'} finished. Pause it instead, and delete it once ${busy.length === 1 ? 'that rental is' : 'those rentals are'} done or cancelled.`,
+    )
+  }
+  const open = bookings.filter((b) => b.status === 'requested')
+  for (const b of open) await store.setBookingStatus(b.id, 'declined')
+  const photos = listing.photos.map((p) => p.key).filter((k) => PHOTO_KEY.test(k))
+  if (photos.length) await store.deletePhotos(photos)
+  await store.deleteListing(id)
+  return { declinedRequests: open.length }
 }

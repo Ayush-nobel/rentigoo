@@ -1,5 +1,5 @@
 import type { ListingDraft } from '@shared/listingRules'
-import type { Booking, Conversation, DeletionSummary, ISODate, Listing, Message, Review, UserProfile } from '@shared/types'
+import type { Booking, Conversation, DeletionSummary, ISODate, Listing, Message, OwnerStats, Review, UserProfile } from '@shared/types'
 import type { SearchFilters, SearchResult } from './search'
 
 /** Fields an owner fills in when creating or editing a listing. */
@@ -41,6 +41,8 @@ export interface RentiGooApi {
   updateListing(id: string, patch: Partial<ListingInput>): Promise<Listing>
   /** Uploads a prepared photo to the signed-in person's folder; returns its key. */
   uploadListingPhoto(photo: { blob: Blob; ext: 'webp' | 'jpg' }): Promise<string>
+  /** Deletes the listing and its photos; open requests are declined. Refused while it's booked. */
+  deleteListing(id: string): Promise<{ declinedRequests: number }>
   /** Deletes photos uploaded this session that didn't end up on a listing. Best effort. */
   discardListingPhotos(keys: string[]): Promise<void>
 
@@ -60,6 +62,13 @@ export interface RentiGooApi {
   requestBooking(req: BookingRequest): Promise<Booking>
   respondToBooking(bookingId: string, accept: boolean): Promise<Booking>
   cancelBooking(bookingId: string): Promise<Booking>
+  /** Owner: the renter has the item now. */
+  markHandedOver(bookingId: string): Promise<Booking>
+  /** Owner: the item is back; the rental is complete. */
+  markReturned(bookingId: string): Promise<Booking>
+  /** After a completed rental, each side can review the other once. */
+  submitReview(bookingId: string, rating: number, text: string): Promise<Review>
+  getOwnerStats(): Promise<OwnerStats>
   listMyBookings(): Promise<Booking[]>
   listRequestsForMe(): Promise<Booking[]>
 

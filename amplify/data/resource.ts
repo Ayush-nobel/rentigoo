@@ -239,6 +239,14 @@ const schema = a
       .authorization((allow) => [allow.authenticated()])
       .handler(a.handler.function(saveListingFn)),
 
+    // Deletes the caller's listing and its photos (refused while it's booked).
+    deleteMyListing: a
+      .mutation()
+      .arguments({ id: a.id().required() })
+      .returns(a.customType({ declinedRequests: a.integer().required() }))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(saveListingFn)),
+
     submitReview: a
       .mutation()
       .arguments({ bookingId: a.string().required(), rating: a.integer().required(), text: a.string().required() })

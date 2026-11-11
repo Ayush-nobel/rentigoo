@@ -3,7 +3,7 @@ import { LEGAL, publicName } from '@shared/legal'
 import { bookingProblem, canTransition } from '@shared/bookingRules'
 import { categoryName } from '@shared/categories'
 import { isRangeAvailable, quoteListing } from '@shared/pricing'
-import type { Booking, Conversation, DeletionSummary, Listing, Message, UserProfile } from '@shared/types'
+import type { Booking, Conversation, DeletionSummary, Listing, Message, Review, UserProfile } from '@shared/types'
 import { deriveSnapshot, seedSnapshot, type Snapshot } from '@/data'
 import { ApiError, type RentiGooApi } from './api'
 import { todayIST } from './format'
@@ -127,6 +127,20 @@ export const mockApi: RentiGooApi = {
   },
 
   async discardListingPhotos() {},
+
+  async deleteListing(listingId) {
+    const l = findListing(listingId)
+    if (l.ownerId !== me()) throw new ApiError('That listing wasn’t found.', 'not-found')
+    const mine = db.bookings.filter((b) => b.listingId === listingId)
+    if (mine.some((b) => b.status === 'accepted' || b.status === 'active')) {
+      throw new ApiError('This listing has a booking that isn’t finished. Pause it instead, and delete it once that rental is done or cancelled.', 'conflict')
+    }
+    const open = mine.filter((b) => b.status === 'requested')
+    for (const b of open) b.status = 'declined'
+    db.listings = db.listings.filter((x) => x.id !== listingId)
+    save()
+    return delay({ declinedRequests: open.length })
+  },
 
   async getUser(userId) {
     const u = db.users.find((x) => x.id === userId) ?? null
@@ -261,6 +275,64 @@ export const mockApi: RentiGooApi = {
     b.status = 'cancelled'
     save()
     return delay(findBooking(bookingId))
+  },
+
+  async markHandedOver(bookingId) {
+    const b = findBooking(bookingId)
+    if (!canTransition(b, 'active', me())) throw new ApiError('This booking can’t be changed that way now.', 'conflict')
+    b.status = 'active'
+    save()
+    return delay(findBooking(bookingId))
+  },
+
+  async markReturned(bookingId) {
+    const b = findBooking(bookingId)
+    if (!canTransition(b, 'completed', me())) throw new ApiError('This booking can’t be changed that way now.', 'conflict')
+    b.status = 'completed'
+    b.paymentStatus = 'paid'
+    save()
+    return delay(findBooking(bookingId))
+  },
+
+  async submitReview(bookingId, rating, text) {
+    const uid = me()
+    const b = findBooking(bookingId)
+    if (b.renterId !== uid && b.ownerId !== uid) throw new ApiError('Booking not found.', 'not-found')
+    if (b.status !== 'completed') throw new ApiError('You can review once the item has been returned.', 'invalid')
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new ApiError('Choose a rating from 1 to 5 stars.', 'invalid')
+    const words = text.trim()
+    if (words.length < 10) throw new ApiError('Write a few words about how it went (at least 10 characters).', 'invalid')
+    if (words.length > 1000) throw new ApiError('Keep your review under 1,000 characters.', 'invalid')
+    if (db.reviews.some((r) => r.bookingId === bookingId && r.authorId === uid)) throw new ApiError('You’ve already reviewed this rental.', 'conflict')
+    const asRenter = b.renterId === uid
+    const review: Review = {
+      id: id('r'),
+      listingId: b.listingId,
+      bookingId,
+      authorId: uid,
+      targetUserId: asRenter ? b.ownerId : b.renterId,
+      rating: rating as Review['rating'],
+      text: words,
+      role: asRenter ? 'renter' : 'owner',
+      createdAt: new Date().toISOString(),
+    }
+    db.reviews.push(review)
+    save()
+    return delay(review)
+  },
+
+  async getOwnerStats() {
+    const uid = me()
+    const mine = db.bookings.filter((b) => b.ownerId === uid)
+    const done = mine.filter((b) => b.status === 'completed')
+    const month = todayIST().slice(0, 7)
+    return delay({
+      earnedThisMonth: done.filter((b) => b.end.startsWith(month)).reduce((s, b) => s + b.quote.ownerPayout, 0),
+      earnedTotal: done.reduce((s, b) => s + b.quote.ownerPayout, 0),
+      pendingRequests: mine.filter((b) => b.status === 'requested').length,
+      activeRentals: mine.filter((b) => b.status === 'active').length,
+      upcomingRentals: mine.filter((b) => b.status === 'accepted').length,
+    })
   },
 
   async listMyBookings() {
