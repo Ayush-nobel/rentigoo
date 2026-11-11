@@ -8,6 +8,7 @@ import { ownerStatsFn } from './functions/owner-stats/resource'
 import { requestBookingFn } from './functions/request-booking/resource'
 import { respondToBookingFn } from './functions/respond-to-booking/resource'
 import { saveListingFn } from './functions/save-listing/resource'
+import { messagesFn } from './functions/messages/resource'
 import { submitReviewFn } from './functions/submit-review/resource'
 import { storage } from './storage/resource'
 
@@ -22,6 +23,7 @@ const backend = defineBackend({
   submitReviewFn,
   ownerStatsFn,
   saveListingFn,
+  messagesFn,
 })
 
 // createMyProfile reads the person's email_verified attribute straight from

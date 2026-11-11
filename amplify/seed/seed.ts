@@ -134,27 +134,14 @@ async function main() {
   }
   console.log('✓ open bookings')
 
-  // 4. Conversations
+  // 4. Conversations, through the same server functions the app uses.
   for (const c of CONVERSATIONS) {
     const [a, b] = c.participantIds
     await as(a)
-    const convo = ok(
-      await client.models.Conversation.create({
-        listingId: listingIds.get(c.listingId)!,
-        participantIds: [subs.get(a)!, subs.get(b)!],
-        lastMessageAt: new Date().toISOString(),
-        lastMessagePreview: '',
-      }),
-      'conversation',
-    )
+    const convo = ok(await client.mutations.openConversation({ listingId: listingIds.get(c.listingId)!, otherUserId: subs.get(b)! }), 'conversation')
     for (const msg of MESSAGES.filter((x) => x.conversationId === c.id)) {
       await as(msg.senderId)
-      const sentAt = new Date().toISOString()
-      ok(
-        await client.models.Message.create({ conversationId: convo.id, senderId: subs.get(msg.senderId)!, participantIds: convo.participantIds, text: msg.text, sentAt }),
-        'message',
-      )
-      await client.models.Conversation.update({ id: convo.id, lastMessageAt: sentAt, lastMessagePreview: msg.text.slice(0, 140) })
+      ok(await client.mutations.sendMessage({ conversationId: convo.id, text: msg.text }), 'message')
     }
   }
   console.log('✓ conversations')

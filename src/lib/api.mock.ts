@@ -348,7 +348,10 @@ export const mockApi: RentiGooApi = {
   async listConversations() {
     const uid = me()
     return delay(
-      db.conversations.filter((c) => c.participantIds.includes(uid)).sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)),
+      db.conversations
+        .filter((c) => c.participantIds.includes(uid))
+        .map((c) => ({ ...c, unread: db.messages.some((m) => m.conversationId === c.id && m.senderId !== uid && !m.readAt) }))
+        .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)),
     )
   },
 
@@ -366,7 +369,7 @@ export const mockApi: RentiGooApi = {
     const m: Message = { id: id('m'), conversationId, senderId: uid, text: body, sentAt: new Date().toISOString() }
     db.messages.push(m)
     c.lastMessageAt = m.sentAt
-    c.lastMessagePreview = body
+    c.lastMessagePreview = body.slice(0, 140)
     save()
     listeners.get(conversationId)?.forEach((fn) => fn(structuredClone(m)))
     return delay(m, 60)
@@ -374,8 +377,9 @@ export const mockApi: RentiGooApi = {
 
   async openConversation(listingId, otherUserId) {
     const uid = me()
-    if (uid === otherUserId) throw new ApiError('That’s your own listing.', 'invalid')
-    findListing(listingId)
+    if (uid === otherUserId) throw new ApiError('You can’t message yourself.', 'invalid')
+    const l = findListing(listingId)
+    if (l.ownerId !== uid && l.ownerId !== otherUserId) throw new ApiError('You can only message the owner of a listing.', 'forbidden')
     let c = db.conversations.find(
       (x) => x.listingId === listingId && x.participantIds.includes(uid) && x.participantIds.includes(otherUserId),
     )

@@ -10,6 +10,7 @@ import type { Booking, Review } from '../../../shared/types'
 import type { Store, StoredBooking, StoredListing } from './bookings'
 import type { AccountStore } from './account'
 import type { DeleteListingStore } from './listings'
+import type { MessageStore, StoredConversation, StoredMessage } from './messages'
 import type { ListingDraft } from '../../../shared/listingRules'
 
 type Client = ReturnType<typeof generateClient<Schema>>
@@ -191,5 +192,54 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
       if (res.errors?.length && !/not found|conditional/i.test(res.errors[0]!.message)) check(res)
     },
     deleteLogin,
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const convoFromDb = (c: any): StoredConversation => ({
+  ...c, // keeps createdAt/updatedAt, which the API must return
+  id: c.id,
+  listingId: c.listingId,
+  participantIds: (c.participantIds ?? []).filter(Boolean),
+  lastMessageAt: c.lastMessageAt,
+  lastSenderId: c.lastSenderId ?? null,
+  readBy: (c.readBy ?? []).filter(Boolean),
+})
+const messageFromDb = (m: any): StoredMessage => ({ ...m, participantIds: (m.participantIds ?? []).filter(Boolean), readAt: m.readAt ?? null })
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Store for the messages function. */
+export function messageStore(client: Client, base: Store): MessageStore {
+  const m = client.models
+  return {
+    getListing: base.getListing,
+    async getConversation(id) {
+      const c = check(await m.Conversation.get({ id }))
+      return c ? convoFromDb(c) : null
+    },
+    async listConversationsForListing(listingId) {
+      return (await all((nextToken) => m.Conversation.listConversationsByListing({ listingId }, { nextToken }))).map(convoFromDb)
+    },
+    async createConversation(c) {
+      const created = check(await m.Conversation.create(c as never))
+      if (!created) throw new Error('Conversation was not saved')
+      return convoFromDb(created)
+    },
+    async updateConversation(id, patch) {
+      const updated = check(await m.Conversation.update({ id, ...patch } as never))
+      if (!updated) throw new Error('Conversation was not updated')
+      return convoFromDb(updated)
+    },
+    async createMessage(msg) {
+      const created = check(await m.Message.create(msg as never))
+      if (!created) throw new Error('Message was not saved')
+      return messageFromDb(created)
+    },
+    async listMessages(conversationId) {
+      return (await all((nextToken) => m.Message.listMessagesByConversation({ conversationId }, { nextToken }))).map(messageFromDb)
+    },
+    async setMessageRead(id, at) {
+      check(await m.Message.update({ id, readAt: at } as never))
+    },
   }
 }

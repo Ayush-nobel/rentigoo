@@ -157,16 +157,19 @@ type TextAreaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'classNam
   label: string
   hint?: ReactNode
   error?: string
+  hideLabel?: boolean
   className?: string
+  /** Hide the character count (e.g. in a chat box). */
+  hideCount?: boolean
 }
 
 /** Multi-line text, with a character count when there's a maximum. */
 export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextAreaField(
-  { label, hint, error, className, maxLength, value, rows = 5, ...rest },
+  { label, hint, error, hideLabel, hideCount, className, maxLength, value, rows = 5, ...rest },
   ref,
 ) {
   const count = typeof value === 'string' ? value.length : 0
-  const fullHint = maxLength ? (
+  const fullHint = maxLength && !hideCount ? (
     <>
       {hint} {hint ? ' ' : ''}
       <span className="whitespace-nowrap">
@@ -177,7 +180,7 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaProps>(func
     hint
   )
   return (
-    <FieldShell label={label} hint={fullHint} error={error} className={className}>
+    <FieldShell label={label} hint={fullHint} error={error} hideLabel={hideLabel} className={className}>
       {({ id, describedBy }) => (
         <textarea
           ref={ref}

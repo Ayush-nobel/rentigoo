@@ -120,13 +120,17 @@ function bookingFromDb(b: any): Booking {
 }
 
 const reviewFromDb = (r: any): Review => ({ ...r, rating: r.rating as Review['rating'] })
-const conversationFromDb = (c: any): Conversation => ({
-  id: c.id,
-  listingId: c.listingId,
-  participantIds: clean(c.participantIds) as [string, string],
-  lastMessageAt: c.lastMessageAt,
-  lastMessagePreview: c.lastMessagePreview ?? '',
-})
+const conversationFromDb = (c: any, preview = ''): Conversation => {
+  const uid = getSessionUserId()
+  return {
+    id: c.id,
+    listingId: c.listingId,
+    participantIds: clean(c.participantIds) as [string, string],
+    lastMessageAt: c.lastMessageAt,
+    lastMessagePreview: preview,
+    unread: Boolean(c.lastSenderId && c.lastSenderId !== uid && !clean(c.readBy).includes(uid ?? '')),
+  }
+}
 const messageFromDb = (x: any): Message => ({
   id: x.id,
   conversationId: x.conversationId,
@@ -315,7 +319,11 @@ export const amplifyApi: RentiGooApi = {
   async listConversations() {
     me()
     const rows = await all((nextToken) => models().Conversation.list({ nextToken }))
-    return rows.map(conversationFromDb).sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
+    // The preview is read from the latest message itself, so it disappears if that message is removed.
+    const latest = await Promise.all(
+      rows.map((c) => models().Message.listMessagesByConversation({ conversationId: c.id }, { sortDirection: 'DESC', limit: 1 }).then((r) => r.data?.[0]?.text ?? '')),
+    )
+    return rows.map((c, i) => conversationFromDb(c, latest[i]!.slice(0, 140))).sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
   },
 
   async listMessages(conversationId) {
@@ -325,35 +333,25 @@ export const amplifyApi: RentiGooApi = {
   },
 
   async sendMessage(conversationId, text) {
-    const uid = me()
+    me()
     const body = text.trim()
     if (!body) throw new ApiError('Write a message first.', 'invalid')
     if (body.length > 2000) throw new ApiError('That message is too long. Keep it under 2,000 characters.', 'invalid')
-    const convo = check(await models().Conversation.get({ id: conversationId }))
-    if (!convo) throw new ApiError('Conversation not found.', 'not-found')
-    const sentAt = new Date().toISOString()
-    const msg = check(await models().Message.create({ conversationId, senderId: uid, participantIds: clean(convo.participantIds), text: body, sentAt }))
-    await models().Conversation.update({ id: conversationId, lastMessageAt: sentAt, lastMessagePreview: body.slice(0, 140) })
+    const msg = check(await client().mutations.sendMessage({ conversationId, text: body }))
+    if (!msg) throw new ApiError('Your message wasn’t sent. Please try again.', 'conflict')
     return messageFromDb(msg)
   },
 
   async openConversation(listingId, otherUserId) {
-    const uid = me()
-    if (uid === otherUserId) throw new ApiError('That’s your own listing.', 'invalid')
-    const mine = await all((nextToken) => models().Conversation.list({ filter: { listingId: { eq: listingId } }, nextToken }))
-    const existing = mine.find((c) => clean(c.participantIds).includes(otherUserId))
-    if (existing) return conversationFromDb(existing)
-    const created = check(
-      await models().Conversation.create({ listingId, participantIds: [uid, otherUserId], lastMessageAt: new Date().toISOString(), lastMessagePreview: '' }),
-    )
-    return conversationFromDb(created)
+    me()
+    const c = check(await client().mutations.openConversation({ listingId, otherUserId }))
+    if (!c) throw new ApiError('We couldn’t open the conversation. Please try again.', 'conflict')
+    return conversationFromDb(c)
   },
 
   async markConversationRead(conversationId) {
-    const uid = me()
-    const msgs = await amplifyApi.listMessages(conversationId)
-    const now = new Date().toISOString()
-    await Promise.all(msgs.filter((x) => x.senderId !== uid && !x.readAt).map((x) => models().Message.update({ id: x.id, readAt: now })))
+    me()
+    check(await client().mutations.markConversationRead({ conversationId }))
   },
 
   subscribeToMessages(conversationId, onMessage) {

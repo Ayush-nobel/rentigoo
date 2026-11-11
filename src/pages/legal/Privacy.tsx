@@ -73,7 +73,7 @@ const sections: LegalSection[] = [
               </tr>
               <tr>
                 <td>Messages</td>
-                <td>So renters and owners can arrange pickups. Only the two people in a conversation can read it.</td>
+                <td>So renters and owners can arrange pickups. Only the two people in a conversation can read it, and messages can’t be edited once sent. The other person can see when you’ve read their latest message.</td>
               </tr>
               <tr>
                 <td>Reviews</td>

@@ -74,7 +74,9 @@ const priyaListing = (await m.Listing.list({ filter: { title: { beginsWith: 'Can
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
 const start = addDays(today, 200)
 const booking = await client.mutations.requestBooking({ listingId: priyaListing.id, start, end: addDays(start, 2), delivery: false, message: 'Private note that must be wiped' })
-report(!!listing.data && !!booking.data, 'Test account has a listing and a booking request with a note')
+const chat = await client.mutations.openConversation({ listingId: priyaListing.id, otherUserId: priyaListing.ownerId! })
+const said = await client.mutations.sendMessage({ conversationId: chat.data!.id, text: 'My phone number is 98xxxxxx01, call me' })
+report(!!listing.data && !!booking.data && !!said.data, 'Test account has a listing, a booking request with a note, and a message')
 
 // 3. Delete.
 const summary = await client.mutations.deleteMyAccount()
@@ -93,6 +95,8 @@ report(relogin !== 'signed in', 'Login no longer works', relogin)
 await signOut().catch(() => {})
 
 await signIn({ username: 'priya.demo@example.com', password: seedPassword })
+const theirWords = (await m.Message.listMessagesByConversation({ conversationId: chat.data!.id })).data
+report(theirWords.length === 1 && !theirWords[0]!.text.includes('98xxxxxx01'), 'Their messages are wiped for the other person too', theirWords[0]?.text)
 const record = (await m.Booking.get({ id: booking.data!.id })).data
 report(record?.status === 'cancelled', 'Open request was cancelled', record?.status ?? 'not visible')
 report(record != null && !record.message, 'The note was wiped from the booking record the owner keeps', String(record?.message))

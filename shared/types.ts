@@ -159,7 +159,10 @@ export interface Conversation {
   listingId: string
   participantIds: [string, string]
   lastMessageAt: ISODateTime
+  /** The latest message, shortened. Filled in when conversations are listed. */
   lastMessagePreview: string
+  /** The latest message is from the other person and you haven't seen it yet. */
+  unread?: boolean
 }
 
 export interface Message {

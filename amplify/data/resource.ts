@@ -4,6 +4,7 @@ import { deleteAccountFn } from '../functions/delete-account/resource'
 import { ownerStatsFn } from '../functions/owner-stats/resource'
 import { requestBookingFn } from '../functions/request-booking/resource'
 import { saveListingFn } from '../functions/save-listing/resource'
+import { messagesFn } from '../functions/messages/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
 
@@ -14,7 +15,8 @@ import { submitReviewFn } from '../functions/submit-review/resource'
  *   through saveListing, which checks them first; owners can read and delete theirs.
  * - Bookings are created and changed only by the booking functions, and read
  *   only by the renter and owner involved.
- * - Conversations and messages are visible only to their two participants.
+ * - Conversations and messages are visible only to their two participants,
+ *   and written only by the messages function (so nobody can post as someone else).
  * - Fields the server maintains (ratings, verification, booked dates) are
  *   read-only for everyone; the functions write them with IAM access.
  */
@@ -175,30 +177,23 @@ const schema = a
       .authorization((allow) => [allow.guest().to(['read']), allow.authenticated().to(['read'])]),
 
     // ---------- messages ----------
+    // Written only by the messages function, which sets the sender itself.
     Conversation: a
       .model({
         listingId: a.string().required(),
-        participantIds: a
-          .string()
-          .required()
-          .array()
-          .required()
-          .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create'])]),
+        participantIds: a.string().required().array().required(),
         lastMessageAt: a.datetime().required(),
-        lastMessagePreview: a.string(),
+        lastSenderId: a.string(),
+        readBy: a.string().required().array(), // who has seen the latest message
       })
-      .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create', 'update'])]),
+      .secondaryIndexes((index) => [index('listingId').queryField('listConversationsByListing')])
+      .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read'])]),
 
     Message: a
       .model({
         conversationId: a.string().required(),
         senderId: a.string().required(),
-        participantIds: a
-          .string()
-          .required()
-          .array()
-          .required()
-          .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create'])]),
+        participantIds: a.string().required().array().required(),
         text: a.string().required(),
         sentAt: a.datetime().required(),
         readAt: a.datetime(),
@@ -207,7 +202,28 @@ const schema = a
         index('conversationId').sortKeys(['sentAt']).queryField('listMessagesByConversation'),
         index('senderId').queryField('listMessagesBySender'),
       ])
-      .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read', 'create', 'update'])]),
+      .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read'])]),
+
+    openConversation: a
+      .mutation()
+      .arguments({ listingId: a.string().required(), otherUserId: a.string().required() })
+      .returns(a.ref('Conversation'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(messagesFn)),
+
+    sendMessage: a
+      .mutation()
+      .arguments({ conversationId: a.string().required(), text: a.string().required() })
+      .returns(a.ref('Message'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(messagesFn)),
+
+    markConversationRead: a
+      .mutation()
+      .arguments({ conversationId: a.string().required() })
+      .returns(a.integer())
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(messagesFn)),
 
     // ---------- server-side operations ----------
     requestBooking: a
@@ -286,7 +302,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

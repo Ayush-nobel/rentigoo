@@ -123,9 +123,27 @@ report(!again.data?.verifiedEmail, 'Email badge follows Cognito (seeded emails a
 const badName = await client.mutations.createMyProfile({ name: '<script>', areaId: 'nowhere', termsVersion: LEGAL.terms.version, privacyVersion: LEGAL.privacy.version })
 report(!refused(badName), 'Existing profile is unaffected by junk input', badName.data?.name ?? firstError(badName))
 
+// Messages go through the server, which sets the sender.
+const convo = await client.mutations.openConversation({ listingId: priyaListing.id, otherUserId: priyaListing.ownerId! })
+report(!refused(convo) && !!convo.data, 'Can start a conversation with a listing’s owner', firstError(convo))
+const spoof = await m.Message.create({ conversationId: convo.data!.id, senderId: priyaListing.ownerId, participantIds: convo.data!.participantIds, text: 'Pay me in advance', sentAt: new Date().toISOString() } as never)
+report(refused(spoof), 'Cannot write a message directly (or as someone else)', firstError(spoof))
+const sent = await client.mutations.sendMessage({ conversationId: convo.data!.id, text: 'Access check: is it free next month?' })
+report(!refused(sent) && sent.data?.senderId === ananya, 'Messages sent through the server are from the sender', firstError(sent) ?? sent.data?.senderId)
+const editMsg = await m.Message.update({ id: sent.data!.id, text: 'Edited' } as never)
+report(refused(editMsg), 'Cannot edit a message after sending', firstError(editMsg))
+const strangerChat = await client.mutations.openConversation({ listingId: priyaListing.id, otherUserId: 'someone-who-is-not-the-owner' })
+report(refused(strangerChat), 'Cannot use a listing to start chats with people who don’t own it', firstError(strangerChat))
+const directConvo = await m.Conversation.create({ listingId: priyaListing.id, participantIds: [ananya, priyaListing.ownerId], lastMessageAt: new Date().toISOString() } as never)
+report(refused(directConvo), 'Cannot create a conversation directly', firstError(directConvo))
+const notMine = await client.mutations.sendMessage({ conversationId: 'not-a-real-conversation', text: 'hello there' })
+report(refused(notMine), 'Cannot post into a conversation you’re not in', firstError(notMine))
+
 // --- Neha (not part of Ananya's conversations) ---
 await as('neha')
 const others = (await m.Conversation.list()).data
+const theirMessages = (await m.Message.list()).data
+report(theirMessages.length === 0, 'Cannot read other people’s messages', `${theirMessages.length} visible`)
 report(others.length === 0, 'Cannot see other people’s conversations', `${others.length} visible`)
 
 await signOut()
