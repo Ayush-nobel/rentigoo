@@ -253,6 +253,30 @@ export const amplifyApi: RentiGooApi = {
     return summary
   },
 
+  async getPhoneStatus() {
+    me()
+    return check(await client().queries.phoneStatus()) ?? { available: false, verified: false }
+  },
+
+  async startPhoneCheck(phone) {
+    me()
+    const r = check(await client().mutations.startPhoneCheck({ phone }))
+    if (!r) throw new ApiError('We couldn’t send a code. Please try again.', 'conflict')
+    return r
+  },
+
+  async confirmPhoneCheck(code) {
+    me()
+    const r = check(await client().mutations.confirmPhoneCheck({ code }))
+    if (!r) throw new ApiError('That didn’t go through. Please try again.', 'conflict')
+    return r
+  },
+
+  async forgetPhone() {
+    me()
+    return check(await client().mutations.forgetPhone()) ?? { available: true, verified: false }
+  },
+
   async listReviewsByAuthor(authorId) {
     return (await all((nextToken) => models().Review.listReviewsByAuthor({ authorId }, { nextToken, authMode: authMode() }))).map(reviewFromDb).sort(byNewest)
   },

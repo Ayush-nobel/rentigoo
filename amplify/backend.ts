@@ -9,6 +9,7 @@ import { requestBookingFn } from './functions/request-booking/resource'
 import { respondToBookingFn } from './functions/respond-to-booking/resource'
 import { saveListingFn } from './functions/save-listing/resource'
 import { messagesFn } from './functions/messages/resource'
+import { phoneCheckFn } from './functions/phone-check/resource'
 import { submitReviewFn } from './functions/submit-review/resource'
 import { storage } from './storage/resource'
 
@@ -24,6 +25,7 @@ const backend = defineBackend({
   ownerStatsFn,
   saveListingFn,
   messagesFn,
+  phoneCheckFn,
 })
 
 // createMyProfile reads the person's email_verified attribute straight from
@@ -86,3 +88,19 @@ if (appId && process.env.AWS_BRANCH === 'main') {
     )
   }
 }
+
+// Phone checks by SMS. India requires a DLT registration: once you have the
+// IDs, set DLT_ENTITY_ID, DLT_TEMPLATE_ID and SMS_SENDER_ID as environment
+// variables on the main branch in Amplify Hosting, and the next deploy
+// switches SMS on. Until then production says "not switched on yet".
+// Sandboxes use test mode: no SMS is sent and the code is always 246810.
+const dlt = { DLT_ENTITY_ID: process.env.DLT_ENTITY_ID, DLT_TEMPLATE_ID: process.env.DLT_TEMPLATE_ID, SMS_SENDER_ID: process.env.SMS_SENDER_ID }
+const smsMode = !process.env.AWS_BRANCH ? 'test' : Object.values(dlt).every(Boolean) ? 'sns' : 'off'
+backend.phoneCheckFn.addEnvironment('SMS_MODE', smsMode)
+if (smsMode === 'sns') {
+  for (const [k, v] of Object.entries(dlt)) backend.phoneCheckFn.addEnvironment(k, v!)
+  // Publishing straight to a phone number has no resource ARN to scope to.
+  backend.phoneCheckFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['sns:Publish'], notResources: ['arn:aws:sns:*:*:*'] }))
+}
+// Daily send counters delete themselves (DynamoDB TTL).
+backend.data.resources.cfnResources.amplifyDynamoDbTables['PhoneSendCount']!.timeToLiveAttribute = { attributeName: 'ttl', enabled: true }

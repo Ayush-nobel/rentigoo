@@ -72,6 +72,14 @@ const sections: LegalSection[] = [
                 <td>To run rentals: who, what, dates, the price breakdown, status, and the optional note you send with a request. For monthly rentals, also which months the owner has marked as paid, and any notice given.</td>
               </tr>
               <tr>
+                <td>Phone check (optional)</td>
+                <td>
+                  Only if you choose to check your mobile number, once phone checks are switched on. We text a one-time code to it through Amazon Web Services and the
+                  mobile networks. We then keep only a fingerprint of the number (a keyed code that can’t be turned back into the number), so one number can’t check
+                  several accounts. The number itself isn’t stored, and it’s never shown to anyone.
+                </td>
+              </tr>
+              <tr>
                 <td>Messages</td>
                 <td>So renters and owners can arrange pickups. Only the two people in a conversation can read it, and messages can’t be edited once sent. The other person can see when you’ve read their latest message.</td>
               </tr>
@@ -92,7 +100,7 @@ const sections: LegalSection[] = [
         </div>
         <h3>What we don’t collect</h3>
         <ul>
-          <li>Your phone number, ID documents, bank or card details (payments happen directly between renter and owner at pickup today).</li>
+          <li>Your phone number (a phone check uses it once and keeps only a fingerprint), ID documents, bank or card details (payments happen directly between renter and owner at pickup today).</li>
           <li>Your precise location, contacts, or anything from other apps.</li>
           <li>Analytics, advertising IDs or tracking of what you do across the internet. We use no analytics or advertising tools.</li>
         </ul>
@@ -156,6 +164,7 @@ const sections: LegalSection[] = [
       <ul>
         <li>Your account, profile, listings, messages and reviews: until you delete your account.</li>
         <li>Listing photos: until you take them off the listing, delete the listing, or delete your account.</li>
+        <li>Phone check: the fingerprint until you remove the check or delete your account; a count of codes sent to a number, for two days.</li>
         <li>
           A minimal record of past bookings (dates, item, amounts and an internal ID, with no name or messages): for as long as tax, accounting and consumer
           protection laws require us to keep transaction records, then deleted.

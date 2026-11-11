@@ -16,6 +16,12 @@ export interface BookingRequest {
   months?: number
 }
 
+/** Whether phone checks are switched on, and whether yours is done. */
+export interface PhoneStatus {
+  available: boolean
+  verified: boolean
+}
+
 /** Thrown for problems the person can fix (dates taken, not signed in…). */
 export type ApiErrorCode = 'not-found' | 'unauthorised' | 'forbidden' | 'conflict' | 'invalid'
 
@@ -57,6 +63,14 @@ export interface RentiGooApi {
   /** Permanently deletes the signed-in person's account and personal data. */
   deleteMyAccount(): Promise<DeletionSummary>
   listReviewsByAuthor(userId: string): Promise<Review[]>
+
+  // Phone checks (the number is never stored; see amplify/functions/logic/phone.ts)
+  getPhoneStatus(): Promise<PhoneStatus>
+  /** Texts a code to the number. */
+  startPhoneCheck(phone: string): Promise<{ sentTo: string; resendInSeconds: number }>
+  confirmPhoneCheck(code: string): Promise<PhoneStatus>
+  /** Removes the check and the badge; the number can then be used on another account. */
+  forgetPhone(): Promise<PhoneStatus>
   updateMyProfile(patch: Partial<Pick<UserProfile, 'name' | 'areaId' | 'bio' | 'languages' | 'avatarKey'>>): Promise<UserProfile>
   listReviewsForListing(listingId: string): Promise<Review[]>
   listReviewsForUser(userId: string): Promise<Review[]>

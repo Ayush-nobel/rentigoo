@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { areaName } from '@shared/areas'
 import { LEGAL } from '@shared/legal'
+import { PhoneCheck } from '@/components/account/PhoneCheck'
 import { Seo } from '@/components/layout/Seo'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
@@ -82,6 +83,8 @@ export default function Account() {
           />
         </dl>
       </section>
+
+      <PhoneCheck />
 
       <section aria-labelledby="data-title">
         <h2 id="data-title" className="text-3xl">

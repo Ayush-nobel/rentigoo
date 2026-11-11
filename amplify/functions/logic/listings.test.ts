@@ -63,6 +63,7 @@ describe('saveListing', () => {
     const m = memoryStore({ profiles: ['owner'] })
     await saveListing(m.store, { listing }, 'owner', TODAY)
     await deleteMyAccount(m.store, 'owner')
+    expect(m.forgottenPhones).toEqual(['owner'])
     expect(m.deletedPhotos).toEqual([`${folder}/`])
     expect(m.listings.size).toBe(0)
   })

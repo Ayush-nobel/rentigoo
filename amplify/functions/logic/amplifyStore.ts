@@ -12,6 +12,7 @@ import type { AccountStore } from './account'
 import type { DeleteListingStore } from './listings'
 import type { MessageStore, StoredConversation, StoredMessage } from './messages'
 import { requestRebuild } from './rebuild'
+import { ClaimTaken, forgetPhone as forgetPhoneCheck, type PhoneCheck, type PhoneStore } from './phone'
 import type { ListingDraft } from '../../../shared/listingRules'
 
 type Client = ReturnType<typeof generateClient<Schema>>
@@ -189,6 +190,9 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
       check(await m.Listing.delete({ id }))
     },
     deletePhotoFolders: photos.deletePhotoFolders,
+    async forgetPhone(id) {
+      await forgetPhoneCheck({ store: phoneStore(client) }, id)
+    },
     publicListingsChanged: () => requestRebuild('an owner deleted their account'),
     async listReviewsByAuthor(userId) {
       return (await all((nextToken) => m.Review.listReviewsByAuthor({ authorId: userId }, { nextToken }))).map(reviewFromDb)
@@ -258,6 +262,68 @@ export function messageStore(client: Client, base: Store): MessageStore {
     },
     async setMessageRead(id, at) {
       check(await m.Message.update({ id, readAt: at } as never))
+    },
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const checkFromDb = (c: any): PhoneCheck => ({
+  userId: c.id,
+  verifiedHash: c.verifiedHash ?? null,
+  pendingHash: c.pendingHash ?? null,
+  codeHash: c.codeHash ?? null,
+  expiresAt: c.expiresAt ?? null,
+  attempts: c.attempts ?? 0,
+  sendDay: c.sendDay,
+  sendsToday: c.sendsToday ?? 0,
+  lastSentAt: c.lastSentAt ?? null,
+})
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Store for the phone-check function (and account deletion). */
+export function phoneStore(client: Client): PhoneStore {
+  const m = client.models
+  return {
+    async getCheck(userId) {
+      const c = check(await m.PhoneCheck.get({ id: userId }))
+      return c ? checkFromDb(c) : null
+    },
+    async putCheck(c) {
+      const { userId, ...rest } = c
+      const existing = check(await m.PhoneCheck.get({ id: userId }))
+      if (existing) check(await m.PhoneCheck.update({ id: userId, ...rest }))
+      else check(await m.PhoneCheck.create({ id: userId, ...rest }))
+    },
+    async deleteCheck(userId) {
+      await m.PhoneCheck.delete({ id: userId })
+    },
+    async getClaim(hash) {
+      return check(await m.PhoneClaim.get({ id: hash }))?.userId ?? null
+    },
+    async claim(hash, userId) {
+      const res = await m.PhoneClaim.create({ id: hash, userId })
+      if (res.errors?.length) {
+        // Already exists: fine if it's theirs, otherwise taken.
+        const owner = check(await m.PhoneClaim.get({ id: hash }))?.userId
+        if (owner !== userId) throw new ClaimTaken()
+      }
+    },
+    async releaseClaim(hash) {
+      await m.PhoneClaim.delete({ id: hash })
+    },
+    async sendsToNumberToday(hash, day) {
+      return check(await m.PhoneSendCount.get({ id: `${hash}:${day}` }))?.count ?? 0
+    },
+    async countSendToNumber(hash, day) {
+      const id = `${hash}:${day}`
+      const cur = check(await m.PhoneSendCount.get({ id }))
+      const ttl = Math.floor(Date.now() / 1000) + 2 * 86_400
+      if (cur) check(await m.PhoneSendCount.update({ id, count: cur.count + 1, ttl }))
+      else check(await m.PhoneSendCount.create({ id, count: 1, ttl }))
+    },
+    async setProfilePhoneVerified(userId, verified) {
+      // The profile may not exist yet (or any more); nothing to update then.
+      await m.UserProfile.update({ id: userId, verifiedPhone: verified } as never)
     },
   }
 }

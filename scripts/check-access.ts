@@ -139,6 +139,16 @@ report(refused(directConvo), 'Cannot create a conversation directly', firstError
 const notMine = await client.mutations.sendMessage({ conversationId: 'not-a-real-conversation', text: 'hello there' })
 report(refused(notMine), 'Cannot post into a conversation you’re not in', firstError(notMine))
 
+// Phone check tables: only the phone-check function can touch them.
+const peekChecks = await m.PhoneCheck.list()
+report(refused(peekChecks), 'Cannot read anyone’s phone check record', firstError(peekChecks))
+const peekClaims = await m.PhoneClaim.list()
+report(refused(peekClaims), 'Cannot list which numbers are checked', firstError(peekClaims))
+const fakeClaim = await m.PhoneClaim.create({ id: 'f'.repeat(64), userId: ananya } as never)
+report(refused(fakeClaim), 'Cannot claim a number directly', firstError(fakeClaim))
+const fakeBadge = await m.UserProfile.update({ id: ananya, verifiedPhone: true } as never)
+report(refused(fakeBadge), 'Cannot give yourself the phone badge', firstError(fakeBadge))
+
 // --- Neha (not part of Ananya's conversations) ---
 await as('neha')
 const others = (await m.Conversation.list()).data

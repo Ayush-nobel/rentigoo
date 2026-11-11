@@ -16,6 +16,7 @@ export function memoryStore(
   const logins = new Set(seed.profiles ?? [])
   const deletedPhotos: string[] = []
   const rebuilds = { count: 0 }
+  const forgottenPhones: string[] = []
   let n = 0
 
   const store: AccountStore & ListingStore = {
@@ -116,6 +117,9 @@ export function memoryStore(
     async clearBookingMessage(id) {
       delete bookings.get(id)!.message
     },
+    async forgetPhone(id) {
+      forgottenPhones.push(id)
+    },
     async deleteProfile(id) {
       profiles.delete(id)
     },
@@ -123,5 +127,5 @@ export function memoryStore(
       logins.delete(id)
     },
   }
-  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds, forgottenPhones }
 }

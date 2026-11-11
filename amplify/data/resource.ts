@@ -5,6 +5,7 @@ import { ownerStatsFn } from '../functions/owner-stats/resource'
 import { requestBookingFn } from '../functions/request-booking/resource'
 import { saveListingFn } from '../functions/save-listing/resource'
 import { messagesFn } from '../functions/messages/resource'
+import { phoneCheckFn } from '../functions/phone-check/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
 
@@ -22,6 +23,10 @@ import { submitReviewFn } from '../functions/submit-review/resource'
  */
 // oxlint-disable-next-line typescript/no-explicit-any
 const readOnlyForPeople = (allow: any) => [allow.guest().to(['read']), allow.authenticated().to(['read'])]
+// For tables only the functions use: Amplify needs a rule on every model, so
+// these name a user group that nobody is ever put in. Functions bypass it (IAM).
+// oxlint-disable-next-line typescript/no-explicit-any
+const functionsOnly = (allow: any) => [allow.group('functions-only-no-members')]
 // oxlint-disable-next-line typescript/no-explicit-any
 const ownerReadOnly = (allow: any) => [allow.ownerDefinedIn('userId').identityClaim('sub').to(['read'])]
 
@@ -213,6 +218,40 @@ const schema = a
       ])
       .authorization((allow) => [allow.ownersDefinedIn('participantIds').identityClaim('sub').to(['read'])]),
 
+    // ---------- phone checks (only the phone-check function can read or write these) ----------
+    // Keyed by account. Holds fingerprints (HMAC) and a hashed code, never the number or the code.
+    PhoneCheck: a.model({
+      verifiedHash: a.string(),
+      pendingHash: a.string(),
+      codeHash: a.string(),
+      expiresAt: a.datetime(),
+      attempts: a.integer().required(),
+      sendDay: a.string().required(),
+      sendsToday: a.integer().required(),
+      lastSentAt: a.datetime(),
+    }).authorization(functionsOnly),
+    // Keyed by the number's fingerprint: which account checked it (one number, one account).
+    PhoneClaim: a.model({ userId: a.string().required() }).authorization(functionsOnly),
+    // Codes sent to a number per day (abuse limit). Deleted automatically after two days.
+    PhoneSendCount: a.model({ count: a.integer().required(), ttl: a.integer().required() }).authorization(functionsOnly),
+
+    PhoneStatus: a.customType({ available: a.boolean().required(), verified: a.boolean().required() }),
+    PhoneStart: a.customType({ sentTo: a.string().required(), resendInSeconds: a.integer().required() }),
+    phoneStatus: a.query().returns(a.ref('PhoneStatus')).authorization((allow) => [allow.authenticated()]).handler(a.handler.function(phoneCheckFn)),
+    startPhoneCheck: a
+      .mutation()
+      .arguments({ phone: a.string().required() })
+      .returns(a.ref('PhoneStart'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(phoneCheckFn)),
+    confirmPhoneCheck: a
+      .mutation()
+      .arguments({ code: a.string().required() })
+      .returns(a.ref('PhoneStatus'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(phoneCheckFn)),
+    forgetPhone: a.mutation().returns(a.ref('PhoneStatus')).authorization((allow) => [allow.authenticated()]).handler(a.handler.function(phoneCheckFn)),
+
     openConversation: a
       .mutation()
       .arguments({ listingId: a.string().required(), otherUserId: a.string().required() })
@@ -312,7 +351,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

@@ -13,6 +13,7 @@ import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
 import { cleanDraft, listingErrors, type ListingDraft } from '@shared/listingRules'
 import { ownerStatsFrom } from '@shared/earnings'
+import { normaliseIndianMobile, OTP } from '@shared/phone'
 
 // Bump when seed data changes so browsers drop their old copy.
 const DB_KEY = 'mock-db-v2'
@@ -73,6 +74,17 @@ function checkedDraft(d: ListingDraft, knownKeys?: string[]): ListingDraft {
   const first = Object.values(listingErrors(d, { today, knownKeys }))[0]
   if (first) throw new ApiError(first, 'invalid')
   return cleanDraft(d, today)
+}
+
+// Demo phone checks: no text is sent; the code is always 246810.
+const DEMO_CODE = '246810'
+let demoPhone: { pending: string | null; verified: boolean } = { pending: null, verified: false }
+function setDemoPhoneVerified(uid: string, v: boolean) {
+  const u = db.users.find((x) => x.id === uid)
+  if (u) {
+    u.verified = { ...u.verified, phone: v }
+    save()
+  }
 }
 
 const byNewest = <T extends { createdAt: string }>(a: T, b: T) => b.createdAt.localeCompare(a.createdAt)
@@ -195,6 +207,35 @@ export const mockApi: RentiGooApi = {
 
   async listReviewsForListing(listingId) {
     return delay(db.reviews.filter((r) => r.listingId === listingId).sort(byNewest))
+  },
+
+  async getPhoneStatus() {
+    const uid = me()
+    return delay({ available: true, verified: Boolean(db.users.find((u) => u.id === uid)?.verified.phone) })
+  },
+
+  async startPhoneCheck(phone) {
+    me()
+    const e164 = normaliseIndianMobile(phone)
+    if (!e164) throw new ApiError('Enter a 10-digit Indian mobile number, e.g. 98765 43210.', 'invalid')
+    demoPhone = { ...demoPhone, pending: e164 }
+    return delay({ sentTo: e164, resendInSeconds: OTP.resendSeconds })
+  },
+
+  async confirmPhoneCheck(code) {
+    const uid = me()
+    if (!demoPhone.pending) throw new ApiError('Ask for a code first.', 'invalid')
+    if (code.replace(/\D/g, '') !== DEMO_CODE) throw new ApiError('That code isn’t right. In this test version it’s 246810.', 'invalid')
+    demoPhone = { pending: null, verified: true }
+    setDemoPhoneVerified(uid, true)
+    return delay({ available: true, verified: true })
+  },
+
+  async forgetPhone() {
+    const uid = me()
+    demoPhone = { pending: null, verified: false }
+    setDemoPhoneVerified(uid, false)
+    return delay({ available: true, verified: false })
   },
 
   async listReviewsByAuthor(userId) {

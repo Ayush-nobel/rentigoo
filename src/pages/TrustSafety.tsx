@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { BUSINESS } from '@/config/business'
+import { PHONE_CHECK_LIVE } from '@/lib/features'
 import { ContentPage, Points, Section } from '@/components/content/Content'
 import { Seo } from '@/components/layout/Seo'
 import { STATIC_PAGES } from '@/lib/seo'
@@ -22,6 +23,9 @@ export default function TrustSafety() {
             tone="yes"
             items={[
               'Everyone confirms their email address before they can rent or list.',
+              ...(PHONE_CHECK_LIVE
+                ? ['People can check their mobile number with a one-time code. Those who do get a “Phone number checked” badge. It’s optional, so its absence isn’t a warning sign.']
+                : []),
               'Reviews can only be written after a rental is completed, once per person per rental, and can’t be edited afterwards. Nobody can review a rental that didn’t happen.',
               'Prices are worked out by our server from the listing, and a booking keeps the price from the moment you asked, even if the owner changes it later.',
               'Messages always show who really sent them, and can’t be changed once sent.',
@@ -35,7 +39,7 @@ export default function TrustSafety() {
           <Points
             tone="no"
             items={[
-              'We don’t check government IDs or phone numbers.',
+              PHONE_CHECK_LIVE ? 'We don’t check government IDs.' : 'We don’t check government IDs or phone numbers.',
               'We don’t hold payments or deposits. Money passes directly between renter and owner at pickup.',
               'We don’t insure items, and we don’t guarantee that an owner or renter will do what they agreed.',
             ]}

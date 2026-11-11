@@ -23,6 +23,8 @@ export interface AccountStore extends Store {
   listMessageIdsBySender(userId: string): Promise<string[]>
   redactMessage(id: string, text: string): Promise<void>
   clearBookingMessage(id: string): Promise<void>
+  /** Removes their phone check, freeing the number. */
+  forgetPhone(id: string): Promise<void>
   deleteProfile(id: string): Promise<void>
   deleteLogin(id: string): Promise<void>
 }
@@ -98,6 +100,7 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
   for (const b of asRenter) if (b.message) await store.clearBookingMessage(b.id)
 
   // 7. Profile, then the login itself (last, so a failure can be retried while signed in).
+  await store.forgetPhone(userId)
   await store.deleteProfile(userId)
   await store.deleteLogin(userId)
 

@@ -1,3 +1,4 @@
+import { PHONE_CHECK_LIVE } from '@/lib/features'
 import type { FaqItem } from '@shared/types'
 import { FEES } from '@shared/fees'
 
@@ -95,7 +96,9 @@ export const FAQS: FaqItem[] = [
     id: 'f12',
     section: 'safety',
     q: 'How do you check people?',
-    a: 'Everyone confirms their email address before they can rent or list. That’s the only check we do today, so read reviews, chat first, and meet somewhere public for a first rental. We’ll tell you here when we add more checks.',
+    a: PHONE_CHECK_LIVE
+      ? 'Everyone confirms their email address before they can rent or list, and people can also check their mobile number for a “Phone number checked” badge. We don’t check IDs, so read reviews, chat first, and meet somewhere public for a first rental.'
+      : 'Everyone confirms their email address before they can rent or list. That’s the only check we do today, so read reviews, chat first, and meet somewhere public for a first rental. We’ll tell you here when we add more checks.',
   },
   {
     id: 'f13',
