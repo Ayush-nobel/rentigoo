@@ -2,7 +2,6 @@ import { lazyPage } from './lib/lazyPage'
 import type { RouteObject } from 'react-router'
 import { AppShell } from './components/layout/AppShell'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
-import { ComingSoon } from './pages/ComingSoon'
 
 const Home = lazyPage(() => import('./pages/Home'))
 const Browse = lazyPage(() => import('./pages/Browse'))
@@ -19,12 +18,14 @@ const Signup = lazyPage(() => import('./pages/Signup'))
 const ListItem = lazyPage(() => import('./pages/ListItem'))
 const Dashboard = lazyPage(() => import('./pages/Dashboard'))
 const Messages = lazyPage(() => import('./pages/Messages'))
+const HowItWorks = lazyPage(() => import('./pages/HowItWorks'))
+const TrustSafety = lazyPage(() => import('./pages/TrustSafety'))
+const About = lazyPage(() => import('./pages/About'))
 const NotFound = lazyPage(() => import('./pages/NotFound'))
 
 /**
  * Every route. Used by the browser router (main.tsx) and the build-time
- * prerender (entry-server.tsx). Pages still marked ComingSoon are noindexed
- * and swapped for real pages as each build step lands.
+ * prerender (entry-server.tsx).
  */
 export const routes: RouteObject[] = [
   {
@@ -42,10 +43,10 @@ export const routes: RouteObject[] = [
       { path: 'cookies', element: <Cookies /> },
       { path: 'contact', element: <Contact /> },
       { path: 'account', element: <ProtectedRoute><Account /></ProtectedRoute> },
-      { path: 'how-it-works', element: <ComingSoon title="How it works" /> },
-      { path: 'trust-and-safety', element: <ComingSoon title="Trust and safety" /> },
+      { path: 'how-it-works', element: <HowItWorks /> },
+      { path: 'trust-and-safety', element: <TrustSafety /> },
       { path: 'faq', element: <FAQ /> },
-      { path: 'about', element: <ComingSoon title="About RentiGoo" /> },
+      { path: 'about', element: <About /> },
       { path: 'login', element: <Login /> },
       { path: 'signup', element: <Signup /> },
       { path: '*', element: <NotFound /> },

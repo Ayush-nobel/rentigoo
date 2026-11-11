@@ -45,6 +45,21 @@ export const STATIC_PAGES: Record<string, PageMeta> = {
     description: 'Search rentals across MP Nagar, Arera Colony, New Market, Shahpura, Kolar Road and Habibganj. Filter by area, price, dates and delivery.',
     path: '/browse',
   },
+  '/how-it-works': {
+    title: 'How it works',
+    description: 'How renting and lending work on RentiGoo in Bhopal, step by step: requests, pickup, payment, deposits, returns and reviews.',
+    path: '/how-it-works',
+  },
+  '/trust-and-safety': {
+    title: 'Trust and safety',
+    description: 'What RentiGoo checks today, what it doesn’t yet, how to rent and lend safely, the signs of a scam, and what to do if something goes wrong.',
+    path: '/trust-and-safety',
+  },
+  '/about': {
+    title: 'About RentiGoo',
+    description: 'RentiGoo is a Bhopal-based place to rent everyday things from people nearby. Who runs it, why, and how we try to run it.',
+    path: '/about',
+  },
   '/faq': {
     title: 'Questions and answers',
     description: 'How renting and lending work on RentiGoo: requests, deposits, damage, fees, safety and your account.',
