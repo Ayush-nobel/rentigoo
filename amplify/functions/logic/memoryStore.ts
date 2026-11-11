@@ -15,6 +15,7 @@ export function memoryStore(
   const profiles = new Set(seed.profiles ?? [])
   const logins = new Set(seed.profiles ?? [])
   const deletedPhotos: string[] = []
+  const rebuilds = { count: 0 }
   let n = 0
 
   const store: AccountStore & ListingStore = {
@@ -89,6 +90,9 @@ export function memoryStore(
       listings.set(id, next)
       return structuredClone(next)
     },
+    async publicListingsChanged() {
+      rebuilds.count++
+    },
     async deletePhotoFolders(prefixes) {
       deletedPhotos.push(...prefixes)
     },
@@ -119,5 +123,5 @@ export function memoryStore(
       logins.delete(id)
     },
   }
-  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds }
 }

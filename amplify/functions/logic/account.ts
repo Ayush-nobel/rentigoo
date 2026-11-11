@@ -16,6 +16,8 @@ export interface AccountStore extends Store {
   deleteListing(id: string): Promise<void>
   /** Deletes every uploaded file under these folders (e.g. `listing-photos/<identity>/`). */
   deletePhotoFolders(prefixes: string[]): Promise<void>
+  /** Their public listings went away: rebuild the site's pages. Never throws. */
+  publicListingsChanged(): Promise<void>
   listReviewsByAuthor(userId: string): Promise<Review[]>
   deleteReview(id: string): Promise<void>
   listMessageIdsBySender(userId: string): Promise<string[]>
@@ -70,6 +72,7 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
   ]
   if (folders.length) await store.deletePhotoFolders(folders)
   for (const l of owned) await store.deleteListing(l.id)
+  if (owned.some((l) => l.status === 'active')) await store.publicListingsChanged()
 
   // 4. Reviews they wrote and reviews about them; then fix everyone's averages.
   const written = await store.listReviewsByAuthor(userId)

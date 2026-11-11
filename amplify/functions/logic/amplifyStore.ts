@@ -11,6 +11,7 @@ import type { Store, StoredBooking, StoredListing } from './bookings'
 import type { AccountStore } from './account'
 import type { DeleteListingStore } from './listings'
 import type { MessageStore, StoredConversation, StoredMessage } from './messages'
+import { requestRebuild } from './rebuild'
 import type { ListingDraft } from '../../../shared/listingRules'
 
 type Client = ReturnType<typeof generateClient<Schema>>
@@ -163,6 +164,7 @@ export function listingStore(client: Client, base: Store, photos: Photos): Delet
       return listingFromDb(updated)
     },
     deletePhotos: photos.deletePhotos,
+    publicListingsChanged: () => requestRebuild('a listing was published, edited, paused or deleted'),
     listBookingsForListing: base.listBookingsForListing,
     setBookingStatus: base.setBookingStatus,
     async deleteListing(id) {
@@ -187,6 +189,7 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
       check(await m.Listing.delete({ id }))
     },
     deletePhotoFolders: photos.deletePhotoFolders,
+    publicListingsChanged: () => requestRebuild('an owner deleted their account'),
     async listReviewsByAuthor(userId) {
       return (await all((nextToken) => m.Review.listReviewsByAuthor({ authorId: userId }, { nextToken }))).map(reviewFromDb)
     },

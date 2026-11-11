@@ -88,3 +88,31 @@ describe('deleteMyListing', () => {
     await expect(deleteMyListing(m.store, saved.id, 'owner')).rejects.toThrow(/Pause it instead/)
   })
 })
+
+describe('rebuilding the site when public listings change', () => {
+  it('rebuilds for public changes only', async () => {
+    const m = memoryStore()
+    const draft = await saveListing(m.store, { listing: { ...listing, status: 'draft' } }, 'owner', TODAY)
+    expect(m.rebuilds.count).toBe(0) // drafts aren't public
+    await saveListing(m.store, { id: draft.id, listing: { status: 'active' } }, 'owner', TODAY)
+    expect(m.rebuilds.count).toBe(1) // published
+    await saveListing(m.store, { id: draft.id, listing: { title: 'Two-person dome tent' } }, 'owner', TODAY)
+    expect(m.rebuilds.count).toBe(2) // public page changed
+    await saveListing(m.store, { id: draft.id, listing: { status: 'paused' } }, 'owner', TODAY)
+    expect(m.rebuilds.count).toBe(3) // left the public pages
+    await saveListing(m.store, { id: draft.id, listing: { title: 'Paused tent' } }, 'owner', TODAY)
+    expect(m.rebuilds.count).toBe(3) // paused edits aren't public
+    await deleteMyListing(m.store, draft.id, 'owner')
+    expect(m.rebuilds.count).toBe(3) // deleting a paused listing changes nothing public
+  })
+
+  it('rebuilds when a live listing is deleted, or its owner deletes their account', async () => {
+    const m = memoryStore({ profiles: ['owner'] })
+    const a = await saveListing(m.store, { listing }, 'owner', TODAY)
+    await saveListing(m.store, { listing }, 'owner', TODAY)
+    await deleteMyListing(m.store, a.id, 'owner')
+    expect(m.rebuilds.count).toBe(3)
+    await deleteMyAccount(m.store, 'owner')
+    expect(m.rebuilds.count).toBe(4)
+  })
+})

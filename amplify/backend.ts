@@ -67,3 +67,22 @@ for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
 // placeholder pictures, so demo data can be seeded through saveListing like
 // real listings. Production only accepts real uploads.
 if (process.env.AWS_BRANCH !== 'main') backend.saveListingFn.addEnvironment('ALLOW_PLACEHOLDER_PHOTOS', 'true')
+
+// When a public listing appears, changes or goes away, ask Amplify Hosting to
+// rebuild so its page is prerendered (see functions/logic/rebuild.ts). Only on
+// the production branch: AWS_APP_ID and AWS_BRANCH exist only in Amplify's
+// own build, never in a sandbox.
+const appId = process.env.AWS_APP_ID
+if (appId && process.env.AWS_BRANCH === 'main') {
+  const { region, account } = backend.saveListingFn.stack
+  for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
+    fn.addEnvironment('REBUILD_APP_ID', appId)
+    fn.addEnvironment('REBUILD_BRANCH', 'main')
+    fn.resources.lambda.addToRolePolicy(
+      new PolicyStatement({
+        actions: ['amplify:StartJob', 'amplify:ListJobs'],
+        resources: [`arn:aws:amplify:${region}:${account}:apps/${appId}/branches/main/jobs/*`, `arn:aws:amplify:${region}:${account}:apps/${appId}/branches/main`],
+      }),
+    )
+  }
+}

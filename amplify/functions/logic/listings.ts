@@ -13,6 +13,8 @@ export interface ListingStore {
   updateListing(id: string, l: ListingDraft): Promise<StoredListing>
   /** Removes uploaded photo files. Missing files are fine. */
   deletePhotos(keys: string[]): Promise<void>
+  /** A public listing appeared, changed or went away: rebuild the site's pages. Never throws. */
+  publicListingsChanged(): Promise<void>
 }
 
 export interface SaveListingInput {
@@ -61,6 +63,7 @@ export async function saveListing(store: ListingStore, input: SaveListingInput, 
     const gone = existing.photos.map((p) => p.key).filter((k) => !kept.has(k) && PHOTO_KEY.test(k))
     if (gone.length) await store.deletePhotos(gone)
   }
+  if (existing?.status === 'active' || saved.status === 'active') await store.publicListingsChanged()
   return saved
 }
 
@@ -96,5 +99,6 @@ export async function deleteMyListing(store: DeleteListingStore, id: string, act
   const photos = listing.photos.map((p) => p.key).filter((k) => PHOTO_KEY.test(k))
   if (photos.length) await store.deletePhotos(photos)
   await store.deleteListing(id)
+  if (listing.status === 'active') await store.publicListingsChanged()
   return { declinedRequests: open.length }
 }

@@ -37,6 +37,7 @@
     "@aws-amplify/backend": "^1.25.1",
     "@aws-amplify/backend-cli": "^1.10.0",
     "@aws-amplify/seed": "^1.1.5",
+    "@aws-sdk/client-amplify": "^3.1165.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.1165.0",
     "@aws-sdk/client-s3": "^3.1165.0",
     "@tailwindcss/vite": "^4.3.5",
