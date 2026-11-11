@@ -3,6 +3,7 @@
  * the law makes us keep (a minimal record of past transactions) stays, with
  * free-text notes wiped. Each step is safe to re-run if a later step fails.
  */
+import { PHOTO_KEY } from '../../../shared/listingRules'
 import { occupiedDates } from '../../../shared/pricing'
 import type { Review } from '../../../shared/types'
 import { BLOCKING, RuleError, type Store, type StoredBooking, type StoredListing } from './bookings'
@@ -13,6 +14,8 @@ export interface AccountStore extends Store {
   listBookingsAsRenter(userId: string): Promise<StoredBooking[]>
   listListingsOwnedBy(userId: string): Promise<StoredListing[]>
   deleteListing(id: string): Promise<void>
+  /** Deletes every uploaded file under these folders (e.g. `listing-photos/<identity>/`). */
+  deletePhotoFolders(prefixes: string[]): Promise<void>
   listReviewsByAuthor(userId: string): Promise<Review[]>
   deleteReview(id: string): Promise<void>
   listMessageIdsBySender(userId: string): Promise<string[]>
@@ -60,7 +63,12 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
     await store.setListingBookedDates(listingId, [...new Set(left.flatMap((b) => occupiedDates(b.start, b.end)))].sort())
   }
 
-  // 3. Their listings.
+  // 3. Their listings, and the photo folders those listings were uploaded to
+  //    (whole folders, so photos uploaded but never saved go too).
+  const folders = [
+    ...new Set(owned.flatMap((l) => l.photos.map((p) => p.key)).filter((k) => PHOTO_KEY.test(k)).map((k) => `${k.split('/').slice(0, 2).join('/')}/`)),
+  ]
+  if (folders.length) await store.deletePhotoFolders(folders)
   for (const l of owned) await store.deleteListing(l.id)
 
   // 4. Reviews they wrote and reviews about them; then fix everyone's averages.

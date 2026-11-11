@@ -4,6 +4,7 @@ import type { Schema } from '../../data/resource'
 import { deleteMyAccount } from '../logic/account'
 import { accountStore, dataClient } from '../logic/amplifyStore'
 import { callerId, guarded } from '../logic/handlerKit'
+import { photoBucket } from '../logic/photoBucket'
 
 const cognito = new CognitoIdentityProviderClient({})
 
@@ -19,6 +20,6 @@ export const handler: Schema['deleteMyAccount']['functionHandler'] = (event) =>
       } catch (e) {
         if ((e as { name?: string }).name !== 'UserNotFoundException') throw e
       }
-    })
+    }, photoBucket())
     return deleteMyAccount(store, sub)
   })

@@ -9,6 +9,8 @@ import type { Schema } from '../../data/resource'
 import type { Booking, Review } from '../../../shared/types'
 import type { Store, StoredBooking, StoredListing } from './bookings'
 import type { AccountStore } from './account'
+import type { ListingStore } from './listings'
+import type { ListingDraft } from '../../../shared/listingRules'
 
 type Client = ReturnType<typeof generateClient<Schema>>
 
@@ -119,8 +121,37 @@ export function amplifyStore(client: Client): Store {
   }
 }
 
+type Photos = Pick<ListingStore, 'deletePhotos'> & Pick<AccountStore, 'deletePhotoFolders'>
+
+const listingToDb = (l: ListingDraft) => ({
+  ...l,
+  condition: toDb(l.condition) as never,
+  // Absent optional fields are cleared, not left as they were.
+  deliveryFee: l.deliveryFee ?? null,
+  pricing: { daily: l.pricing.daily, weekly: l.pricing.weekly ?? null, monthly: l.pricing.monthly ?? null },
+})
+
+/** Store for saveListing. */
+export function listingStore(client: Client, base: Store, photos: Photos): ListingStore {
+  const m = client.models
+  return {
+    getListing: base.getListing,
+    async createListing(l) {
+      const created = check(await m.Listing.create({ ...listingToDb(l), bookedDates: [], ratingAvg: 0, ratingCount: 0 } as never))
+      if (!created) throw new Error('Listing was not saved')
+      return listingFromDb(created)
+    },
+    async updateListing(id, l) {
+      const updated = check(await m.Listing.update({ id, ...listingToDb(l) } as never))
+      if (!updated) throw new Error('Listing was not updated')
+      return listingFromDb(updated)
+    },
+    deletePhotos: photos.deletePhotos,
+  }
+}
+
 /** Store with the extra operations account deletion needs. */
-export function accountStore(client: Client, deleteLogin: (id: string) => Promise<void>): AccountStore {
+export function accountStore(client: Client, deleteLogin: (id: string) => Promise<void>, photos: Photos): AccountStore {
   const base = amplifyStore(client)
   const m = client.models
   return {
@@ -134,6 +165,7 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
     async deleteListing(id) {
       check(await m.Listing.delete({ id }))
     },
+    deletePhotoFolders: photos.deletePhotoFolders,
     async listReviewsByAuthor(userId) {
       return (await all((nextToken) => m.Review.listReviewsByAuthor({ authorId: userId }, { nextToken }))).map(reviewFromDb)
     },

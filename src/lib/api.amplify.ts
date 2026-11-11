@@ -1,8 +1,9 @@
 import { generateClient } from 'aws-amplify/data'
+import { list, remove, uploadData } from 'aws-amplify/storage'
 import { categoryName } from '@shared/categories'
 import type { Booking, Conversation, Listing, Message, Review, UserProfile } from '@shared/types'
 import type { Schema } from '../../amplify/data/resource'
-import { ApiError, type ListingInput, type RentiGooApi } from './api'
+import { ApiError, type RentiGooApi } from './api'
 import { searchListings } from './search'
 import { getSessionUserId } from './session'
 
@@ -47,7 +48,6 @@ function me(): string {
 
 // ---------- mapping between the database and the app ----------
 const toApp = (s: string | null | undefined) => (s ?? '').replace(/_/g, '-')
-const toDb = <T extends string>(s: string) => s.replace(/-/g, '_') as T
 const clean = (xs: (string | null)[] | null | undefined) => (xs ?? []).filter((x): x is string => Boolean(x))
 
 /* oxlint-disable typescript/no-explicit-any */
@@ -137,11 +137,6 @@ const messageFromDb = (x: any): Message => ({
 })
 /* oxlint-enable typescript/no-explicit-any */
 
-function listingToDb(input: Partial<ListingInput>) {
-  const { condition, ...rest } = input
-  return { ...rest, ...(condition ? { condition: toDb<'new' | 'like_new' | 'good' | 'fair'>(condition) } : {}) }
-}
-
 // Active listings change rarely; keep them briefly so filtering feels instant.
 let listingCache: { at: number; items: Listing[] } | null = null
 async function activeListings(): Promise<Listing[]> {
@@ -172,16 +167,34 @@ export const amplifyApi: RentiGooApi = {
 
   async createListing(input) {
     me()
-    const created = check(await models().Listing.create(listingToDb(input) as never))
+    const saved = check(await client().mutations.saveListing({ listing: JSON.stringify(input) }))
+    if (!saved) throw new ApiError('Your listing wasn’t saved. Please try again.', 'conflict')
     listingCache = null
-    return listingFromDb(created)
+    return listingFromDb(saved)
   },
 
   async updateListing(id, patch) {
     me()
-    const updated = check(await models().Listing.update({ id, ...listingToDb(patch) } as never))
+    const saved = check(await client().mutations.saveListing({ id, listing: JSON.stringify(patch) }))
+    if (!saved) throw new ApiError('Your changes weren’t saved. Please try again.', 'conflict')
     listingCache = null
-    return listingFromDb(updated)
+    return listingFromDb(saved)
+  },
+
+  async uploadListingPhoto({ blob, ext }) {
+    me()
+    const name = `${crypto.randomUUID()}.${ext}`
+    const { path } = await uploadData({
+      path: ({ identityId }) => `listing-photos/${identityId}/${name}`,
+      data: blob,
+      // Each upload gets a new name, so browsers can keep it for good.
+      options: { contentType: ext === 'webp' ? 'image/webp' : 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' },
+    }).result
+    return path
+  },
+
+  async discardListingPhotos(keys) {
+    await Promise.allSettled(keys.map((path) => remove({ path })))
   },
 
   async getUser(id) {
@@ -205,6 +218,14 @@ export const amplifyApi: RentiGooApi = {
 
   async deleteMyAccount() {
     me()
+    // Photos uploaded but never saved on a listing: clear our own folder first
+    // (best effort; the server deletes the folders of saved listings too).
+    try {
+      const { items } = await list({ path: ({ identityId }) => `listing-photos/${identityId}/`, options: { listAll: true } })
+      await Promise.allSettled(items.map((i) => remove({ path: i.path })))
+    } catch {
+      /* nothing uploaded, or offline: carry on */
+    }
     const summary = check(await client().mutations.deleteMyAccount())
     if (!summary) throw new ApiError('Your account wasn’t deleted. Please try again.', 'conflict')
     listingCache = null

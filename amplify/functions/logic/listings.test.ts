@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest'
+import { saveListing } from './listings'
+import { memoryStore } from './memoryStore'
+import { deleteMyAccount } from './account'
+
+const TODAY = '2026-11-10'
+const folder = 'listing-photos/ap-south-1:0f8fad5b-d9cb-469f-a165-70867728950e'
+const key = (n: number) => `${folder}/7c9e6679-7425-40de-944b-e07fc1f90ae${n}.webp`
+const listing = {
+  title: 'Two-person tent',
+  description: 'Waterproof dome tent, sleeps two. Pegs, poles and a carry bag included.',
+  categoryId: 'outdoor',
+  areaId: 'kolar-road',
+  photos: [{ key: key(1), alt: 'Green dome tent pitched on grass' }],
+  condition: 'good',
+  pricing: { daily: 300 },
+  deposit: 1500,
+  minDays: 1,
+  maxDays: 10,
+  pickupOptions: ['pickup'],
+  blockedDates: [],
+  rules: [],
+  status: 'active',
+}
+
+describe('saveListing', () => {
+  it('creates a listing owned by the caller, ignoring fields the owner may not set', async () => {
+    const { store } = memoryStore()
+    const saved = await saveListing(store, { listing: { ...listing, ownerId: 'someone-else', ratingAvg: 5, ratingCount: 99 } }, 'owner', TODAY)
+    expect(saved).toMatchObject({ ownerId: 'owner', ratingAvg: 0, ratingCount: 0, title: 'Two-person tent' })
+  })
+
+  it('refuses an incomplete listing with the reason', async () => {
+    const { store } = memoryStore()
+    await expect(saveListing(store, { listing: { ...listing, photos: [] } }, 'owner', TODAY)).rejects.toThrow(/at least one photo/)
+  })
+
+  it('lets only the owner edit, and accepts a status-only change', async () => {
+    const { store } = memoryStore()
+    const saved = await saveListing(store, { listing }, 'owner', TODAY)
+    await expect(saveListing(store, { id: saved.id, listing: { status: 'paused' } }, 'stranger', TODAY)).rejects.toThrow(/wasn’t found/)
+    const paused = await saveListing(store, { id: saved.id, listing: { status: 'paused' } }, 'owner', TODAY)
+    expect(paused).toMatchObject({ status: 'paused', title: 'Two-person tent' })
+  })
+
+  it('keeps booked days and ratings when the owner edits', async () => {
+    const m = memoryStore()
+    const saved = await saveListing(m.store, { listing }, 'owner', TODAY)
+    Object.assign(m.listings.get(saved.id)!, { bookedDates: ['2026-11-20'], ratingAvg: 4.5, ratingCount: 2 })
+    const edited = await saveListing(m.store, { id: saved.id, listing: { ...listing, title: 'Two-person dome tent', bookedDates: [] } }, 'owner', TODAY)
+    expect(edited).toMatchObject({ title: 'Two-person dome tent', bookedDates: ['2026-11-20'], ratingAvg: 4.5, ratingCount: 2 })
+  })
+
+  it('deletes photo files taken off the listing', async () => {
+    const m = memoryStore()
+    const saved = await saveListing(m.store, { listing: { ...listing, photos: [{ key: key(1), alt: 'Tent' }, { key: key(2), alt: 'Bag' }] } }, 'owner', TODAY)
+    await saveListing(m.store, { id: saved.id, listing: { photos: [{ key: key(2), alt: 'Bag' }] } }, 'owner', TODAY)
+    expect(m.deletedPhotos).toEqual([key(1)])
+  })
+
+  it('deleting the account deletes the photo folder too', async () => {
+    const m = memoryStore({ profiles: ['owner'] })
+    await saveListing(m.store, { listing }, 'owner', TODAY)
+    await deleteMyAccount(m.store, 'owner')
+    expect(m.deletedPhotos).toEqual([`${folder}/`])
+    expect(m.listings.size).toBe(0)
+  })
+})

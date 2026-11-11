@@ -16,6 +16,7 @@ const Refunds = lazyPage(() => import('./pages/legal/Refunds'))
 const Cookies = lazyPage(() => import('./pages/legal/Cookies'))
 const Contact = lazyPage(() => import('./pages/legal/Contact'))
 const Signup = lazyPage(() => import('./pages/Signup'))
+const ListItem = lazyPage(() => import('./pages/ListItem'))
 const NotFound = lazyPage(() => import('./pages/NotFound'))
 
 /**
@@ -30,7 +31,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'browse', element: <Browse /> },
       { path: 'listing/:id', element: <ListingDetail /> },
-      { path: 'list', element: <ProtectedRoute><ComingSoon title="List an item" /></ProtectedRoute> },
+      { path: 'list', element: <ProtectedRoute><ListItem /></ProtectedRoute> },
       { path: 'dashboard', element: <ProtectedRoute><ComingSoon title="Dashboard" /></ProtectedRoute> },
       { path: 'messages/:conversationId?', element: <ProtectedRoute><ComingSoon title="Messages" /></ProtectedRoute> },
       { path: 'privacy', element: <Privacy /> },

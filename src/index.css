@@ -405,3 +405,11 @@ dialog.sheet::backdrop {
     scroll-behavior: auto !important;
   }
 }
+
+/* Days an owner blocks on their listing: filled, so it's clear which are kept back. */
+.block-dates .rdp-selected .rdp-day_button {
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: var(--ink);
+  font-weight: 700;
+}

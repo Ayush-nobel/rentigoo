@@ -87,8 +87,26 @@ report(refused(giveAway), 'Cannot hand a listing to someone else', firstError(gi
 const ownBooked = await m.Listing.update({ id: mine.id, bookedDates: ['2026-12-25'] } as never)
 report(refused(ownBooked), 'Cannot fake booked dates', firstError(ownBooked))
 
-const allowedEdit = await m.Listing.update({ id: mine.id, title: mine.title } as never)
-report(!refused(allowedEdit), 'Can edit her own listing', firstError(allowedEdit))
+const directEdit = await m.Listing.update({ id: mine.id, title: mine.title } as never)
+report(refused(directEdit), 'Cannot edit a listing directly (must go through the server check)', firstError(directEdit))
+
+const directCreate = await m.Listing.create({
+  title: 'Unchecked listing', description: 'x', categoryId: 'tools', areaId: 'mp-nagar', photos: [], condition: 'good',
+  pricing: { daily: 1 }, deposit: 0, minDays: 1, maxDays: 1, pickupOptions: ['pickup'], blockedDates: [], rules: [], status: 'active',
+} as never)
+report(refused(directCreate), 'Cannot create a listing directly', firstError(directCreate))
+
+const allowedEdit = await client.mutations.saveListing({ id: mine.id, listing: JSON.stringify({ title: mine.title }) })
+report(!refused(allowedEdit) && allowedEdit.data?.title === mine.title, 'Can edit her own listing through saveListing', firstError(allowedEdit))
+
+const editOthers = await client.mutations.saveListing({ id: priyaListing.id, listing: JSON.stringify({ title: 'Free camera!' }) })
+report(refused(editOthers), 'Cannot edit someone else’s listing through saveListing', firstError(editOthers))
+
+const sneaky = await client.mutations.saveListing({ id: mine.id, listing: JSON.stringify({ ownerId: priyaListing.ownerId, ratingAvg: 5, bookedDates: ['2026-12-25'] }) })
+report(!refused(sneaky) && sneaky.data?.ownerId === ananya && (sneaky.data?.ratingAvg ?? 0) === (mine.ratingAvg ?? 0) && !(sneaky.data?.bookedDates ?? []).includes('2026-12-25'), 'saveListing ignores owner, rating and booked days', firstError(sneaky) ?? JSON.stringify({ owner: sneaky.data?.ownerId === ananya, r: [sneaky.data?.ratingAvg, mine.ratingAvg], b: sneaky.data?.bookedDates }))
+
+const foreignPhoto = await client.mutations.saveListing({ id: mine.id, listing: JSON.stringify({ photos: [{ key: 'https://example.com/x.jpg', alt: 'A photo' }] }) })
+report(refused(foreignPhoto), 'Cannot point a listing at a photo from another website', firstError(foreignPhoto))
 
 const reviewForNothing = await client.mutations.submitReview({ bookingId: selfAccept?.id ?? 'nope', rating: 5, text: 'Five stars for a rental that never happened' })
 report(refused(reviewForNothing), 'Cannot review a rental that didn’t happen', firstError(reviewForNothing))

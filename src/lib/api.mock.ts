@@ -10,6 +10,8 @@ import { todayIST } from './format'
 import { searchListings } from './search'
 import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
+import { rememberLocalPhoto } from './photos'
+import { cleanDraft, listingErrors, type ListingDraft } from '@shared/listingRules'
 
 // Bump when seed data changes so browsers drop their old copy.
 const DB_KEY = 'mock-db-v2'
@@ -65,6 +67,13 @@ function asSeenBy(u: UserProfile): UserProfile {
   return u.id === getSessionUserId() ? u : { ...u, name: publicName(u.name), consent: null }
 }
 
+function checkedDraft(d: ListingDraft, knownKeys?: string[]): ListingDraft {
+  const today = todayIST()
+  const first = Object.values(listingErrors(d, { today, knownKeys }))[0]
+  if (first) throw new ApiError(first, 'invalid')
+  return cleanDraft(d, today)
+}
+
 const byNewest = <T extends { createdAt: string }>(a: T, b: T) => b.createdAt.localeCompare(a.createdAt)
 
 export const mockApi: RentiGooApi = {
@@ -84,9 +93,10 @@ export const mockApi: RentiGooApi = {
     return delay(db.listings.filter((l) => l.ownerId === ownerId && (mine || l.status === 'active')).sort(byNewest))
   },
 
+  // Same checks as the saveListing function on the real backend.
   async createListing(input) {
     const listing: Listing = {
-      ...input,
+      ...checkedDraft(input),
       id: id('l'),
       ownerId: me(),
       ratingAvg: 0,
@@ -100,11 +110,23 @@ export const mockApi: RentiGooApi = {
 
   async updateListing(listingId, patch) {
     const l = findListing(listingId)
-    if (l.ownerId !== me()) throw new ApiError('You can only edit your own listings.', 'forbidden')
-    Object.assign(l, patch)
+    if (l.ownerId !== me()) throw new ApiError('That listing wasn’t found.', 'not-found')
+    const next = checkedDraft({ ...l, ...patch }, l.photos.map((p) => p.key))
+    delete l.deliveryFee
+    Object.assign(l, next)
     save()
     return delay(findListing(listingId))
   },
+
+  async uploadListingPhoto({ blob, ext }) {
+    me()
+    // Demo mode: the photo lives in this browser tab only.
+    const key = `listing-photos/mock:${crypto.randomUUID()}/${crypto.randomUUID()}.${ext}`
+    rememberLocalPhoto(key, blob)
+    return delay(key, 400)
+  },
+
+  async discardListingPhotos() {},
 
   async getUser(userId) {
     const u = db.users.find((x) => x.id === userId) ?? null

@@ -3,6 +3,7 @@ import type { RentiGooApi } from './api'
 import { amplifyApi } from './api.amplify'
 import { mockApi } from './api.mock'
 import { cognitoAuth, mockAuth, type AuthService } from './auth'
+import { outputs } from './outputs'
 
 /**
  * The data source for the whole app.
@@ -10,14 +11,11 @@ import { cognitoAuth, mockAuth, type AuthService } from './auth'
  *   written by `npx ampx sandbox` or the Amplify build).
  * - Anything else uses the seed data in the browser.
  */
-const outputs = Object.values(import.meta.glob('../../amplify_outputs.json', { eager: true, import: 'default' }))[0] as
-  | Record<string, unknown>
-  | undefined
 
 const wantsAmplify = import.meta.env.VITE_DATA_MODE === 'amplify'
 const hasBackend = Boolean(outputs && 'data' in outputs)
 
-if (wantsAmplify && hasBackend) Amplify.configure(outputs!)
+if (wantsAmplify && hasBackend) Amplify.configure(outputs as Parameters<typeof Amplify.configure>[0])
 if (wantsAmplify && !hasBackend) {
   console.warn('VITE_DATA_MODE=amplify but amplify_outputs.json has no backend yet. Using the built-in demo data.')
 }

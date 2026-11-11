@@ -1,4 +1,4 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cx } from '@/lib/cx'
 
@@ -152,3 +152,45 @@ export function SliderField({ label, value, min, max, step = 1, onChange, format
     </div>
   )
 }
+
+type TextAreaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> & {
+  label: string
+  hint?: ReactNode
+  error?: string
+  className?: string
+}
+
+/** Multi-line text, with a character count when there's a maximum. */
+export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextAreaField(
+  { label, hint, error, className, maxLength, value, rows = 5, ...rest },
+  ref,
+) {
+  const count = typeof value === 'string' ? value.length : 0
+  const fullHint = maxLength ? (
+    <>
+      {hint} {hint ? ' ' : ''}
+      <span className="whitespace-nowrap">
+        {count.toLocaleString('en-IN')} of {maxLength.toLocaleString('en-IN')} characters
+      </span>
+    </>
+  ) : (
+    hint
+  )
+  return (
+    <FieldShell label={label} hint={fullHint} error={error} className={className}>
+      {({ id, describedBy }) => (
+        <textarea
+          ref={ref}
+          id={id}
+          rows={rows}
+          value={value}
+          maxLength={maxLength}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : undefined}
+          className={cx(fieldClasses, 'py-3 leading-relaxed')}
+          {...rest}
+        />
+      )}
+    </FieldShell>
+  )
+})

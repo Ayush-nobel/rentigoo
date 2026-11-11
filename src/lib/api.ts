@@ -1,25 +1,9 @@
+import type { ListingDraft } from '@shared/listingRules'
 import type { Booking, Conversation, DeletionSummary, ISODate, Listing, Message, Review, UserProfile } from '@shared/types'
 import type { SearchFilters, SearchResult } from './search'
 
 /** Fields an owner fills in when creating or editing a listing. */
-export type ListingInput = Pick<
-  Listing,
-  | 'title'
-  | 'description'
-  | 'categoryId'
-  | 'areaId'
-  | 'photos'
-  | 'condition'
-  | 'pricing'
-  | 'deposit'
-  | 'minDays'
-  | 'maxDays'
-  | 'pickupOptions'
-  | 'deliveryFee'
-  | 'blockedDates'
-  | 'rules'
-  | 'status'
->
+export type ListingInput = ListingDraft
 
 export interface BookingRequest {
   listingId: string
@@ -51,8 +35,14 @@ export interface RentiGooApi {
   searchListings(filters: SearchFilters): Promise<SearchResult>
   getListing(id: string): Promise<Listing | null>
   listListingsByOwner(ownerId: string): Promise<Listing[]>
+  /** Checked by the server against shared/listingRules before it's stored. */
   createListing(input: ListingInput): Promise<Listing>
+  /** Send only what changes, e.g. `{ status: 'paused' }`. */
   updateListing(id: string, patch: Partial<ListingInput>): Promise<Listing>
+  /** Uploads a prepared photo to the signed-in person's folder; returns its key. */
+  uploadListingPhoto(photo: { blob: Blob; ext: 'webp' | 'jpg' }): Promise<string>
+  /** Deletes photos uploaded this session that didn't end up on a listing. Best effort. */
+  discardListingPhotos(keys: string[]): Promise<void>
 
   // People and reviews
   getUser(id: string): Promise<UserProfile | null>

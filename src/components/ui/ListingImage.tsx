@@ -2,6 +2,7 @@ import type { Photo } from '@shared/types'
 import { cx } from '@/lib/cx'
 import { createElement } from 'react'
 import { CATEGORY_TONES, categoryIcon } from '@/lib/categoryMeta'
+import { photoSrc } from '@/lib/photos'
 
 interface ListingImageProps {
   photo: Photo | undefined
@@ -22,14 +23,15 @@ const VARIANTS = [
 ]
 
 /**
- * Shows a real photo (URL or S3 key, wired up in step 7) or, for seed data,
+ * Shows an uploaded photo or, for seed data and photos we can't load,
  * a built-in illustration keyed `ph:<categoryId>:<n>`.
  */
 export function ListingImage({ photo, className, priority, sizes, decorative }: ListingImageProps) {
-  if (photo && !photo.key.startsWith('ph:')) {
+  const src = photo && photoSrc(photo.key)
+  if (photo && src) {
     return (
       <img
-        src={photo.key}
+        src={src}
         alt={decorative ? '' : photo.alt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"

@@ -1,6 +1,7 @@
 import type { Review } from '../../../shared/types'
 import type { StoredBooking, StoredListing } from './bookings'
 import type { AccountStore } from './account'
+import type { ListingStore } from './listings'
 
 /** In-memory Store for tests. */
 export function memoryStore(
@@ -13,9 +14,10 @@ export function memoryStore(
   const messages = structuredClone(seed.messages ?? [])
   const profiles = new Set(seed.profiles ?? [])
   const logins = new Set(seed.profiles ?? [])
+  const deletedPhotos: string[] = []
   let n = 0
 
-  const store: AccountStore = {
+  const store: AccountStore & ListingStore = {
     async getListing(id) {
       return structuredClone(listings.get(id) ?? null)
     },
@@ -71,6 +73,24 @@ export function memoryStore(
     async deleteListing(id) {
       listings.delete(id)
     },
+    async createListing(l) {
+      const created: StoredListing = { ...l, id: `l${++n}`, bookedDates: [], ratingAvg: 0, ratingCount: 0, createdAt: new Date().toISOString() }
+      listings.set(created.id, created)
+      return structuredClone(created)
+    },
+    async updateListing(id, l) {
+      const cur = listings.get(id)!
+      const { deliveryFee: _drop, ...rest } = cur
+      const next: StoredListing = { ...rest, ...l }
+      listings.set(id, next)
+      return structuredClone(next)
+    },
+    async deletePhotoFolders(prefixes) {
+      deletedPhotos.push(...prefixes)
+    },
+    async deletePhotos(keys) {
+      deletedPhotos.push(...keys)
+    },
     async listReviewsByAuthor(userId) {
       return reviews.filter((r) => r.authorId === userId)
     },
@@ -95,5 +115,5 @@ export function memoryStore(
       logins.delete(id)
     },
   }
-  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos }
 }

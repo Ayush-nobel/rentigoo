@@ -9,6 +9,7 @@ import { AdminCreateUserCommand, CognitoIdentityProviderClient } from '@aws-sdk/
 import { Amplify } from 'aws-amplify'
 import { confirmSignIn, getCurrentUser, signIn, signOut } from 'aws-amplify/auth'
 import { generateClient } from 'aws-amplify/data'
+import { uploadData } from 'aws-amplify/storage'
 import type { Schema } from '../amplify/data/resource'
 import { LEGAL } from '../shared/legal'
 import { addDays } from '../shared/pricing'
@@ -54,10 +55,21 @@ report(
   'Consent record is stored (versions and time)',
   `${stored?.termsVersion} / ${stored?.privacyVersion} at ${stored?.consentAt}`,
 )
-const listing = await m.Listing.create({
-  ownerId: me, title: 'Delete-check ladder', description: 'Test item', categoryId: 'tools', areaId: 'mp-nagar',
-  photos: [], condition: 'good', pricing: { daily: 100 }, deposit: 0, minDays: 1, maxDays: 5, pickupOptions: ['pickup'], blockedDates: [], rules: [], status: 'active',
-} as never)
+// A real uploaded photo, so we can check the file is deleted too.
+const photoBytes = readFileSync('public/brand/icon-192.png')
+const { path: photoKey } = await uploadData({
+  path: ({ identityId }) => `listing-photos/${identityId}/${crypto.randomUUID()}.webp`,
+  data: new Blob([photoBytes], { type: 'image/webp' }),
+  options: { contentType: 'image/webp' },
+}).result
+const photoUrl = `https://${outputs.storage.bucket_name}.s3.${outputs.storage.aws_region}.amazonaws.com/${photoKey}`
+report((await fetch(photoUrl)).status === 200, 'Uploaded listing photo is public', photoKey)
+const listing = await client.mutations.saveListing({
+  listing: JSON.stringify({
+    title: 'Delete-check ladder', description: 'Aluminium step ladder, six steps, folds flat. Test item for the deletion check.', categoryId: 'tools', areaId: 'mp-nagar',
+    photos: [{ key: photoKey, alt: 'Silver step ladder' }], condition: 'good', pricing: { daily: 100 }, deposit: 0, minDays: 1, maxDays: 5, pickupOptions: ['pickup'], blockedDates: [], rules: [], status: 'active',
+  }),
+})
 const priyaListing = (await m.Listing.list({ filter: { title: { beginsWith: 'Canon EF 50mm' } } })).data[0]!
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
 const start = addDays(today, 200)
@@ -74,6 +86,8 @@ const gone = await m.UserProfile.get({ id: me }, { authMode: 'identityPool', sel
 report(gone.data == null, 'Profile is gone')
 const listingGone = await m.Listing.get({ id: listing.data!.id }, { authMode: 'identityPool' })
 report(listingGone.data == null, 'Listing is gone')
+const photoAfter = (await fetch(photoUrl)).status
+report(photoAfter === 403 || photoAfter === 404, 'Listing photo file is deleted', String(photoAfter))
 const relogin = await signIn({ username: email, password }).then(() => 'signed in', (e) => (e as Error).name)
 report(relogin !== 'signed in', 'Login no longer works', relogin)
 await signOut().catch(() => {})

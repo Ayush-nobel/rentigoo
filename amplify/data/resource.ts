@@ -3,13 +3,15 @@ import { createProfileFn } from '../functions/create-profile/resource'
 import { deleteAccountFn } from '../functions/delete-account/resource'
 import { ownerStatsFn } from '../functions/owner-stats/resource'
 import { requestBookingFn } from '../functions/request-booking/resource'
+import { saveListingFn } from '../functions/save-listing/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
 
 /**
  * Who can do what
  * - Anyone (signed in or not) can read listings, public profiles and reviews.
- * - Owners create and edit their own listings and profile.
+ * - Owners edit their own profile. Listings are created and edited only
+ *   through saveListing, which checks them first; owners can read and delete theirs.
  * - Bookings are created and changed only by the booking functions, and read
  *   only by the renter and owner involved.
  * - Conversations and messages are visible only to their two participants.
@@ -102,7 +104,7 @@ const schema = a
         ownerId: a
           .string()
           .authorization((allow) => [
-            allow.ownerDefinedIn('ownerId').identityClaim('sub').to(['read', 'create', 'delete']),
+            allow.ownerDefinedIn('ownerId').identityClaim('sub').to(['read', 'delete']),
             allow.guest().to(['read']),
             allow.authenticated().to(['read']),
           ]),
@@ -127,7 +129,7 @@ const schema = a
       })
       .secondaryIndexes((index) => [index('ownerId').queryField('listListingsByOwner')])
       .authorization((allow) => [
-        allow.ownerDefinedIn('ownerId').identityClaim('sub'),
+        allow.ownerDefinedIn('ownerId').identityClaim('sub').to(['read', 'delete']),
         allow.guest().to(['read']),
         allow.authenticated().to(['read']),
       ]),
@@ -228,6 +230,15 @@ const schema = a
       .authorization((allow) => [allow.authenticated()])
       .handler(a.handler.function(respondToBookingFn)),
 
+    // Creates a listing (no id) or edits one (id; send only the fields that change).
+    // `listing` is checked against shared/listingRules before anything is stored.
+    saveListing: a
+      .mutation()
+      .arguments({ id: a.id(), listing: a.json().required() })
+      .returns(a.ref('Listing'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(saveListingFn)),
+
     submitReview: a
       .mutation()
       .arguments({ bookingId: a.string().required(), rating: a.integer().required(), text: a.string().required() })
@@ -267,7 +278,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

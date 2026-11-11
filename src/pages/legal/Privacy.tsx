@@ -61,7 +61,11 @@ const sections: LegalSection[] = [
               </tr>
               <tr>
                 <td>Your listings</td>
-                <td>To show your items to renters: title, description, photos, prices, deposit and the days they’re free.</td>
+                <td>
+                  To show your items to renters: title, description, photos, prices, deposit and the days they’re free. Listing photos are public
+                  files, like the listing itself. Before a photo is uploaded, your browser resizes it and removes its hidden details, such as the
+                  GPS location phones save in pictures.
+                </td>
               </tr>
               <tr>
                 <td>Bookings</td>
@@ -151,6 +155,7 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>Your account, profile, listings, messages and reviews: until you delete your account.</li>
+        <li>Listing photos: until you take them off the listing, delete the listing, or delete your account.</li>
         <li>
           A minimal record of past bookings (dates, item, amounts and an internal ID, with no name or messages): for as long as tax, accounting and consumer
           protection laws require us to keep transaction records, then deleted.
