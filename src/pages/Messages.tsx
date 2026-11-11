@@ -1,6 +1,7 @@
 import { ArrowLeft, MessageCircle, Send, ShieldCheck } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router'
+import { headlinePrice } from '@shared/pricing'
 import type { Conversation, Listing, Message, UserProfile } from '@shared/types'
 import { Seo } from '@/components/layout/Seo'
 import { Avatar } from '@/components/ui/Avatar'
@@ -228,7 +229,9 @@ function Thread({ conversation, me, other, listing, onActivity }: { conversation
             <span className="block size-12 overflow-hidden rounded-lg bg-sunken">
               <ListingImage photo={listing.photos[0]} decorative />
             </span>
-            <span className="text-[0.9375rem] font-semibold">{rupees(listing.pricing.daily)}/day</span>
+            <span className="text-[0.9375rem] font-semibold">
+              {rupees(headlinePrice(listing).amount)}/{headlinePrice(listing).per}
+            </span>
           </Link>
         )}
       </header>

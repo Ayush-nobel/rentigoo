@@ -50,3 +50,28 @@ export function AvailabilityCalendar({ blockedDates, today, value, onChange }: P
     </div>
   )
 }
+
+/** Pick one start date (monthly rentals). Past and booked days can't be picked. */
+export function StartDateCalendar({ blockedDates, today, value, onChange }: { blockedDates: ISODate[]; today: ISODate; value?: ISODate; onChange: (d?: ISODate) => void }) {
+  const todayDate = isoToLocalDate(today)
+  return (
+    <div>
+      <DayPicker
+        mode="single"
+        locale={enIN}
+        selected={value ? isoToLocalDate(value) : undefined}
+        onSelect={(d) => onChange(d ? localDateToISO(d) : undefined)}
+        disabled={[{ before: todayDate }, ...blockedDates.map(isoToLocalDate)]}
+        startMonth={todayDate}
+        endMonth={new Date(todayDate.getFullYear() + 1, todayDate.getMonth())}
+        weekStartsOn={1}
+      />
+      <p className="mt-2 flex items-center gap-2 text-[0.9375rem] text-muted">
+        <span aria-hidden="true" className="line-through decoration-[1.5px]">
+          12
+        </span>
+        Struck-through days are already booked or in the past.
+      </p>
+    </div>
+  )
+}

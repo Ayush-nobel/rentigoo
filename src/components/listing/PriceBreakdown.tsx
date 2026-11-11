@@ -1,12 +1,16 @@
 import { FEES } from '@shared/fees'
-import type { PriceQuote } from '@shared/types'
-import { plural, rupees } from '@/lib/format'
+import { addMonths, termOf } from '@shared/pricing'
+import type { ISODate, PriceQuote } from '@shared/types'
+import { plural, rupees, shortDate } from '@/lib/format'
 import { cx } from '@/lib/cx'
 
-/** Every rupee the renter pays, line by line. */
-export function PriceBreakdown({ quote, className }: { quote: PriceQuote; className?: string }) {
+/** Every rupee the renter pays, line by line. Monthly rentals also say what's due each month. */
+export function PriceBreakdown({ quote, start, className }: { quote: PriceQuote; start?: ISODate; className?: string }) {
+  const monthly = termOf(quote) === 'months'
   const rows: { label: string; value: string; tone?: 'saving' }[] = [
-    { label: `${rupees(quote.dailyRate)} × ${plural(quote.days, 'day')}`, value: rupees(quote.undiscountedSubtotal) },
+    monthly
+      ? { label: `${rupees(quote.monthlyRate!)} × ${plural(quote.months!, 'month')}`, value: rupees(quote.rentalSubtotal) }
+      : { label: `${rupees(quote.dailyRate)} × ${plural(quote.days, 'day')}`, value: rupees(quote.undiscountedSubtotal) },
   ]
   if (quote.longStayDiscount > 0) rows.push({ label: 'Weekly/monthly rate saving', value: `−${rupees(quote.longStayDiscount)}`, tone: 'saving' })
   if (quote.serviceFee > 0) rows.push({ label: `Service fee (${FEES.serviceFeePct}%)`, value: rupees(quote.serviceFee) })
@@ -29,7 +33,7 @@ export function PriceBreakdown({ quote, className }: { quote: PriceQuote; classN
           ))}
           <tr className="border-t border-line">
             <th scope="row" className="pt-2.5 pb-1 font-semibold">
-              Rent total
+              {monthly ? `Rent for all ${plural(quote.months!, 'month')}` : 'Rent total'}
             </th>
             <td className="pt-2.5 pb-1 text-right font-semibold tabular-nums">{rupees(quote.totalRent)}</td>
           </tr>
@@ -43,12 +47,19 @@ export function PriceBreakdown({ quote, className }: { quote: PriceQuote; classN
             <th scope="row" className="pt-3 font-display text-xl font-bold">
               Due at pickup
             </th>
-            <td className="pt-3 text-right font-display text-xl font-bold tabular-nums">{rupees(quote.totalDue)}</td>
+            <td className="pt-3 text-right font-display text-xl font-bold tabular-nums">{rupees(quote.dueAtPickup ?? quote.totalDue)}</td>
           </tr>
         </tbody>
       </table>
       <p className="mt-3 text-[0.9375rem] text-muted">
-        Pay the owner at pickup by UPI or cash. {quote.refundableDeposit > 0 ? `The ${rupees(quote.refundableDeposit)} deposit comes back when the item does.` : 'No deposit needed.'}
+        {monthly
+          ? `At pickup: the first month${quote.deliveryFee ? ', delivery' : ''}${quote.refundableDeposit ? ' and the deposit' : ''}. ${
+              quote.months! > 1
+                ? `Then ${rupees(quote.monthlyRate!)} at the start of each month${start ? `, from ${shortDate(addMonths(start, 1))}` : ''}, paid to the owner by UPI or cash.`
+                : ''
+            } Either of you can end it early with a month’s notice.`
+          : 'Pay the owner at pickup by UPI or cash.'}{' '}
+        {quote.refundableDeposit > 0 ? `The ${rupees(quote.refundableDeposit)} deposit comes back when the item does.` : 'No deposit needed.'}
       </p>
     </div>
   )

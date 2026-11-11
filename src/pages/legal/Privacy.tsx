@@ -69,7 +69,7 @@ const sections: LegalSection[] = [
               </tr>
               <tr>
                 <td>Bookings</td>
-                <td>To run rentals: who, what, dates, the price breakdown, status, and the optional note you send with a request.</td>
+                <td>To run rentals: who, what, dates, the price breakdown, status, and the optional note you send with a request. For monthly rentals, also which months the owner has marked as paid, and any notice given.</td>
               </tr>
               <tr>
                 <td>Messages</td>

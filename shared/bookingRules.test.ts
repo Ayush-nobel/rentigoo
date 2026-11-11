@@ -4,6 +4,7 @@ import { bookingProblem, canTransition } from './bookingRules'
 const listing = {
   ownerId: 'owner',
   status: 'active' as const,
+  pricing: { daily: 300 },
   minDays: 2,
   maxDays: 7,
   pickupOptions: ['pickup' as const],

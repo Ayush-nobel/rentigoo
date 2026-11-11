@@ -19,13 +19,15 @@ export function ActiveFilters({ filters: f, onChange, onClearAll }: Props) {
   for (const a of f.areas ?? []) {
     chips.push({ key: `a-${a}`, label: areaName(a), remove: () => onChange({ areas: f.areas!.filter((x) => x !== a) }) })
   }
+  if (f.term) chips.push({ key: 'term', label: f.term === 'months' ? 'By the month' : 'By the day', remove: () => onChange({ term: undefined, min: undefined, max: undefined }) })
   if (f.min !== undefined || f.max !== undefined) {
+    const per = f.term === 'months' ? 'a month' : 'a day'
     const label =
       f.min !== undefined && f.max !== undefined
-        ? `${rupees(f.min)}–${rupees(f.max)} a day`
+        ? `${rupees(f.min)}–${rupees(f.max)} ${per}`
         : f.min !== undefined
-          ? `From ${rupees(f.min)} a day`
-          : `Up to ${rupees(f.max!)} a day`
+          ? `From ${rupees(f.min)} ${per}`
+          : `Up to ${rupees(f.max!)} ${per}`
     chips.push({ key: 'price', label, remove: () => onChange({ min: undefined, max: undefined }) })
   }
   if (f.from && f.to) chips.push({ key: 'dates', label: `Free ${dateRange(f.from, f.to)}`, remove: () => onChange({ from: undefined, to: undefined }) })

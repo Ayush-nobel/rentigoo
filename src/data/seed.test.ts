@@ -20,3 +20,15 @@ describe('seed data', () => {
     for (const r of snap.reviews) expect(listings.has(r.listingId) && users.has(r.authorId)).toBe(true)
   })
 })
+
+describe('seed listings follow the listing rules', () => {
+  it('every seed listing would be accepted by saveListing on a test backend', async () => {
+    const { LISTINGS } = await import('./listings')
+    const { listingErrors } = await import('@shared/listingRules')
+    const { todayIST } = await import('@/lib/format')
+    for (const l of LISTINGS) {
+      const errs = listingErrors({ ...l, blockedDates: [] }, { today: todayIST(), allowPlaceholders: true })
+      expect({ id: l.id, errs }).toEqual({ id: l.id, errs: {} })
+    }
+  })
+})

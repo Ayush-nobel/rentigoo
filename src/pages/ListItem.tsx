@@ -380,68 +380,144 @@ const numberProps = { inputMode: 'numeric' as const, autoComplete: 'off', patter
 
 function PriceStep({ form, edit, errors }: StepProps) {
   const cat = getCategory(form.categoryId)
-  const daily = /^\d+$/.test(form.daily) ? Number(form.daily) : null
-  const weekly = /^\d+$/.test(form.weekly) ? Number(form.weekly) : undefined
-  const monthly = /^\d+$/.test(form.monthly) ? Number(form.monthly) : undefined
+  const n = (v: string) => (/^\d+$/.test(v) ? Number(v) : undefined)
+  const daily = form.byDay ? n(form.daily) : undefined
+  const weekly = form.byDay ? n(form.weekly) : undefined
+  const monthly = n(form.monthly)
   const examples = daily
-    ? [3, ...(weekly ? [7] : []), ...(monthly ? [30] : [])].map((days) => {
+    ? [3, ...(weekly ? [7] : [])].map((days) => {
         try {
-          return { days, rent: bestRent(days, { daily, weekly, monthly }) }
+          return { label: plural(days, 'day'), rent: bestRent(days, { daily, weekly, monthly: form.byMonth ? undefined : monthly }) }
         } catch {
           return null
         }
       })
     : []
-  const keep = (rent: number) => rent - Math.round((rent * FEES.ownerCommissionPct) / 100)
+  if (form.byMonth && monthly) examples.push({ label: '1 month', rent: monthly }, ...(n(form.maxMonths) && n(form.maxMonths)! > 1 ? [{ label: plural(n(form.maxMonths)!, 'month'), rent: monthly * n(form.maxMonths)! }] : []))
+  const monthOptions = Array.from({ length: LISTING_LIMITS.maxMonthsCap }, (_, i) => i + 1)
 
   return (
     <>
-      <TextField
-        label="Price per day"
-        prefix="₹"
-        {...numberProps}
-        value={form.daily}
-        error={errors.pricing}
-        hint={cat ? `Things in ${cat.name} often go for about ${rupees(cat.avgDailyRate)} a day. That’s our rough estimate, not a rule.` : undefined}
-        onChange={(e) => edit({ daily: e.target.value })}
-      />
-      <div className="grid gap-5 sm:grid-cols-2">
-        <TextField
-          label="Price per week (optional)"
-          prefix="₹"
-          {...numberProps}
-          value={form.weekly}
-          error={errors.weekly}
-          hint={daily ? `Less than ${rupees(daily * 7)} (7 days at your daily price).` : 'A discount for longer rentals.'}
-          onChange={(e) => edit({ weekly: e.target.value })}
+      <fieldset aria-describedby={errors.term ? 'term-error' : undefined}>
+        <legend className="mb-1.5 font-semibold">How can people rent it?</legend>
+        <Checkbox
+          label="By the day"
+          description="For a weekend, an event or a trip. You set a price per day, and per week if you like."
+          checked={form.byDay}
+          onChange={(e) => edit({ byDay: e.target.checked })}
         />
-        <TextField
-          label="Price per month (optional)"
-          prefix="₹"
-          {...numberProps}
-          value={form.monthly}
-          error={errors.monthly}
-          hint="For 30 days."
-          onChange={(e) => edit({ monthly: e.target.value })}
+        <Checkbox
+          label="By the month"
+          description="For furniture, appliances and anything people need for a while. Rent is paid month by month, up to 12 months."
+          checked={form.byMonth}
+          onChange={(e) => edit({ byMonth: e.target.checked })}
         />
-      </div>
+        {errors.term && (
+          <p id="term-error" className="mt-1 text-[0.9375rem] font-medium text-danger">
+            {errors.term}
+          </p>
+        )}
+      </fieldset>
+
+      {form.byDay && (
+        <section aria-labelledby="by-day-title" className="space-y-5 rounded-[20px] border border-line p-4 sm:p-5">
+          <h2 id="by-day-title" className="font-sans text-lg font-semibold">
+            By the day
+          </h2>
+          <TextField
+            label="Price per day"
+            prefix="₹"
+            {...numberProps}
+            value={form.daily}
+            error={errors.pricing}
+            hint={cat ? `Things in ${cat.name} often go for about ${rupees(cat.avgDailyRate)} a day. That’s our rough estimate, not a rule.` : undefined}
+            onChange={(e) => edit({ daily: e.target.value })}
+          />
+          <TextField
+            label="Price per week (optional)"
+            prefix="₹"
+            {...numberProps}
+            value={form.weekly}
+            error={errors.weekly}
+            hint={daily ? `Less than ${rupees(daily * 7)} (7 days at your daily price).` : 'A discount for longer rentals.'}
+            onChange={(e) => edit({ weekly: e.target.value })}
+          />
+          {!form.byMonth && form.monthly && (
+            <TextField
+              label="Price per 30 days (optional)"
+              prefix="₹"
+              {...numberProps}
+              value={form.monthly}
+              error={errors.monthly}
+              hint="A discount for long daily rentals. To offer proper monthly rentals, tick “By the month” above."
+              onChange={(e) => edit({ monthly: e.target.value })}
+            />
+          )}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField label="Shortest rental, in days" {...numberProps} value={form.minDays} error={errors.minDays} onChange={(e) => edit({ minDays: e.target.value })} />
+            <TextField
+              label="Longest rental, in days"
+              {...numberProps}
+              value={form.maxDays}
+              error={errors.maxDays}
+              hint={`Up to ${LISTING_LIMITS.maxDaysCap}.${form.byMonth ? ' Longer than that is by the month.' : ''}`}
+              onChange={(e) => edit({ maxDays: e.target.value })}
+            />
+          </div>
+        </section>
+      )}
+
+      {form.byMonth && (
+        <section aria-labelledby="by-month-title" className="space-y-5 rounded-[20px] border border-line p-4 sm:p-5">
+          <h2 id="by-month-title" className="font-sans text-lg font-semibold">
+            By the month
+          </h2>
+          <TextField
+            label="Price per month"
+            prefix="₹"
+            {...numberProps}
+            value={form.monthly}
+            error={errors.monthly}
+            hint={daily ? `Less than ${rupees(daily * 30)} (30 days at your daily price).` : 'Paid at the start of each month, directly to you.'}
+            onChange={(e) => edit({ monthly: e.target.value })}
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <SelectField label="Shortest rental" value={form.minMonths} error={errors.months} onChange={(e) => edit({ minMonths: e.target.value })}>
+              {monthOptions.map((m) => (
+                <option key={m} value={m}>
+                  {plural(m, 'month')}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField label="Longest rental" value={form.maxMonths} onChange={(e) => edit({ maxMonths: e.target.value })}>
+              {monthOptions.map((m) => (
+                <option key={m} value={m}>
+                  {plural(m, 'month')}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+          <p className="text-[0.9375rem] text-muted">
+            The renter pays the first month and the deposit at pickup, then each month’s rent at its start. Either of you can end it early with a month’s notice.
+          </p>
+        </section>
+      )}
 
       {examples.some(Boolean) && (
         <div className="rounded-[20px] bg-sunken p-4 sm:p-5">
           <p className="font-semibold">What a renter would pay in rent</p>
           <ul className="mt-2 space-y-1">
             {examples.filter(Boolean).map((x) => (
-              <li key={x!.days} className="flex justify-between gap-4">
-                <span>{plural(x!.days, 'day')}</span>
+              <li key={x!.label} className="flex justify-between gap-4">
+                <span>{x!.label}</span>
                 <span className="font-semibold">{rupees(x!.rent)}</span>
               </li>
             ))}
           </ul>
           <p className="mt-2 text-[0.9375rem] text-muted">
             {FEES.ownerCommissionPct === 0
-              ? 'You keep all of it. RentiGoo doesn’t take a cut while payments happen at pickup.'
-              : `You keep ${rupees(keep(examples[0]!.rent))} of the first example after our ${FEES.ownerCommissionPct}% fee.`}{' '}
-            The renter always picks the cheapest mix of your prices.
+              ? 'You keep all of it. RentiGoo doesn’t take a cut while payments happen in person.'
+              : `RentiGoo keeps ${FEES.ownerCommissionPct}% of the rent.`}
           </p>
         </div>
       )}
@@ -455,23 +531,6 @@ function PriceStep({ form, edit, errors }: StepProps) {
         hint="The renter pays it at pickup, and you give it all back when the item returns as it left. ₹0 for no deposit."
         onChange={(e) => edit({ deposit: e.target.value })}
       />
-      <div className="grid gap-5 sm:grid-cols-2">
-        <TextField
-          label="Shortest rental, in days"
-          {...numberProps}
-          value={form.minDays}
-          error={errors.minDays}
-          onChange={(e) => edit({ minDays: e.target.value })}
-        />
-        <TextField
-          label="Longest rental, in days"
-          {...numberProps}
-          value={form.maxDays}
-          error={errors.maxDays}
-          hint={`Up to ${LISTING_LIMITS.maxDaysCap}.`}
-          onChange={(e) => edit({ maxDays: e.target.value })}
-        />
-      </div>
     </>
   )
 }
@@ -577,7 +636,7 @@ function Review({ form, onChange }: { form: ListingForm; onChange: (step: StepId
   const d = toDraft(form, 'active')
   const cover = d.photos[0]
   const prices = [
-    `${rupees(d.pricing.daily)} a day`,
+    ...(d.pricing.daily !== undefined ? [`${rupees(d.pricing.daily)} a day`] : []),
     ...(d.pricing.weekly ? [`${rupees(d.pricing.weekly)} a week`] : []),
     ...(d.pricing.monthly ? [`${rupees(d.pricing.monthly)} a month`] : []),
   ]
@@ -610,7 +669,12 @@ function Review({ form, onChange }: { form: ListingForm; onChange: (step: StepId
           {d.deposit ? `${rupees(d.deposit)}, refundable` : 'No deposit'}
         </ReviewRow>
         <ReviewRow term="Rental length" step="price" onChange={onChange}>
-          {d.minDays === d.maxDays ? plural(d.minDays, 'day') : `${plural(d.minDays, 'day')} to ${plural(d.maxDays, 'day')}`}
+          {[
+            d.pricing.daily !== undefined && (d.minDays === d.maxDays ? `${plural(d.minDays, 'day')}` : `${plural(d.minDays, 'day')} to ${plural(d.maxDays, 'day')}`),
+            d.months && (d.months.min === d.months.max ? plural(d.months.min, 'month') : `${plural(d.months.min, 'month')} to ${plural(d.months.max, 'month')}`),
+          ]
+            .filter(Boolean)
+            .join(', or ')}
         </ReviewRow>
         <ReviewRow term="Pickup" step="pickup" onChange={onChange}>
           {[d.pickupOptions.includes('pickup') && `Collect from ${areaName(d.areaId)}`, d.pickupOptions.includes('delivery') && `Delivery for ${d.deliveryFee ? rupees(d.deliveryFee) : 'free'}`]

@@ -40,6 +40,23 @@ export default function HowItWorks() {
           </ButtonLink>
         </Section>
 
+        <Section id="monthly" title="Renting by the month">
+          <p>
+            Some things are better rented for months than days: a sofa, a fridge, a study table for the term. When an owner offers it, choose “By the month” on the
+            listing, pick a start date and how many months you need, up to 12.
+          </p>
+          <Steps
+            steps={[
+              { title: 'At pickup', body: <p>Pay the first month’s rent and the deposit (and any delivery fee) to the owner.</p> },
+              { title: 'Each month', body: <p>Pay that month’s rent when it starts, by UPI or cash. Your dashboard shows what’s due and when, and the owner marks each payment.</p> },
+              {
+                title: 'At the end',
+                body: <p>Return the item and get your deposit back. Need to stop sooner? Either of you can give a month’s notice from the dashboard.</p>,
+              },
+            ]}
+          />
+        </Section>
+
         <Section id="listing" title="Listing something">
           <Steps
             steps={[
@@ -47,8 +64,8 @@ export default function HowItWorks() {
                 title: 'Create a listing',
                 body: (
                   <p>
-                    Add up to {LISTING_LIMITS.photosMax} photos, a clear description, your daily price (plus weekly or monthly prices if you like), a deposit, and how long people can
-                    rent it for. Block any days you need it yourself.
+                    Add up to {LISTING_LIMITS.photosMax} photos and a clear description. Choose whether people rent it by the day, by the month, or both, and set your
+                    prices, a deposit and how long they can have it. Block any days you need it yourself.
                   </p>
                 ),
               },

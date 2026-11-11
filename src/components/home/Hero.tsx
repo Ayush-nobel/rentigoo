@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { headlinePrice } from '@shared/pricing'
 import { MapPin, Search } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -120,7 +121,7 @@ function TagRack({ listings }: { listings: Listing[] }) {
             </div>
             <div className="flex items-center justify-between gap-2 px-1.5 pt-2.5 pb-1">
               <p className="truncate font-semibold">{l.title.split(/ with | for |,/)[0]}</p>
-              <PriceTag amount={l.pricing.daily} size="sm" />
+              <PriceTag {...headlinePrice(l)} size="sm" />
             </div>
           </div>
         </motion.div>

@@ -1,12 +1,13 @@
 import { MessageCircle } from 'lucide-react'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { monthSchedule, noticeEnd, termOf } from '@shared/pricing'
 import type { Booking, Listing, UserProfile } from '@shared/types'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Feedback'
 import { ListingImage } from '@/components/ui/ListingImage'
 import { api, ApiError } from '@/lib'
-import { dateRange, plural, rupees } from '@/lib/format'
+import { dateRange, longDate, plural, rupees, shortDate, todayIST } from '@/lib/format'
 import { ReviewForm } from './ReviewForm'
 
 export type Role = 'owner' | 'renter'
@@ -43,6 +44,12 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
   const title = listing?.title ?? 'An item that’s no longer listed'
   const q = b.quote
 
+  const monthly = termOf(q) === 'months'
+  const schedule = monthly ? monthSchedule(b.start, b.end, q.monthlyRate!) : []
+  const paid = b.paidMonths ?? 0
+  const nextDue = schedule[paid]
+  const underway = b.status === 'active'
+
   const actions: Action[] = []
   if (role === 'owner' && b.status === 'requested') {
     actions.push({ label: 'Accept', run: () => api.respondToBooking(b.id, true), done: `Accepted. Those dates are now blocked for ${title}.` })
@@ -51,8 +58,25 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
   if (role === 'owner' && b.status === 'accepted') {
     actions.push({ label: 'Mark as handed over', run: () => api.markHandedOver(b.id), done: `Marked as handed over. Mark it as returned when ${otherName} brings it back.` })
   }
+  if (monthly && underway && role === 'owner' && nextDue) {
+    actions.push({
+      label: `Mark month ${nextDue.n} as paid`,
+      run: () => api.markMonthPaid(b.id),
+      done: `Month ${nextDue.n} marked as paid (${rupees(nextDue.amount)}).`,
+    })
+  }
   if (role === 'owner' && b.status === 'active') {
-    actions.push({ label: 'Mark as returned', run: () => api.markReturned(b.id), done: 'Marked as returned. The rental is complete.' })
+    actions.push({ label: 'Mark as returned', variant: monthly ? 'outline' : undefined, run: () => api.markReturned(b.id), done: 'Marked as returned. The rental is complete.' })
+  }
+  if (monthly && underway && !b.notice) {
+    const end = noticeEnd(todayIST(), b)
+    actions.push({
+      label: 'Give notice',
+      variant: 'danger',
+      confirm: `End this rental on ${longDate(end)}?${end < b.end ? ' Any month after that is dropped, and a shortened last month is charged per day.' : ''} ${role === 'owner' ? otherName : 'The owner'} will see it straight away. This can’t be undone.`,
+      run: () => api.giveNotice(b.id),
+      done: `Notice given. The rental now ends on ${longDate(end)}.`,
+    })
   }
   if (b.status === 'accepted' || (role === 'renter' && b.status === 'requested')) {
     const isRequest = b.status === 'requested'
@@ -112,18 +136,79 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
             )}
           </h3>
           <p className="text-muted">
-            {dateRange(b.start, b.end)}, {plural(q.days, 'day')}, {role === 'owner' ? `requested by ${otherName}` : `from ${otherName}`}
+            {dateRange(b.start, b.end)}, {monthly ? plural(schedule.length, 'month') : plural(q.days, 'day')}, {role === 'owner' ? `requested by ${otherName}` : `from ${otherName}`}
           </p>
         </div>
       </div>
 
       <dl className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+        {monthly && <Row term="Rent">{`${rupees(q.monthlyRate!)} a month`}</Row>}
         <Row term={role === 'owner' ? 'You get at pickup' : 'You pay at pickup'}>
-          {rupees(role === 'owner' ? q.ownerPayout + q.refundableDeposit : q.totalDue)}
+          {rupees(monthly ? q.dueAtPickup! : role === 'owner' ? q.ownerPayout + q.refundableDeposit : q.totalDue)}
         </Row>
         <Row term="Of which deposit">{q.refundableDeposit ? `${rupees(q.refundableDeposit)}, given back on return` : 'None'}</Row>
         <Row term={b.delivery ? 'Delivery' : 'Pickup'}>{b.delivery ? `Owner delivers${q.deliveryFee ? ` (${rupees(q.deliveryFee)})` : ''}` : 'Renter collects'}</Row>
+        {monthly && (underway || b.status === 'completed') && (
+          <Row term="Paid so far">{`${paid} of ${plural(schedule.length, 'month')}`}</Row>
+        )}
       </dl>
+
+      {monthly && b.notice && (
+        <p className="mt-3 rounded-xl bg-sunken px-4 py-3">
+          {b.notice.by === (role === 'owner' ? b.ownerId : b.renterId) ? 'You' : otherName} gave notice on {shortDate(b.notice.at.slice(0, 10))}. The rental ends on{' '}
+          <strong>{longDate(b.end)}</strong>.
+        </p>
+      )}
+
+      {monthly && (underway || b.status === 'accepted') && (
+        <details className="smooth group mt-3 rounded-xl border border-line">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 font-semibold [&::-webkit-details-marker]:hidden">
+            <span>
+              Monthly payments
+              {underway && nextDue ? (
+                <span className="font-normal text-muted">
+                  , next {rupees(nextDue.amount)} {nextDue.start <= todayIST() ? 'due now' : `on ${shortDate(nextDue.start)}`}
+                </span>
+              ) : null}
+            </span>
+            <span aria-hidden="true" className="text-xl text-muted transition-transform group-open:rotate-45">
+              +
+            </span>
+          </summary>
+          <table className="mx-4 mb-3 w-[calc(100%-2rem)] text-left text-[0.9375rem]">
+            <caption className="sr-only">Monthly payments</caption>
+            <thead>
+              <tr className="text-muted">
+                <th scope="col" className="py-1 font-medium">
+                  Month
+                </th>
+                <th scope="col" className="py-1 font-medium">
+                  Due
+                </th>
+                <th scope="col" className="py-1 text-right font-medium">
+                  Amount
+                </th>
+                <th scope="col" className="py-1 text-right font-medium">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedule.map((m, i) => (
+                <tr key={m.n} className="border-t border-line">
+                  <td className="py-1.5">
+                    {m.n}
+                    {m.partial ? ' (short)' : ''}
+                  </td>
+                  <td className="py-1.5">{i === 0 ? 'At pickup' : shortDate(m.start)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{rupees(m.amount)}</td>
+                  <td className="py-1.5 text-right">{i < paid ? 'Paid' : underway && m.start <= todayIST() ? 'Due' : 'Upcoming'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      )}
 
       {b.message && role === 'owner' && b.status === 'requested' && (
         <blockquote className="mt-3 rounded-xl bg-sunken px-4 py-3">
@@ -145,7 +230,7 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Button variant="danger" onClick={() => void run(confirming)} disabled={busy !== null}>
-              {busy ? 'Cancelling…' : `Yes, ${confirming.label.toLowerCase()}`}
+              {busy ? 'Saving…' : `Yes, ${confirming.label.toLowerCase()}`}
             </Button>
             <Button variant="ghost" onClick={() => setConfirming(null)} disabled={busy !== null}>
               Keep it

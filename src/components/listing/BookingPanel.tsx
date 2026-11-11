@@ -3,15 +3,16 @@ import { CircleCheck, Truck } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { bookingProblem } from '@shared/bookingRules'
-import { quoteListing, rentalDays } from '@shared/pricing'
-import type { Booking, Listing } from '@shared/types'
+import { addMonths, quoteListing, quoteListingMonths, rentalDays, rentsByDay, rentsByMonth } from '@shared/pricing'
+import type { Booking, Listing, RentalTerm } from '@shared/types'
 import { useAuth } from '@/context/AuthContext'
 import { api, ApiError } from '@/lib'
 import { dateRange, plural, rupees, todayIST } from '@/lib/format'
 import { Button, ButtonLink } from '../ui/Button'
 import { PriceTag } from '../ui/PriceTag'
 import { useHydrated } from '@/lib/initialData'
-import { AvailabilityCalendar, type IsoRange } from './AvailabilityCalendar'
+import { AvailabilityCalendar, StartDateCalendar, type IsoRange } from './AvailabilityCalendar'
+import { SelectField } from '../ui/Field'
 import { PriceBreakdown } from './PriceBreakdown'
 
 interface Props {
@@ -27,35 +28,47 @@ export function BookingPanel({ listing, onBooked }: Props) {
   const offersDelivery = listing.pickupOptions.includes('delivery')
   const offersPickup = listing.pickupOptions.includes('pickup')
 
+  const byDay = rentsByDay(listing)
+  const byMonth = rentsByMonth(listing)
+  const [term, setTerm] = useState<RentalTerm>(byDay ? 'days' : 'months')
   const [range, setRange] = useState<IsoRange>({})
+  const [start, setStart] = useState<string | undefined>()
+  const [months, setMonths] = useState(listing.months?.min ?? 1)
   const [delivery, setDelivery] = useState(!offersPickup)
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [booked, setBooked] = useState<Booking | null>(null)
 
-  const complete = Boolean(range.from && range.to)
-  const problem = complete ? bookingProblem(listing, { start: range.from!, end: range.to!, delivery }, user?.id ?? '', today) : null
+  const monthly = term === 'months'
+  const from = monthly ? start : range.from
+  const to = monthly ? (start ? addMonths(start, months) : undefined) : range.to
+  const complete = Boolean(from && to)
+  const problem = complete ? bookingProblem(listing, { start: from!, end: to!, delivery, term, months }, user?.id ?? '', today) : null
   const quote = useMemo(
-    () => (complete && !problem ? quoteListing(listing, range.from!, range.to!, delivery) : null),
-    [complete, problem, listing, range.from, range.to, delivery],
+    () => (complete && !problem ? (monthly ? quoteListingMonths(listing, from!, months, delivery) : quoteListing(listing, from!, to!, delivery)) : null),
+    [complete, problem, monthly, listing, from, to, months, delivery],
   )
 
-  const status = !range.from
-    ? 'Choose your pickup date.'
-    : !range.to
-      ? 'Now choose your return date.'
-      : problem ?? `${dateRange(range.from, range.to)}, ${plural(rentalDays(range.from, range.to), 'day')}.`
+  const status = monthly
+    ? !start
+      ? 'Choose the day you’d like it from.'
+      : (problem ?? `${dateRange(from!, to!)}, ${plural(months, 'month')}.`)
+    : !range.from
+      ? 'Choose your pickup date.'
+      : !range.to
+        ? 'Now choose your return date.'
+        : (problem ?? `${dateRange(range.from, range.to)}, ${plural(rentalDays(range.from, range.to), 'day')}.`)
 
   const isOwner = user?.id === listing.ownerId
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!quote || !range.from || !range.to) return
+    if (!quote || !from || !to) return
     setSubmitting(true)
     setError(null)
     try {
-      const b = await api.requestBooking({ listingId: listing.id, start: range.from, end: range.to, delivery, message })
+      const b = await api.requestBooking({ listingId: listing.id, start: from, end: to, delivery, message, ...(monthly ? { months } : {}) })
       setBooked(b)
       onBooked?.(b)
     } catch (err) {
@@ -73,12 +86,16 @@ export function BookingPanel({ listing, onBooked }: Props) {
         </motion.span>
         <h2 className="mt-3 text-2xl">Request sent</h2>
         <p className="mt-2">
-          You’ve asked for {dateRange(booked.start, booked.end)}. We’ll show the owner’s answer on your dashboard.
+          You’ve asked for {dateRange(booked.start, booked.end)}
+          {booked.quote.months ? ` (${plural(booked.quote.months, 'month')})` : ''}. We’ll show the owner’s answer on your dashboard.
         </p>
-        <p className="mt-3 font-semibold">Due at pickup if accepted: {rupees(booked.quote.totalDue)}</p>
+        <p className="mt-3 font-semibold">Due at pickup if accepted: {rupees(booked.quote.dueAtPickup ?? booked.quote.totalDue)}</p>
+        {booked.quote.months && booked.quote.months > 1 ? (
+          <p className="mt-1 text-[0.9375rem] text-muted">Then {rupees(booked.quote.monthlyRate!)} at the start of each month.</p>
+        ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
-          <ButtonLink to="/dashboard?tab=bookings">See my bookings</ButtonLink>
-          <Button variant="outline" onClick={() => { setBooked(null); setRange({}) }}>
+          <ButtonLink to="/dashboard?tab=rentals">See my rentals</ButtonLink>
+          <Button variant="outline" onClick={() => { setBooked(null); setRange({}); setStart(undefined) }}>
             Pick other dates
           </Button>
         </div>
@@ -92,23 +109,64 @@ export function BookingPanel({ listing, onBooked }: Props) {
         <h2 id="booking-title" className="text-2xl">
           Check dates
         </h2>
-        <PriceTag amount={listing.pricing.daily} />
+        <PriceTag {...(monthly ? { amount: listing.pricing.monthly!, per: 'month' as const } : { amount: listing.pricing.daily!, per: 'day' as const })} />
       </div>
-      {(listing.pricing.weekly || listing.pricing.monthly) && (
+
+      {byDay && byMonth && (
+        <fieldset className="mt-4">
+          <legend className="sr-only">Rent it</legend>
+          <div className="grid grid-cols-2 gap-1 rounded-full bg-sunken p-1">
+            {(
+              [
+                ['days', 'By the day'],
+                ['months', 'By the month'],
+              ] as const
+            ).map(([t, label]) => (
+              <label
+                key={t}
+                className="flex min-h-11 cursor-pointer items-center justify-center rounded-full font-semibold has-checked:bg-surface has-checked:shadow-card has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-solid has-focus-visible:[outline-color:var(--focus)]"
+              >
+                <input type="radio" name="term" className="sr-only" checked={term === t} onChange={() => { setTerm(t); setError(null) }} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      {!monthly && (listing.pricing.weekly || (listing.pricing.monthly && !byMonth)) && (
         <p className="mt-2 text-[0.9375rem] text-muted">
-          {[listing.pricing.weekly && `${rupees(listing.pricing.weekly)} a week`, listing.pricing.monthly && `${rupees(listing.pricing.monthly)} a month`]
+          {[listing.pricing.weekly && `${rupees(listing.pricing.weekly)} a week`, !byMonth && listing.pricing.monthly && `${rupees(listing.pricing.monthly)} a month`]
             .filter(Boolean)
             .join(', ')}
           . The cheapest rate is applied for you.
         </p>
       )}
 
+      {monthly && (
+        <SelectField
+          className="mt-4"
+          label="How many months?"
+          value={String(months)}
+          onChange={(e) => { setMonths(Number(e.target.value)); setError(null) }}
+          hint={`Paid month by month. Either of you can end it early with a month’s notice.`}
+        >
+          {Array.from({ length: listing.months!.max - listing.months!.min + 1 }, (_, i) => listing.months!.min + i).map((n) => (
+            <option key={n} value={n}>
+              {plural(n, 'month')}
+            </option>
+          ))}
+        </SelectField>
+      )}
+
       <div className="mt-4 -mx-2 min-h-[22rem] overflow-x-auto">
         {/* Which days are past depends on today, so draw the calendar in the browser only. */}
-        {hydrated ? (
-        <AvailabilityCalendar blockedDates={listing.blockedDates} today={today} value={range} onChange={(r) => { setRange(r); setError(null) }} />
-        ) : (
+        {!hydrated ? (
           <div aria-hidden="true" className="mx-2 h-[20rem] animate-pulse rounded-field bg-sunken" />
+        ) : monthly ? (
+          <StartDateCalendar blockedDates={listing.blockedDates} today={today} value={start} onChange={(d) => { setStart(d); setError(null) }} />
+        ) : (
+          <AvailabilityCalendar blockedDates={listing.blockedDates} today={today} value={range} onChange={(r) => { setRange(r); setError(null) }} />
         )}
       </div>
 
@@ -116,7 +174,9 @@ export function BookingPanel({ listing, onBooked }: Props) {
         {status}
       </p>
       <p className="text-[0.9375rem] text-muted">
-        Rented for {listing.minDays === listing.maxDays ? plural(listing.minDays, 'day') : `${plural(listing.minDays, 'day')} to ${plural(listing.maxDays, 'day')}`} at a time.
+        {monthly
+          ? `Rented for ${listing.months!.min === listing.months!.max ? plural(listing.months!.min, 'month') : `${plural(listing.months!.min, 'month')} to ${plural(listing.months!.max, 'month')}`} at a time.`
+          : `Rented for ${listing.minDays === listing.maxDays ? plural(listing.minDays, 'day') : `${plural(listing.minDays, 'day')} to ${plural(listing.maxDays, 'day')}`} at a time.`}
       </p>
 
       {offersDelivery && offersPickup && (
@@ -156,7 +216,7 @@ export function BookingPanel({ listing, onBooked }: Props) {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="overflow-hidden"
           >
-            <PriceBreakdown quote={quote} className="mt-5 border-t border-line pt-4" />
+            <PriceBreakdown quote={quote} start={from} className="mt-5 border-t border-line pt-4" />
           </motion.div>
         )}
       </AnimatePresence>

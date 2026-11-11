@@ -26,7 +26,19 @@ export const FAQS: FaqItem[] = [
     id: 'f3',
     section: 'renting',
     q: 'What if I need it for longer?',
-    a: 'Message the owner before your return date. If the dates are free, they can extend your booking. Lots of listings have cheaper weekly and monthly rates, which kick in automatically.',
+    a: 'Message the owner before your return date. If they agree and the days are free, send a new request for the extra days. Lots of listings have cheaper weekly rates that apply automatically, and some can be rented by the month.',
+  },
+  {
+    id: 'f20',
+    section: 'renting',
+    q: 'Can I rent something by the month?',
+    a: 'Yes, when the owner offers it: furniture, appliances and other things people need for a while. Choose “By the month” on the listing, pick a start date and how many months (up to 12). You pay the first month and the deposit at pickup, then each month’s rent when it starts, directly to the owner.',
+  },
+  {
+    id: 'f21',
+    section: 'renting',
+    q: 'Can I end a monthly rental early?',
+    a: 'Yes. Before pickup you can cancel free. After pickup, either you or the owner can give notice from your dashboard, and the rental ends one month later. If the last month is cut short, you pay for those days only.',
   },
   {
     id: 'f4',
@@ -65,7 +77,7 @@ export const FAQS: FaqItem[] = [
     id: 'f9',
     section: 'payments',
     q: 'How do I pay right now?',
-    a: 'While we’re getting online payments ready, you pay the owner at pickup, by UPI or cash. The exact amount is shown on your booking, so there’s nothing to negotiate on the day.',
+    a: 'While we’re getting online payments ready, you pay the owner at pickup, by UPI or cash. The exact amount is shown on your booking, so there’s nothing to negotiate on the day. For monthly rentals, each later month is paid the same way when it starts, and your dashboard shows what’s due when.',
   },
   {
     id: 'f10',

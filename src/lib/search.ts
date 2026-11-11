@@ -1,5 +1,5 @@
-import { isRangeAvailable } from '@shared/pricing'
-import type { ISODate, Listing } from '@shared/types'
+import { dailyEquivalent, isRangeAvailable, rentsByDay, rentsByMonth } from '@shared/pricing'
+import type { ISODate, Listing, RentalTerm } from '@shared/types'
 
 export type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'rating' | 'newest'
 
@@ -15,7 +15,9 @@ export interface SearchFilters {
   q?: string
   category?: string
   areas?: string[]
-  /** Daily price range in rupees. */
+  /** Only listings rented by the day, or by the month. */
+  term?: RentalTerm
+  /** Price range in rupees: per month when `term` is 'months', otherwise per day. */
   min?: number
   max?: number
   from?: ISODate
@@ -52,6 +54,11 @@ function textScore(l: Listing, terms: string[], categoryName: (id: string) => st
   return score
 }
 
+/** The price a filter or sort compares: per month for monthly searches, otherwise per day (monthly-only listings ÷ 30). */
+export function comparablePrice(l: Listing, term?: RentalTerm): number {
+  return term === 'months' ? (l.pricing.monthly ?? Number.POSITIVE_INFINITY) : term === 'days' ? (l.pricing.daily ?? Number.POSITIVE_INFINITY) : dailyEquivalent(l)
+}
+
 /** Filter, sort and paginate. Pure, so the mock API and tests share it. */
 export function searchListings(
   all: Listing[],
@@ -67,8 +74,11 @@ export function searchListings(
     if (l.status !== 'active') continue
     if (f.category && l.categoryId !== f.category) continue
     if (areas && !areas.has(l.areaId)) continue
-    if (f.min !== undefined && l.pricing.daily < f.min) continue
-    if (f.max !== undefined && l.pricing.daily > f.max) continue
+    if (f.term === 'days' && !rentsByDay(l)) continue
+    if (f.term === 'months' && !rentsByMonth(l)) continue
+    const price = comparablePrice(l, f.term)
+    if (f.min !== undefined && price < f.min) continue
+    if (f.max !== undefined && price > f.max) continue
     if (f.noDeposit && l.deposit > 0) continue
     if (f.delivery && !l.pickupOptions.includes('delivery')) continue
     if (hasDates && !isRangeAvailable(f.from!, f.to!, l.blockedDates)) continue
@@ -78,13 +88,14 @@ export function searchListings(
   }
 
   const sort = f.sort ?? 'relevance'
+  const sortTerm = f.term
   const quality = (l: Listing) => l.ratingAvg * Math.log2(2 + l.ratingCount)
   scored.sort((a, b) => {
     switch (sort) {
       case 'price-asc':
-        return a.l.pricing.daily - b.l.pricing.daily
+        return comparablePrice(a.l, sortTerm) - comparablePrice(b.l, sortTerm)
       case 'price-desc':
-        return b.l.pricing.daily - a.l.pricing.daily
+        return comparablePrice(b.l, sortTerm) - comparablePrice(a.l, sortTerm)
       case 'rating':
         return b.l.ratingAvg - a.l.ratingAvg || b.l.ratingCount - a.l.ratingCount
       case 'newest':

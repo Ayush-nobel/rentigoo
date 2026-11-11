@@ -78,8 +78,35 @@ const sections: LegalSection[] = [
           <li>You arrange pickup or delivery through Messages. At handover, check the item together.</li>
           <li>You use it with care, keep to the owner’s rules, and return it on time, in the condition you got it (apart from normal wear).</li>
         </ol>
-        <p>If you can’t return the item on time, tell the owner straight away. Each extra day is charged at the listing’s daily rate unless the owner agrees otherwise.</p>
+        <p>
+          If you can’t return the item on time, tell the owner straight away. Each extra day is charged at the listing’s daily rate (or, for items rented only by
+          the month, the monthly price ÷ 30) unless the owner agrees otherwise.
+        </p>
       </>
+    ),
+  },
+  {
+    id: 'monthly',
+    title: 'Monthly rentals',
+    body: (
+      <ul>
+        <li>Some items can be rented by the month, for 1 to 12 months at a time. A month runs to the same date in the next month (for example 15 Jan to 15 Feb).</li>
+        <li>
+          At pickup you pay the first month’s rent, any delivery fee and the deposit. Each later month’s rent is due on the day that month starts, paid
+          directly to the owner by UPI or cash. The owner marks each payment in their dashboard; keep your own record, such as the UPI receipt.
+        </li>
+        <li>Before pickup, a monthly booking can be cancelled free, like any other booking.</li>
+        <li>
+          After pickup, either of you can end the rental early by giving notice from the dashboard. It then ends one month after the day notice is given (or
+          after the start date, if that’s later), but never partway through a month that’s already been paid. Months after the end are dropped, and if the last
+          month is cut short, its rent is charged per day at the monthly price ÷ 30.
+        </li>
+        <li>
+          If a month’s rent is more than 7 days late, the owner may end the rental by telling the renter in Messages and ask for the item back. Rent owed for
+          the days the renter had the item may be taken from the deposit, and the rest of the deposit must be returned.
+        </li>
+        <li>Deposits and damage work as for any rental (see below): the deposit comes back in full when the item returns in the same condition, apart from normal wear.</li>
+      </ul>
     ),
   },
   {
@@ -104,7 +131,7 @@ const sections: LegalSection[] = [
         )}
         <p>
           <strong>How you pay today:</strong> RentiGoo doesn’t take online payments yet. You pay the owner the “Due at pickup” amount when you collect the item,
-          by UPI or cash, and the owner gives you back the deposit when you return it. We’ll update these terms before online payments start.
+          by UPI or cash (for monthly rentals, each later month is paid the same way when it starts), and the owner gives you back the deposit when you return it. We’ll update these terms before online payments start.
         </p>
       </>
     ),
@@ -120,7 +147,7 @@ const sections: LegalSection[] = [
           If the item comes back damaged or incomplete, the owner may keep only the reasonable cost of repair or replacement, and must show the renter the bill
           or a written quote.
         </li>
-        <li>If you can’t agree, contact our grievance officer (section 12). We’ll look at what both of you send us.</li>
+        <li>If you can’t agree, contact our grievance officer (see “Complaints and grievance officer” below). We’ll look at what both of you send us.</li>
       </ul>
     ),
   },

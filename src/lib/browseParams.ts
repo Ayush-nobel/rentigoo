@@ -6,7 +6,7 @@ import { SORT_LABELS, type SearchFilters, type SortKey } from './search'
 /**
  * Browse filters live in the URL so searches are shareable and the back
  * button works:
- *   /browse?q=tent&category=outdoor&areas=mp-nagar,kolar-road&min=100&max=500
+ *   /browse?q=tent&category=outdoor&areas=mp-nagar,kolar-road&term=months&min=100&max=500
  *          &from=2026-11-20&to=2026-11-22&deposit=none&delivery=1&sort=price-asc&page=2
  * Anything malformed is dropped rather than trusted.
  */
@@ -20,6 +20,9 @@ export function parseBrowseParams(p: URLSearchParams): SearchFilters {
 
   const areas = (p.get('areas') ?? '').split(',').filter((a) => getArea(a))
   if (areas.length) f.areas = [...new Set(areas)]
+
+  const term = p.get('term')
+  if (term === 'days' || term === 'months') f.term = term
 
   const min = wholeRupees(p.get('min'))
   const max = wholeRupees(p.get('max'))
@@ -50,6 +53,7 @@ export function toBrowseParams(f: SearchFilters): URLSearchParams {
   if (f.q) p.set('q', f.q)
   if (f.category) p.set('category', f.category)
   if (f.areas?.length) p.set('areas', f.areas.join(','))
+  if (f.term) p.set('term', f.term)
   if (f.min !== undefined) p.set('min', String(f.min))
   if (f.max !== undefined) p.set('max', String(f.max))
   if (f.from && f.to) {
@@ -68,6 +72,7 @@ export function activeFilterCount(f: SearchFilters): number {
   return (
     (f.category ? 1 : 0) +
     (f.areas?.length ?? 0) +
+    (f.term ? 1 : 0) +
     (f.min !== undefined || f.max !== undefined ? 1 : 0) +
     (f.from ? 1 : 0) +
     (f.noDeposit ? 1 : 0) +

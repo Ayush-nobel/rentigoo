@@ -62,3 +62,8 @@ for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
     new PolicyStatement({ actions: ['s3:ListBucket'], resources: [bucket.bucketArn], conditions: { StringLike: { 's3:prefix': ['listing-photos/*'] } } }),
   )
 }
+
+// Test backends (sandboxes and branches other than main) accept the built-in
+// placeholder pictures, so demo data can be seeded through saveListing like
+// real listings. Production only accepts real uploads.
+if (process.env.AWS_BRANCH !== 'main') backend.saveListingFn.addEnvironment('ALLOW_PLACEHOLDER_PHOTOS', 'true')

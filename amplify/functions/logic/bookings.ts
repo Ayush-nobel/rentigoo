@@ -4,7 +4,8 @@
  */
 import { bookingProblem, canTransition } from '../../../shared/bookingRules'
 import { FEES } from '../../../shared/fees'
-import { occupiedDates, quoteListing } from '../../../shared/pricing'
+import { ownerStatsFrom } from '../../../shared/earnings'
+import { addMonths, monthSchedule, noticeEnd, occupiedDates, quoteListing, quoteListingMonths, termOf } from '../../../shared/pricing'
 import type { Booking, BookingStatus, ISODate, Listing, OwnerStats, Review } from '../../../shared/types'
 
 /** Listing as stored: owner-set blocked days plus server-maintained booked days. */
@@ -20,6 +21,8 @@ export interface Store {
   listBookingsForOwner(ownerId: string): Promise<StoredBooking[]>
   createBooking(b: Omit<StoredBooking, 'id' | 'createdAt'>): Promise<StoredBooking>
   setBookingStatus(id: string, status: BookingStatus, paymentStatus?: Booking['paymentStatus']): Promise<StoredBooking>
+  /** Monthly rentals: payments marked and notice given. */
+  updateBookingTerms(id: string, patch: Pick<Partial<Booking>, 'paidMonths' | 'notice' | 'end'>): Promise<StoredBooking>
   listReviewsForBooking(bookingId: string): Promise<Review[]>
   listReviewsForListing(listingId: string): Promise<Review[]>
   listReviewsForUser(userId: string): Promise<Review[]>
@@ -46,9 +49,12 @@ function datesTakenBy(bookings: StoredBooking[], exceptId?: string): ISODate[] {
 export interface RequestBookingInput {
   listingId: string
   start: ISODate
+  /** Ignored for monthly requests: the end is worked out from `months`. */
   end: ISODate
   delivery: boolean
   message?: string | null
+  /** Set for a monthly rental. */
+  months?: number | null
 }
 
 export async function requestBooking(store: Store, input: RequestBookingInput, actorId: string, today: ISODate): Promise<StoredBooking> {
@@ -56,12 +62,22 @@ export async function requestBooking(store: Store, input: RequestBookingInput, a
   if (!listing) throw new RuleError('That listing doesn’t exist any more.')
 
   // Availability is checked against fresh bookings, not the cached calendar.
+  const monthly = input.months != null
+  let end = input.end
+  if (monthly) {
+    try {
+      end = addMonths(input.start, input.months!)
+    } catch {
+      throw new RuleError('Those dates don’t look right. Pick them again.')
+    }
+  }
+  const req = { start: input.start, end, delivery: input.delivery, term: monthly ? ('months' as const) : ('days' as const), months: input.months ?? undefined }
   const existing = await store.listBookingsForListing(listing.id)
   const unavailable = [...listing.blockedDates, ...datesTakenBy(existing)]
-  const problem = bookingProblem({ ...listing, blockedDates: unavailable }, input, actorId, today)
+  const problem = bookingProblem({ ...listing, blockedDates: unavailable }, req, actorId, today)
   if (problem) throw new RuleError(problem)
 
-  const mine = existing.find((b) => b.renterId === actorId && b.status === 'requested' && b.start === input.start && b.end === input.end)
+  const mine = existing.find((b) => b.renterId === actorId && b.status === 'requested' && b.start === input.start && b.end === end)
   if (mine) throw new RuleError('You’ve already asked for these dates. The owner will reply soon.')
 
   const message = input.message?.trim().slice(0, 500)
@@ -71,19 +87,20 @@ export async function requestBooking(store: Store, input: RequestBookingInput, a
     ownerId: listing.ownerId,
     participants: [actorId, listing.ownerId],
     start: input.start,
-    end: input.end,
+    end,
     delivery: input.delivery,
     // Priced here, from the stored listing. Nothing from the browser is trusted.
-    quote: quoteListing(listing, input.start, input.end, input.delivery),
+    quote: monthly ? quoteListingMonths(listing, input.start, input.months!, input.delivery) : quoteListing(listing, input.start, end, input.delivery),
+    ...(monthly ? { paidMonths: 0 } : {}),
     status: 'requested',
     paymentStatus: 'pay-at-pickup',
     ...(message ? { message } : {}),
   })
 }
 
-export type BookingAction = 'accept' | 'decline' | 'cancel' | 'handover' | 'return'
+export type BookingAction = 'accept' | 'decline' | 'cancel' | 'handover' | 'return' | 'markPaid' | 'giveNotice'
 
-const ACTION_STATUS: Record<BookingAction, BookingStatus> = {
+const ACTION_STATUS: Record<Exclude<BookingAction, 'markPaid' | 'giveNotice'>, BookingStatus> = {
   accept: 'accepted',
   decline: 'declined',
   cancel: 'cancelled',
@@ -91,9 +108,10 @@ const ACTION_STATUS: Record<BookingAction, BookingStatus> = {
   return: 'completed',
 }
 
-export async function respondToBooking(store: Store, bookingId: string, action: BookingAction, actorId: string): Promise<StoredBooking> {
+export async function respondToBooking(store: Store, bookingId: string, action: BookingAction, actorId: string, today?: ISODate): Promise<StoredBooking> {
   const booking = await store.getBooking(bookingId)
   if (!booking || !booking.participants.includes(actorId)) throw new RuleError('Booking not found.')
+  if (action === 'markPaid' || action === 'giveNotice') return monthlyAction(store, booking, action, actorId, today)
   const to = ACTION_STATUS[action]
   if (!to || !canTransition(booking, to, actorId)) throw new RuleError('This booking can’t be changed that way now.')
 
@@ -112,6 +130,30 @@ export async function respondToBooking(store: Store, bookingId: string, action: 
     const after = others.map((b) => (b.id === updated.id ? updated : b))
     await store.setListingBookedDates(booking.listingId, datesTakenBy(after))
   }
+  return updated
+}
+
+/**
+ * Monthly rentals, while the item is with the renter:
+ * - the owner marks each month's rent as paid, in order;
+ * - either side gives one month's notice, which moves the end date (once).
+ */
+async function monthlyAction(store: Store, b: StoredBooking, action: 'markPaid' | 'giveNotice', actorId: string, today: ISODate | undefined): Promise<StoredBooking> {
+  if (termOf(b.quote) !== 'months' || b.status !== 'active') throw new RuleError('This booking can’t be changed that way now.')
+  const schedule = monthSchedule(b.start, b.end, b.quote.monthlyRate!)
+  if (action === 'markPaid') {
+    if (actorId !== b.ownerId) throw new RuleError('Only the owner can mark rent as paid.')
+    const paid = b.paidMonths ?? 0
+    if (paid >= schedule.length) throw new RuleError('Every month is already marked as paid.')
+    return store.updateBookingTerms(b.id, { paidMonths: paid + 1 })
+  }
+  if (b.notice) throw new RuleError('Notice has already been given for this rental.')
+  if (!today) throw new Error('today is required for notice')
+  const end = noticeEnd(today, b)
+  const updated = await store.updateBookingTerms(b.id, { notice: { at: new Date().toISOString(), by: actorId }, end, paidMonths: Math.min(b.paidMonths ?? 0, monthSchedule(b.start, end, b.quote.monthlyRate!).length) })
+  // The days after the new end are free again.
+  const others = await store.listBookingsForListing(b.listingId)
+  await store.setListingBookedDates(b.listingId, datesTakenBy(others.map((x) => (x.id === updated.id ? updated : x))))
   return updated
 }
 
@@ -160,15 +202,7 @@ export type { OwnerStats }
 
 /** Owner dashboard figures. `month` is `YYYY-MM` in India time. */
 export async function ownerStats(store: Store, ownerId: string, month: string): Promise<OwnerStats> {
-  const bookings = await store.listBookingsForOwner(ownerId)
-  const done = bookings.filter((b) => b.status === 'completed')
-  return {
-    earnedThisMonth: done.filter((b) => b.end.startsWith(month)).reduce((s, b) => s + b.quote.ownerPayout, 0),
-    earnedTotal: done.reduce((s, b) => s + b.quote.ownerPayout, 0),
-    pendingRequests: bookings.filter((b) => b.status === 'requested').length,
-    activeRentals: bookings.filter((b) => b.status === 'active').length,
-    upcomingRentals: bookings.filter((b) => b.status === 'accepted').length,
-  }
+  return ownerStatsFrom(await store.listBookingsForOwner(ownerId), month)
 }
 
 /** Exposed for the dashboard copy, so server and UI agree. */

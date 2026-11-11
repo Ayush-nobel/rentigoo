@@ -68,25 +68,28 @@ async function main() {
     ok(await client.mutations.createMyProfile({ name: u.name, areaId: u.areaId, termsVersion: LEGAL.terms.version, privacyVersion: LEGAL.privacy.version }), `profile ${u.name}`)
     ok(await client.models.UserProfile.update({ id: sub, bio: u.bio, languages: u.languages } as never), `profile details ${u.name}`)
     for (const l of LISTINGS.filter((x) => x.ownerId === u.id)) {
+      // Through the same checked path as real listings.
       const created = ok(
-        await client.models.Listing.create({
-          ownerId: sub,
-          title: l.title,
-          description: l.description,
-          categoryId: l.categoryId,
-          areaId: l.areaId,
-          photos: l.photos,
-          condition: l.condition.replace('-', '_') as 'like_new',
-          pricing: l.pricing,
-          deposit: l.deposit,
-          minDays: l.minDays,
-          maxDays: l.maxDays,
-          pickupOptions: l.pickupOptions,
-          deliveryFee: l.deliveryFee ?? null,
-          blockedDates: [],
-          rules: l.rules,
-          status: l.status,
-        } as never),
+        await client.mutations.saveListing({
+          listing: JSON.stringify({
+            title: l.title,
+            description: l.description,
+            categoryId: l.categoryId,
+            areaId: l.areaId,
+            photos: l.photos,
+            condition: l.condition,
+            pricing: l.pricing,
+            deposit: l.deposit,
+            minDays: l.minDays,
+            maxDays: l.maxDays,
+            ...(l.months ? { months: l.months } : {}),
+            pickupOptions: l.pickupOptions,
+            ...(l.deliveryFee !== undefined ? { deliveryFee: l.deliveryFee } : {}),
+            blockedDates: [],
+            rules: l.rules,
+            status: l.status,
+          }),
+        }),
         `listing ${l.title}`,
       )
       listingIds.set(l.id, created.id)

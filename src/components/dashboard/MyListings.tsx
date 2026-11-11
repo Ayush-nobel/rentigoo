@@ -10,6 +10,11 @@ import { Rating } from '@/components/ui/Rating'
 import { api, ApiError } from '@/lib'
 import { rupees } from '@/lib/format'
 
+function priceLine(l: Listing) {
+  const parts = [l.pricing.daily ? `${rupees(l.pricing.daily)} a day` : '', l.months && l.pricing.monthly ? `${rupees(l.pricing.monthly)} a month` : ''].filter(Boolean)
+  return parts.length ? parts.join(' or ') : 'No price yet'
+}
+
 const STATUS = {
   active: { label: 'Live', tone: 'success' },
   paused: { label: 'Paused', tone: 'neutral' },
@@ -80,7 +85,7 @@ function ListingRow({ listing: l, onChanged }: { listing: Listing; onChanged: (m
             )}
           </h3>
           <p className="text-muted">
-            {l.pricing.daily ? `${rupees(l.pricing.daily)} a day` : 'No price yet'}, {areaName(l.areaId)}
+            {priceLine(l)}, {areaName(l.areaId)}
           </p>
           {l.status !== 'draft' && <Rating value={l.ratingAvg} count={l.ratingCount} className="mt-1" />}
         </div>

@@ -47,6 +47,27 @@ export function FilterPanel({ filters, onChange }: Props) {
         </div>
       </Group>
 
+      <Group legend="How long">
+        <div className="grid">
+          {(
+            [
+              ['', 'Any length'],
+              ['days', 'By the day'],
+              ['months', 'By the month'],
+            ] as const
+          ).map(([id, label]) => (
+            <Radio
+              key={id || 'any'}
+              name="term"
+              label={label}
+              checked={(filters.term ?? '') === id}
+              // Prices mean something different per day and per month, so a change of term clears them.
+              onChange={() => onChange({ term: id || undefined, min: undefined, max: undefined })}
+            />
+          ))}
+        </div>
+      </Group>
+
       <Group legend="Area">
         <div className="grid">
           {AREAS.map((a) => (
@@ -55,7 +76,7 @@ export function FilterPanel({ filters, onChange }: Props) {
         </div>
       </Group>
 
-      <Group legend="Price per day">
+      <Group legend={filters.term === 'months' ? 'Price per month' : 'Price per day'}>
         <PriceRange min={filters.min} max={filters.max} onChange={(min, max) => onChange({ min, max })} />
       </Group>
 

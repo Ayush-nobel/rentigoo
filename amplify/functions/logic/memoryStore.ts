@@ -47,6 +47,10 @@ export function memoryStore(
       if (paymentStatus) b.paymentStatus = paymentStatus
       return structuredClone(b)
     },
+    async updateBookingTerms(id, patch) {
+      Object.assign(bookings.get(id)!, patch)
+      return structuredClone(bookings.get(id)!)
+    },
     async listReviewsForBooking(bookingId) {
       return reviews.filter((r) => r.bookingId === bookingId)
     },

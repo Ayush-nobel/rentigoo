@@ -17,6 +17,7 @@ export type ListingDraft = Pick<
   | 'deposit'
   | 'minDays'
   | 'maxDays'
+  | 'months'
   | 'pickupOptions'
   | 'deliveryFee'
   | 'blockedDates'
@@ -37,6 +38,9 @@ export const LISTING_LIMITS = {
   depositMax: 500_000,
   deliveryFeeMax: 5_000,
   maxDaysCap: 90,
+  monthlyMin: 100,
+  monthlyMax: 1_000_000,
+  maxMonthsCap: 12,
   rulesMax: 8,
   ruleMax: 120,
   blockedDaysMax: 366,
@@ -60,7 +64,7 @@ const PICKUP: PickupOption[] = ['pickup', 'delivery']
 export const PHOTO_KEY = /^listing-photos\/[\w-]+:[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|jpg)$/
 const PLACEHOLDER_KEY = /^ph:[a-z-]+:\d+$/
 
-export type ListingErrors = Partial<Record<keyof ListingDraft | 'weekly' | 'monthly' | 'photoAlt', string>>
+export type ListingErrors = Partial<Record<keyof ListingDraft | 'weekly' | 'monthly' | 'photoAlt' | 'term', string>>
 
 const whole = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n)
 
@@ -72,11 +76,17 @@ const whole = (n: unknown): n is number => typeof n === 'number' && Number.isInt
  */
 export function listingErrors(
   d: ListingDraft,
-  opts: { today: ISODate; /** Keys already on the saved listing (e.g. seed placeholders), accepted as they are. */ knownKeys?: string[] },
+  opts: {
+    today: ISODate
+    /** Keys already on the saved listing (e.g. seed placeholders), accepted as they are. */
+    knownKeys?: string[]
+    /** Test backends only: accept built-in placeholder pictures (`ph:`), so demo data can be seeded. */
+    allowPlaceholders?: boolean
+  },
 ): ListingErrors {
   const e: ListingErrors = {}
   const known = new Set(opts.knownKeys ?? [])
-  const isPhotoKey = (key: string) => PHOTO_KEY.test(key) || (known.has(key) && PLACEHOLDER_KEY.test(key))
+  const isPhotoKey = (key: string) => PHOTO_KEY.test(key) || ((known.has(key) || Boolean(opts.allowPlaceholders)) && PLACEHOLDER_KEY.test(key))
   const L = LISTING_LIMITS
   const title = (d.title ?? '').trim()
   if (title.length < L.titleMin) e.title = `Give it a title of at least ${L.titleMin} characters, e.g. “Canon EOS 200D with 18–55mm lens”.`
@@ -107,8 +117,10 @@ export function listingErrors(
   }
   if (!Array.isArray(d.pickupOptions) || d.pickupOptions.some((p) => !PICKUP.includes(p))) e.pickupOptions = 'Choose pickup, delivery or both.'
   if (!CONDITIONS.some((c) => c.id === d.condition)) e.condition = 'Choose the condition.'
-  if (!whole(d.pricing?.daily) || !whole(d.deposit) || !whole(d.minDays) || !whole(d.maxDays)) {
-    if (draft) e.pricing = 'Prices and days need to be whole numbers.'
+  const dailyOk = d.pricing?.daily === undefined || whole(d.pricing.daily)
+  const monthsOk = d.months === undefined || (whole(d.months?.min) && whole(d.months?.max))
+  if (!dailyOk || (d.pricing?.monthly !== undefined && !whole(d.pricing.monthly)) || !whole(d.deposit) || !whole(d.minDays) || !whole(d.maxDays) || !monthsOk) {
+    if (draft) e.pricing = 'Prices and lengths need to be whole numbers.'
   }
 
   if (draft) return e
@@ -126,15 +138,37 @@ export function listingErrors(
   }
 
   const daily = d.pricing?.daily
-  if (!whole(daily) || daily < L.dailyMin || daily > L.dailyMax) e.pricing = `Set a daily price between ₹${L.dailyMin} and ₹1,00,000, in whole rupees.`
-  else {
-    const { weekly, monthly } = d.pricing
-    if (weekly !== undefined && (!whole(weekly) || weekly < daily || weekly >= daily * 7)) {
-      e.weekly = `A weekly price should be less than 7 days at the daily price (₹${(daily * 7).toLocaleString('en-IN')}), or leave it empty.`
+  const monthly = d.pricing?.monthly
+  const byDay = daily !== undefined
+  const byMonth = d.months !== undefined
+  if (!byDay && !byMonth) e.term = 'Choose whether people can rent it by the day, by the month, or both.'
+  if (byDay) {
+    if (!whole(daily) || daily < L.dailyMin || daily > L.dailyMax) e.pricing = `Set a daily price between ₹${L.dailyMin} and ₹1,00,000, in whole rupees.`
+    else {
+      const { weekly } = d.pricing
+      if (weekly !== undefined && (!whole(weekly) || weekly < daily || weekly >= daily * 7)) {
+        e.weekly = `A weekly price should be less than 7 days at the daily price (₹${(daily * 7).toLocaleString('en-IN')}), or leave it empty.`
+      }
     }
-    if (monthly !== undefined && (!whole(monthly) || monthly < daily || monthly >= daily * 30)) {
-      e.monthly = `A monthly price should be less than 30 days at the daily price, or leave it empty.`
-    } else if (monthly !== undefined && weekly !== undefined && !e.weekly && monthly < weekly) {
+    if (!whole(d.minDays) || d.minDays < 1) e.minDays = 'The shortest rental is at least 1 day.'
+    if (!whole(d.maxDays) || d.maxDays > L.maxDaysCap) e.maxDays = `The longest rental by the day can be up to ${L.maxDaysCap} days.`
+    else if (!e.minDays && d.maxDays < d.minDays) e.maxDays = 'The longest rental can’t be shorter than the shortest.'
+  } else if (d.pricing?.weekly !== undefined) {
+    e.weekly = 'A weekly price needs a daily price too.'
+  }
+  if (byMonth) {
+    if (!whole(monthly) || monthly < L.monthlyMin || monthly > L.monthlyMax) e.monthly = `Set a monthly price between ₹${L.monthlyMin} and ₹10,00,000, in whole rupees.`
+    else if (byDay && !e.pricing && monthly >= daily! * 30) e.monthly = `A month should cost less than 30 days at the daily price (₹${(daily! * 30).toLocaleString('en-IN')}).`
+    else if (byDay && !e.pricing && d.pricing.weekly !== undefined && monthly < d.pricing.weekly) e.monthly = 'A month should cost more than a week.'
+    const { min, max } = d.months!
+    if (!whole(min) || min < 1 || min > L.maxMonthsCap) e.months = `The shortest monthly rental is 1 to ${L.maxMonthsCap} months.`
+    else if (!whole(max) || max > L.maxMonthsCap) e.months = `The longest monthly rental can be up to ${L.maxMonthsCap} months.`
+    else if (max < min) e.months = 'The longest rental can’t be shorter than the shortest.'
+  } else if (monthly !== undefined) {
+    // A monthly price on a daily-only listing works as a discount on long daily rentals.
+    if (!byDay || !whole(monthly) || monthly < (daily ?? 0) || monthly >= (daily ?? 0) * 30) {
+      e.monthly = 'A monthly price should be less than 30 days at the daily price, or leave it empty.'
+    } else if (d.pricing.weekly !== undefined && !e.weekly && monthly < d.pricing.weekly) {
       e.monthly = 'A month should cost more than a week.'
     }
   }
@@ -164,13 +198,14 @@ export function cleanDraft(d: ListingDraft, today: ISODate): ListingDraft {
     photos: d.photos.map((p) => ({ key: p.key, alt: p.alt.trim().replace(/\s+/g, ' ') })),
     condition: d.condition,
     pricing: {
-      daily: d.pricing.daily,
+      ...(d.pricing.daily !== undefined ? { daily: d.pricing.daily } : {}),
       ...(d.pricing.weekly !== undefined ? { weekly: d.pricing.weekly } : {}),
       ...(d.pricing.monthly !== undefined ? { monthly: d.pricing.monthly } : {}),
     },
     deposit: d.deposit,
     minDays: d.minDays,
     maxDays: d.maxDays,
+    ...(d.months ? { months: { min: d.months.min, max: d.months.max } } : {}),
     pickupOptions: PICKUP.filter((p) => d.pickupOptions.includes(p)),
     ...(delivery && d.deliveryFee !== undefined ? { deliveryFee: d.deliveryFee } : {}),
     // Past days no longer matter.

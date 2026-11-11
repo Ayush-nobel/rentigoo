@@ -14,9 +14,12 @@ interface Seed {
   title: string
   categoryId: string
   areaId: string
-  daily: number
+  /** Absent for monthly-only listings. */
+  daily?: number
   weekly?: number
   monthly?: number
+  /** Month range when it can be rented by the month. */
+  months?: [number, number]
   deposit: number
   condition: Condition
   pickup: PickupOption[]
@@ -323,7 +326,8 @@ const seeds: Seed[] = [
     pickup: ['delivery'],
     deliveryFee: 250,
     minDays: 7,
-    maxDays: 90,
+    maxDays: 30,
+    months: [1, 6],
     description: 'Electric desk with memory presets. Good for trying a standing desk before buying one, or for a short project.',
     rules: ['Minimum one week', 'Keep liquids away from the control panel'],
     photoAlts: ['Standing desk raised to standing height'],
@@ -343,7 +347,8 @@ const seeds: Seed[] = [
     pickup: ['pickup', 'delivery'],
     deliveryFee: 150,
     minDays: 7,
-    maxDays: 120,
+    maxDays: 30,
+    months: [1, 4],
     description: 'For Diwali week, construction dust next door, or when a newborn or elderly parent is visiting. HEPA filter replaced in October. Shows a live AQI reading.',
     rules: ['Minimum one week', 'Don’t wash the filter'],
     photoAlts: ['White air purifier showing an AQI reading'],
@@ -451,11 +456,65 @@ const seeds: Seed[] = [
     pickup: ['delivery'],
     deliveryFee: 400,
     minDays: 7,
-    maxDays: 180,
+    maxDays: 30,
+    months: [1, 6],
     description: 'Try running at home before spending ₹35,000 on one. Folds upright against a wall. Delivery includes setup.',
     rules: ['Minimum one week', 'Use on a flat floor with the safety key clipped on'],
     photoAlts: ['Treadmill unfolded in a living room'],
     createdDaysAgo: 14,
+  },
+  // Rented by the month only.
+  {
+    id: 'l-sofa-3seat',
+    ownerId: 'u-simran',
+    title: 'Three-seater fabric sofa, grey',
+    categoryId: 'furniture',
+    areaId: 'shahpura',
+    monthly: 1400,
+    months: [3, 12],
+    deposit: 3000,
+    condition: 'good',
+    pickup: ['delivery'],
+    deliveryFee: 500,
+    description:
+      'Comfortable three-seater with removable, washable covers. Ideal if you’ve just moved to Bhopal for a job or a course and don’t want to buy furniture yet. Delivered and carried up to your flat.',
+    rules: ['No pets on the sofa, please', 'Tell me before moving it to another address'],
+    photoAlts: ['Grey three-seater sofa in a living room', 'Close-up of the washable fabric cover'],
+    createdDaysAgo: 6,
+  },
+  {
+    id: 'l-fridge-190l',
+    ownerId: 'u-rohan',
+    title: 'Single-door fridge, 190 litres',
+    categoryId: 'appliances',
+    areaId: 'habibganj',
+    monthly: 750,
+    months: [2, 12],
+    deposit: 2500,
+    condition: 'good',
+    pickup: ['pickup', 'delivery'],
+    deliveryFee: 300,
+    description:
+      'Reliable single-door fridge with a small freezer, right for one or two people. Three years old, cools well, quiet. You’ll need a stabiliser socket or I can lend one.',
+    rules: ['Let it stand for 2 hours after moving before switching on', 'Defrost the freezer once a month'],
+    photoAlts: ['Single-door fridge with the door open', 'Freezer compartment and shelves'],
+    createdDaysAgo: 3,
+  },
+  {
+    id: 'l-study-table',
+    ownerId: 'u-vikram',
+    title: 'Study table and chair set',
+    categoryId: 'furniture',
+    areaId: 'arera-colony',
+    monthly: 450,
+    months: [1, 10],
+    deposit: 1000,
+    condition: 'like-new',
+    pickup: ['pickup'],
+    description: 'Solid wood study table with a drawer and a matching chair. Good for a student’s room for the term. Easy to carry in a small car or auto.',
+    rules: ['Use a mat under hot cups'],
+    photoAlts: ['Wooden study table with matching chair'],
+    createdDaysAgo: 10,
   },
 ]
 
@@ -468,10 +527,11 @@ export const LISTINGS: Listing[] = seeds.map((s) => ({
   areaId: s.areaId,
   photos: s.photoAlts.map((alt, i) => ({ key: `ph:${s.categoryId}:${i}`, alt })),
   condition: s.condition,
-  pricing: { daily: s.daily, ...(s.weekly ? { weekly: s.weekly } : {}), ...(s.monthly ? { monthly: s.monthly } : {}) },
+  pricing: { ...(s.daily !== undefined ? { daily: s.daily } : {}), ...(s.weekly ? { weekly: s.weekly } : {}), ...(s.monthly ? { monthly: s.monthly } : {}) },
   deposit: s.deposit,
   minDays: s.minDays ?? 1,
   maxDays: s.maxDays ?? 30,
+  ...(s.months ? { months: { min: s.months[0], max: s.months[1] } } : {}),
   pickupOptions: s.pickup,
   ...(s.deliveryFee !== undefined ? { deliveryFee: s.deliveryFee } : {}),
   blockedDates: s.blockedDates ?? [],

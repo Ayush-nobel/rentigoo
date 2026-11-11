@@ -55,14 +55,23 @@ export function listingFromDb(l: any): StoredListing {
     blockedDates: (l.blockedDates ?? []).filter(Boolean),
     bookedDates: (l.bookedDates ?? []).filter(Boolean),
     rules: (l.rules ?? []).filter(Boolean),
-    pricing: { daily: l.pricing.daily, ...(l.pricing.weekly ? { weekly: l.pricing.weekly } : {}), ...(l.pricing.monthly ? { monthly: l.pricing.monthly } : {}) },
+    pricing: { ...(l.pricing.daily != null ? { daily: l.pricing.daily } : {}), ...(l.pricing.weekly ? { weekly: l.pricing.weekly } : {}), ...(l.pricing.monthly ? { monthly: l.pricing.monthly } : {}) },
+    months: l.months ?? undefined,
     ratingAvg: l.ratingAvg ?? 0,
     ratingCount: l.ratingCount ?? 0,
   }
 }
 
 export function bookingFromDb(b: any): StoredBooking {
-  return { ...b, paymentStatus: toApp(b.paymentStatus) as Booking['paymentStatus'], message: b.message ?? undefined }
+  const q = Object.fromEntries(Object.entries(b.quote ?? {}).filter(([, v]) => v !== null))
+  return {
+    ...b,
+    quote: q,
+    paymentStatus: toApp(b.paymentStatus) as Booking['paymentStatus'],
+    message: b.message ?? undefined,
+    paidMonths: b.paidMonths ?? undefined,
+    notice: b.notice ?? null,
+  }
 }
 
 const reviewFromDb = (r: any): Review => r as Review
@@ -102,6 +111,11 @@ export function amplifyStore(client: Client): Store {
       if (!updated) throw new Error('Booking was not updated')
       return bookingFromDb(updated)
     },
+    async updateBookingTerms(id, patch) {
+      const updated = check(await m.Booking.update({ id, ...patch } as never))
+      if (!updated) throw new Error('Booking was not updated')
+      return bookingFromDb(updated)
+    },
     async listReviewsForBooking(bookingId) {
       return (await all((nextToken) => m.Review.listReviewsByBooking({ bookingId }, { nextToken }))).map(reviewFromDb)
     },
@@ -129,7 +143,8 @@ const listingToDb = (l: ListingDraft) => ({
   condition: toDb(l.condition) as never,
   // Absent optional fields are cleared, not left as they were.
   deliveryFee: l.deliveryFee ?? null,
-  pricing: { daily: l.pricing.daily, weekly: l.pricing.weekly ?? null, monthly: l.pricing.monthly ?? null },
+  months: l.months ?? null,
+  pricing: { daily: l.pricing.daily ?? null, weekly: l.pricing.weekly ?? null, monthly: l.pricing.monthly ?? null },
 })
 
 /** Store for saveListing and deleteMyListing. */

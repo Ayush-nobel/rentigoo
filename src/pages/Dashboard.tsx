@@ -150,7 +150,7 @@ function Stats({ stats }: { stats: Awaited<ReturnType<typeof api.getOwnerStats>>
         <Stat term="Out now" value={String(stats.activeRentals)} />
       </dl>
       <p className="mt-4 text-[0.9375rem] opacity-85">
-        Counted when you mark an item as returned. Renters pay you directly at pickup
+        Counted when you mark an item as returned, or a month’s rent as paid. Renters pay you directly
         {FEES.ownerCommissionPct === 0 ? ', and RentiGoo takes no cut.' : `; this is after RentiGoo’s ${FEES.ownerCommissionPct}% fee.`}
       </p>
     </section>

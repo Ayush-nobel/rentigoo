@@ -1,8 +1,10 @@
-import { MapPin, Truck } from 'lucide-react'
+import { CalendarRange, MapPin, Truck } from 'lucide-react'
 import { Link } from 'react-router'
+import { headlinePrice, rentsByDay, rentsByMonth } from '@shared/pricing'
 import { areaName } from '@shared/areas'
 import type { Listing } from '@shared/types'
 import { cx } from '@/lib/cx'
+import { rupees } from '@/lib/format'
 import { ListingImage } from '../ui/ListingImage'
 import { PriceTag } from '../ui/PriceTag'
 import { Rating } from '../ui/Rating'
@@ -24,7 +26,7 @@ export function ListingCard({ listing, priority, className }: ListingCardProps) 
           priority={priority}
           className="transition-transform duration-500 group-hover:scale-[1.03]"
         />
-        <PriceTag amount={listing.pricing.daily} className="absolute bottom-3 left-3" />
+        <PriceTag {...headlinePrice(listing)} className="absolute bottom-3 left-3" />
       </div>
       <div className="mt-3 px-0.5">
         <div className="flex items-start justify-between gap-3">
@@ -45,6 +47,12 @@ export function ListingCard({ listing, priority, className }: ListingCardProps) 
             <span className="inline-flex items-center gap-1">
               <Truck aria-hidden="true" className="size-4" />
               Delivers
+            </span>
+          )}
+          {rentsByMonth(listing) && (
+            <span className="inline-flex items-center gap-1">
+              <CalendarRange aria-hidden="true" className="size-4" />
+              {rentsByDay(listing) ? `Also ${rupees(listing.pricing.monthly!)} a month` : `${listing.months!.min}–${listing.months!.max} months`}
             </span>
           )}
         </p>

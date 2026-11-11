@@ -155,3 +155,67 @@ describe('ownerStats', () => {
     expect(s).toEqual({ earnedThisMonth: earned, earnedTotal: earned, pendingRequests: 1, activeRentals: 0, upcomingRentals: 0 })
   })
 })
+
+describe('monthly rentals', () => {
+  const sofa: StoredListing = { ...listing, id: 'sofa', title: 'Sofa', pricing: { monthly: 2500 }, months: { min: 2, max: 12 }, deposit: 5000, blockedDates: [] }
+  const askMonths = (over = {}) => ({ listingId: 'sofa', start: '2026-12-01', end: '', delivery: false, months: 6, ...over })
+
+  async function running() {
+    const m = memoryStore({ listings: [sofa] })
+    const b = await requestBooking(m.store, askMonths(), 'renter', TODAY)
+    await respondToBooking(m.store, b.id, 'accept', 'owner')
+    await respondToBooking(m.store, b.id, 'handover', 'owner')
+    return { ...m, id: b.id }
+  }
+
+  it('prices by the month and works out the end date', async () => {
+    const { store } = memoryStore({ listings: [sofa] })
+    const b = await requestBooking(store, askMonths(), 'renter', TODAY)
+    expect(b).toMatchObject({ start: '2026-12-01', end: '2027-06-01', paidMonths: 0 })
+    expect(b.quote).toMatchObject({ term: 'months', months: 6, monthlyRate: 2500, totalRent: 15000, dueAtPickup: 7500 })
+  })
+
+  it('checks the month range and refuses day bookings on a monthly-only listing', async () => {
+    const { store } = memoryStore({ listings: [sofa] })
+    await expect(requestBooking(store, askMonths({ months: 1 }), 'renter', TODAY)).rejects.toThrow(/at least 2 months/)
+    await expect(requestBooking(store, askMonths({ months: 13 }), 'renter', TODAY)).rejects.toThrow(/up to 12 months/)
+    await expect(requestBooking(store, { listingId: 'sofa', start: '2026-12-01', end: '2026-12-04', delivery: false }, 'renter', TODAY)).rejects.toThrow(/by the month/)
+  })
+
+  it('blocks every day of the rental once accepted', async () => {
+    const { listings } = await running()
+    const booked = listings.get('sofa')!.bookedDates
+    expect(booked[0]).toBe('2026-12-01')
+    expect(booked.at(-1)).toBe('2027-05-31')
+  })
+
+  it('owner marks months paid in order; renter can’t; not past the last month', async () => {
+    const m = await running()
+    await expect(respondToBooking(m.store, m.id, 'markPaid', 'renter')).rejects.toThrow(/Only the owner/)
+    for (let i = 1; i <= 6; i++) expect((await respondToBooking(m.store, m.id, 'markPaid', 'owner')).paidMonths).toBe(i)
+    await expect(respondToBooking(m.store, m.id, 'markPaid', 'owner')).rejects.toThrow(/already marked/)
+  })
+
+  it('notice ends it a month later, frees the days after, and only once', async () => {
+    const m = await running()
+    const b = await respondToBooking(m.store, m.id, 'giveNotice', 'renter', '2027-01-10')
+    expect(b.end).toBe('2027-02-10')
+    expect(b.notice?.by).toBe('renter')
+    expect(m.listings.get('sofa')!.bookedDates.at(-1)).toBe('2027-02-09')
+    await expect(respondToBooking(m.store, m.id, 'giveNotice', 'owner', '2027-01-11')).rejects.toThrow(/already been given/)
+  })
+
+  it('earnings count each month once it’s marked paid', async () => {
+    const m = await running()
+    await respondToBooking(m.store, m.id, 'markPaid', 'owner')
+    await respondToBooking(m.store, m.id, 'markPaid', 'owner')
+    const s = await ownerStats(m.store, 'owner', '2027-01')
+    expect(s).toMatchObject({ earnedTotal: 5000, earnedThisMonth: 2500, activeRentals: 1 })
+  })
+
+  it('notice and payments are only for monthly rentals that are under way', async () => {
+    const { store } = memoryStore({ listings: [listing] })
+    const b = await requestBooking(store, ask(), 'renter', TODAY)
+    await expect(respondToBooking(store, b.id, 'giveNotice', 'renter', TODAY)).rejects.toThrow(/can’t be changed/)
+  })
+})

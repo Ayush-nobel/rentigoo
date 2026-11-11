@@ -2,7 +2,7 @@ import { profileProblem, tidyName } from '@shared/accountRules'
 import { LEGAL, publicName } from '@shared/legal'
 import { bookingProblem, canTransition } from '@shared/bookingRules'
 import { categoryName } from '@shared/categories'
-import { isRangeAvailable, quoteListing } from '@shared/pricing'
+import { addMonths, isRangeAvailable, monthSchedule, noticeEnd, quoteListing, quoteListingMonths, termOf } from '@shared/pricing'
 import type { Booking, Conversation, DeletionSummary, Listing, Message, Review, UserProfile } from '@shared/types'
 import { deriveSnapshot, seedSnapshot, type Snapshot } from '@/data'
 import { ApiError, type RentiGooApi } from './api'
@@ -12,6 +12,7 @@ import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
 import { cleanDraft, listingErrors, type ListingDraft } from '@shared/listingRules'
+import { ownerStatsFrom } from '@shared/earnings'
 
 // Bump when seed data changes so browsers drop their old copy.
 const DB_KEY = 'mock-db-v2'
@@ -233,7 +234,9 @@ export const mockApi: RentiGooApi = {
   async requestBooking(req) {
     const uid = me()
     const l = findListing(req.listingId)
-    const problem = bookingProblem(l, req, uid, todayIST())
+    const monthly = req.months !== undefined
+    const end = monthly ? addMonths(req.start, req.months!) : req.end
+    const problem = bookingProblem(l, { ...req, end, term: monthly ? 'months' : 'days' }, uid, todayIST())
     if (problem) throw new ApiError(problem, 'conflict')
     const booking: Booking = {
       id: id('b'),
@@ -241,9 +244,11 @@ export const mockApi: RentiGooApi = {
       renterId: uid,
       ownerId: l.ownerId,
       start: req.start,
-      end: req.end,
+      end,
       delivery: req.delivery,
-      quote: quoteListing(l, req.start, req.end, req.delivery), // recomputed, never trusted from the client
+      // Recomputed, never trusted from the client.
+      quote: monthly ? quoteListingMonths(l, req.start, req.months!, req.delivery) : quoteListing(l, req.start, end, req.delivery),
+      ...(monthly ? { paidMonths: 0 } : {}),
       status: 'requested',
       paymentStatus: 'pay-at-pickup',
       ...(req.message?.trim() ? { message: req.message.trim() } : {}),
@@ -294,6 +299,30 @@ export const mockApi: RentiGooApi = {
     return delay(findBooking(bookingId))
   },
 
+  async markMonthPaid(bookingId) {
+    const b = findBooking(bookingId)
+    if (b.ownerId !== me()) throw new ApiError('Only the owner can mark rent as paid.', 'forbidden')
+    if (termOf(b.quote) !== 'months' || b.status !== 'active') throw new ApiError('This booking can’t be changed that way now.', 'conflict')
+    const months = monthSchedule(b.start, b.end, b.quote.monthlyRate!).length
+    if ((b.paidMonths ?? 0) >= months) throw new ApiError('Every month is already marked as paid.', 'conflict')
+    b.paidMonths = (b.paidMonths ?? 0) + 1
+    save()
+    return delay(findBooking(bookingId))
+  },
+
+  async giveNotice(bookingId) {
+    const uid = me()
+    const b = findBooking(bookingId)
+    if (b.renterId !== uid && b.ownerId !== uid) throw new ApiError('Booking not found.', 'not-found')
+    if (termOf(b.quote) !== 'months' || b.status !== 'active') throw new ApiError('This booking can’t be changed that way now.', 'conflict')
+    if (b.notice) throw new ApiError('Notice has already been given for this rental.', 'conflict')
+    b.end = noticeEnd(todayIST(), b)
+    b.notice = { at: new Date().toISOString(), by: uid }
+    b.paidMonths = Math.min(b.paidMonths ?? 0, monthSchedule(b.start, b.end, b.quote.monthlyRate!).length)
+    save()
+    return delay(findBooking(bookingId))
+  },
+
   async submitReview(bookingId, rating, text) {
     const uid = me()
     const b = findBooking(bookingId)
@@ -323,16 +352,7 @@ export const mockApi: RentiGooApi = {
 
   async getOwnerStats() {
     const uid = me()
-    const mine = db.bookings.filter((b) => b.ownerId === uid)
-    const done = mine.filter((b) => b.status === 'completed')
-    const month = todayIST().slice(0, 7)
-    return delay({
-      earnedThisMonth: done.filter((b) => b.end.startsWith(month)).reduce((s, b) => s + b.quote.ownerPayout, 0),
-      earnedTotal: done.reduce((s, b) => s + b.quote.ownerPayout, 0),
-      pendingRequests: mine.filter((b) => b.status === 'requested').length,
-      activeRentals: mine.filter((b) => b.status === 'active').length,
-      upcomingRentals: mine.filter((b) => b.status === 'accepted').length,
-    })
+    return delay(ownerStatsFrom(db.bookings.filter((b) => b.ownerId === uid), todayIST().slice(0, 7)))
   },
 
   async listMyBookings() {

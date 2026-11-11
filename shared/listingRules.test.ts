@@ -76,3 +76,27 @@ describe('cleanDraft', () => {
     expect(c).not.toHaveProperty('deliveryFee')
   })
 })
+
+describe('monthly listings', () => {
+  const monthlyOnly: ListingDraft = { ...good, pricing: { monthly: 2500 }, months: { min: 3, max: 12 }, categoryId: 'furniture' }
+  it('accepts a monthly-only listing, and one offering both', () => {
+    expect(listingErrors(monthlyOnly, { today: TODAY })).toEqual({})
+    expect(listingErrors({ ...good, pricing: { daily: 200, monthly: 4000 }, months: { min: 1, max: 6 } }, { today: TODAY })).toEqual({})
+  })
+  it('needs at least one way to rent', () => {
+    expect(listingErrors({ ...good, pricing: {} }, { today: TODAY }).term).toMatch(/by the day, by the month/)
+  })
+  it('checks the month price and range', () => {
+    expect(listingErrors({ ...monthlyOnly, pricing: { monthly: 50 } }, { today: TODAY }).monthly).toBeDefined()
+    expect(listingErrors({ ...monthlyOnly, months: { min: 1, max: 24 } }, { today: TODAY }).months).toMatch(/12 months/)
+    expect(listingErrors({ ...monthlyOnly, months: { min: 6, max: 3 } }, { today: TODAY }).months).toMatch(/shorter/)
+    expect(listingErrors({ ...good, pricing: { daily: 100, monthly: 3500 }, months: { min: 1, max: 3 } }, { today: TODAY }).monthly).toMatch(/less than 30 days/)
+  })
+  it('a week price needs a day price', () => {
+    expect(listingErrors({ ...monthlyOnly, pricing: { monthly: 2500, weekly: 900 } }, { today: TODAY }).weekly).toBeDefined()
+  })
+  it('keeps the month range when cleaning', () => {
+    expect(cleanDraft(monthlyOnly, TODAY)).toMatchObject({ pricing: { monthly: 2500 }, months: { min: 3, max: 12 } })
+    expect(cleanDraft(monthlyOnly, TODAY).pricing).not.toHaveProperty('daily')
+  })
+})

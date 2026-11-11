@@ -29,8 +29,14 @@ const schema = a
   .schema({
     // ---------- shared shapes ----------
     Photo: a.customType({ key: a.string().required(), alt: a.string().required() }),
-    ListingPricing: a.customType({ daily: a.integer().required(), weekly: a.integer(), monthly: a.integer() }),
+    ListingPricing: a.customType({ daily: a.integer(), weekly: a.integer(), monthly: a.integer() }), // daily is absent on monthly-only listings
+    MonthRange: a.customType({ min: a.integer().required(), max: a.integer().required() }),
+    Notice: a.customType({ at: a.datetime().required(), by: a.string().required() }),
     PriceQuote: a.customType({
+      term: a.string(), // 'days' | 'months'; absent on older bookings (all by the day)
+      months: a.integer(),
+      monthlyRate: a.integer(),
+      dueAtPickup: a.integer(),
       days: a.integer().required(),
       dailyRate: a.integer().required(),
       undiscountedSubtotal: a.integer().required(),
@@ -49,7 +55,7 @@ const schema = a
     BookingStatus: a.enum(['requested', 'accepted', 'declined', 'active', 'completed', 'cancelled']),
     PaymentStatus: a.enum(['unpaid', 'pay_at_pickup', 'paid']),
     ReviewRole: a.enum(['renter', 'owner']),
-    BookingAction: a.enum(['accept', 'decline', 'cancel', 'handover', 'return']),
+    BookingAction: a.enum(['accept', 'decline', 'cancel', 'handover', 'return', 'markPaid', 'giveNotice']),
     OwnerStats: a.customType({
       earnedThisMonth: a.integer().required(),
       earnedTotal: a.integer().required(),
@@ -120,6 +126,7 @@ const schema = a
         deposit: a.integer().required(),
         minDays: a.integer().required(),
         maxDays: a.integer().required(),
+        months: a.ref('MonthRange'), // present when it can be rented by the month
         pickupOptions: a.string().required().array().required(),
         deliveryFee: a.integer(),
         blockedDates: a.string().required().array(), // days the owner keeps for themselves
@@ -150,6 +157,8 @@ const schema = a
         status: a.ref('BookingStatus').required(),
         paymentStatus: a.ref('PaymentStatus').required(),
         message: a.string(),
+        paidMonths: a.integer(), // monthly rentals: months the owner has marked paid
+        notice: a.ref('Notice'), // monthly rentals: notice to end early
       })
       .secondaryIndexes((index) => [
         index('listingId').queryField('listBookingsByListing'),
@@ -234,6 +243,7 @@ const schema = a
         end: a.date().required(),
         delivery: a.boolean().required(),
         message: a.string(),
+        months: a.integer(), // set for a monthly rental; the end date is worked out from it
       })
       .returns(a.ref('Booking'))
       .authorization((allow) => [allow.authenticated()])

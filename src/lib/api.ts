@@ -8,9 +8,12 @@ export type ListingInput = ListingDraft
 export interface BookingRequest {
   listingId: string
   start: ISODate
+  /** Return date. For a monthly rental, `start` plus `months` calendar months. */
   end: ISODate
   delivery: boolean
   message?: string
+  /** Set for a monthly rental. */
+  months?: number
 }
 
 /** Thrown for problems the person can fix (dates taken, not signed in…). */
@@ -66,6 +69,10 @@ export interface RentiGooApi {
   markHandedOver(bookingId: string): Promise<Booking>
   /** Owner: the item is back; the rental is complete. */
   markReturned(bookingId: string): Promise<Booking>
+  /** Monthly rentals, owner: the next month's rent has been received. */
+  markMonthPaid(bookingId: string): Promise<Booking>
+  /** Monthly rentals, either side: end it one month from today. */
+  giveNotice(bookingId: string): Promise<Booking>
   /** After a completed rental, each side can review the other once. */
   submitReview(bookingId: string, rating: number, text: string): Promise<Review>
   getOwnerStats(): Promise<OwnerStats>

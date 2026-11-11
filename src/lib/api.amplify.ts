@@ -62,10 +62,15 @@ function listingFromDb(l: any): Listing {
     areaId: l.areaId,
     photos: (l.photos ?? []).filter(Boolean),
     condition: toApp(l.condition) as Listing['condition'],
-    pricing: { daily: l.pricing.daily, ...(l.pricing.weekly ? { weekly: l.pricing.weekly } : {}), ...(l.pricing.monthly ? { monthly: l.pricing.monthly } : {}) },
+    pricing: {
+      ...(l.pricing.daily != null ? { daily: l.pricing.daily } : {}),
+      ...(l.pricing.weekly ? { weekly: l.pricing.weekly } : {}),
+      ...(l.pricing.monthly ? { monthly: l.pricing.monthly } : {}),
+    },
     deposit: l.deposit,
     minDays: l.minDays,
     maxDays: l.maxDays,
+    ...(l.months ? { months: { min: l.months.min, max: l.months.max } } : {}),
     pickupOptions: clean(l.pickupOptions) as Listing['pickupOptions'],
     ...(l.deliveryFee != null ? { deliveryFee: l.deliveryFee } : {}),
     blockedDates: [...new Set([...own, ...clean(l.bookedDates)])].sort(),
@@ -111,10 +116,13 @@ function bookingFromDb(b: any): Booking {
     start: b.start,
     end: b.end,
     delivery: b.delivery,
-    quote: b.quote,
+    // Older bookings have nulls for the monthly fields; drop them.
+    quote: Object.fromEntries(Object.entries(b.quote ?? {}).filter(([, v]) => v !== null)) as unknown as Booking['quote'],
     status: b.status,
     paymentStatus: toApp(b.paymentStatus) as Booking['paymentStatus'],
     ...(b.message ? { message: b.message } : {}),
+    ...(b.paidMonths != null ? { paidMonths: b.paidMonths } : {}),
+    ...(b.notice ? { notice: { at: b.notice.at, by: b.notice.by } } : {}),
     createdAt: b.createdAt,
   }
 }
@@ -179,7 +187,9 @@ export const amplifyApi: RentiGooApi = {
 
   async updateListing(id, patch) {
     me()
-    const saved = check(await client().mutations.saveListing({ id, listing: JSON.stringify(patch) }))
+    // An explicit undefined (e.g. monthly rentals switched off) is sent as null, which clears it.
+    const body = JSON.stringify(patch, (k, v) => (v === undefined && (k === 'months' || k === 'deliveryFee') ? null : v))
+    const saved = check(await client().mutations.saveListing({ id, listing: body }))
     if (!saved) throw new ApiError('Your changes weren’t saved. Please try again.', 'conflict')
     listingCache = null
     return listingFromDb(saved)
@@ -262,7 +272,7 @@ export const amplifyApi: RentiGooApi = {
 
   async requestBooking(req) {
     me()
-    const b = check(await client().mutations.requestBooking({ ...req, message: req.message ?? null }))
+    const b = check(await client().mutations.requestBooking({ ...req, message: req.message ?? null, months: req.months ?? null }))
     if (!b) throw new ApiError('Your request wasn’t sent. Please try again.', 'conflict')
     return bookingFromDb(b)
   },
@@ -289,6 +299,18 @@ export const amplifyApi: RentiGooApi = {
   async markReturned(bookingId) {
     me()
     const b = bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'return' })))
+    listingCache = null
+    return b
+  },
+
+  async markMonthPaid(bookingId) {
+    me()
+    return bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'markPaid' })))
+  },
+
+  async giveNotice(bookingId) {
+    me()
+    const b = bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'giveNotice' })))
     listingCache = null
     return b
   },

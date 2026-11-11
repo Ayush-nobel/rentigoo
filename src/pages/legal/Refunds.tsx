@@ -20,7 +20,10 @@ const sections: LegalSection[] = [
       <ul>
         <li>You can cancel a request, or an accepted booking, from your dashboard at any time before pickup. It costs nothing, because you haven’t paid.</li>
         <li>Please cancel as early as you can and message the owner, so they can rent to someone else.</li>
-        <li>After pickup, a booking can’t be cancelled. Return the item early if you like; the owner doesn’t have to refund unused days, but may choose to.</li>
+        <li>
+          After pickup, a booking by the day can’t be cancelled. Return the item early if you like; the owner doesn’t have to refund unused days, but may
+          choose to. Monthly rentals can be ended early with notice (see below).
+        </li>
       </ul>
     ),
   },
@@ -31,6 +34,24 @@ const sections: LegalSection[] = [
       <ul>
         <li>You can decline any request, or cancel an accepted booking before pickup, from your dashboard. The renter isn’t charged.</li>
         <li>Tell the renter why, as early as you can. Owners who cancel accepted bookings often may have their account suspended.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'monthly',
+    title: 'Monthly rentals',
+    body: (
+      <ul>
+        <li>Before pickup, either of you can cancel a monthly booking free, as above.</li>
+        <li>
+          After pickup, either of you can give notice from the dashboard. The rental ends one month after the day notice is given. Nothing more is due for the
+          months after that, and a shortened last month is charged per day at the monthly price ÷ 30.
+        </li>
+        <li>
+          Because each month is paid when it starts, ending with notice never means paying for a month you don’t get. If the owner agrees to end it sooner than a
+          month, they decide whether to return rent already paid for the days after the item comes back.
+        </li>
+        <li>The deposit is returned when the item comes back, as for any rental.</li>
       </ul>
     ),
   },

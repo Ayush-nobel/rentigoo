@@ -2,6 +2,7 @@ import { CalendarDays, ChevronRight, MapPin, PackageCheck, Truck, SearchX } from
 import { Link, useParams } from 'react-router'
 import { areaName } from '@shared/areas'
 import { categoryName } from '@shared/categories'
+import { headlinePrice, rentsByDay, rentsByMonth } from '@shared/pricing'
 import type { Condition, Listing } from '@shared/types'
 import { BookingPanel } from '@/components/listing/BookingPanel'
 import { ListingCard } from '@/components/listing/ListingCard'
@@ -108,7 +109,7 @@ export default function ListingDetail() {
               <Fact
                 icon={<CalendarDays aria-hidden="true" className="size-6" />}
                 title="Rental length"
-                body={listing.minDays === listing.maxDays ? plural(listing.minDays, 'day') : `${plural(listing.minDays, 'day')} to ${plural(listing.maxDays, 'day')}`}
+                body={rentalLength(listing)}
               />
               <Fact
                 icon={<Truck aria-hidden="true" className="size-6" />}
@@ -207,7 +208,7 @@ function MobileBookBar({ listing }: { listing: Listing }) {
     <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-surface px-4 py-3 lg:hidden">
       <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
         <div>
-          <PriceTag amount={listing.pricing.daily} size="sm" />
+          <PriceTag {...headlinePrice(listing)} size="sm" />
           <p className="mt-1 text-sm text-muted">{listing.deposit > 0 ? `+ ${rupees(listing.deposit)} refundable deposit` : 'No deposit'}</p>
         </div>
         <a href="#book" className="inline-flex min-h-12 items-center rounded-full bg-accent px-6 font-semibold text-on-accent hover:bg-accent-hover">
@@ -216,4 +217,10 @@ function MobileBookBar({ listing }: { listing: Listing }) {
       </div>
     </div>
   )
+}
+
+/** "1 to 30 days", "3 to 12 months", or both. */
+function rentalLength(l: Listing): string {
+  const span = (min: number, max: number, unit: string) => (min === max ? plural(min, unit) : `${plural(min, unit)} to ${plural(max, unit)}`)
+  return [rentsByDay(l) && span(l.minDays, l.maxDays, 'day'), rentsByMonth(l) && span(l.months!.min, l.months!.max, 'month')].filter(Boolean).join(', or ')
 }

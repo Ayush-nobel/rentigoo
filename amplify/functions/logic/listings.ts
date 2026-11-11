@@ -22,7 +22,7 @@ export interface SaveListingInput {
 
 const FIELDS: (keyof ListingDraft)[] = [
   'title', 'description', 'categoryId', 'areaId', 'photos', 'condition', 'pricing', 'deposit',
-  'minDays', 'maxDays', 'pickupOptions', 'deliveryFee', 'blockedDates', 'rules', 'status',
+  'minDays', 'maxDays', 'months', 'pickupOptions', 'deliveryFee', 'blockedDates', 'rules', 'status',
 ]
 
 /** Keep only the fields an owner may set; anything else in the request is ignored. */
@@ -34,7 +34,7 @@ function pick(raw: unknown): ListingDraft {
   return out as unknown as ListingDraft
 }
 
-export async function saveListing(store: ListingStore, input: SaveListingInput, actorId: string, today: ISODate): Promise<StoredListing> {
+export async function saveListing(store: ListingStore, input: SaveListingInput, actorId: string, today: ISODate, opts: { allowPlaceholders?: boolean } = {}): Promise<StoredListing> {
   const existing = input.id ? await store.getListing(input.id) : null
   if (input.id && (!existing || existing.ownerId !== actorId)) throw new RuleError('That listing wasn’t found.')
 
@@ -46,7 +46,9 @@ export async function saveListing(store: ListingStore, input: SaveListingInput, 
     if (e instanceof RuleError) throw e
     throw new RuleError('The listing didn’t come through. Please try again.')
   }
-  const errors = listingErrors(draft, { today, knownKeys: existing?.photos.map((p) => p.key) })
+  // null clears an optional field on an edit (e.g. switching off monthly rentals).
+  for (const k of ['months', 'deliveryFee'] as const) if (draft[k] === null) delete draft[k]
+  const errors = listingErrors(draft, { today, knownKeys: existing?.photos.map((p) => p.key), allowPlaceholders: opts.allowPlaceholders })
   const first = Object.values(errors)[0]
   if (first) throw new RuleError(first)
 

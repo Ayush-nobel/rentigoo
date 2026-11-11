@@ -71,10 +71,22 @@ export type Condition = 'new' | 'like-new' | 'good' | 'fair'
 export type PickupOption = 'pickup' | 'delivery'
 export type ListingStatus = 'active' | 'paused' | 'draft'
 
+/** How a booking is measured: a range of days, or whole calendar months. */
+export type RentalTerm = 'days' | 'months'
+
 export interface ListingPricing {
-  daily: number
+  /** Per day. Absent on listings rented only by the month. */
+  daily?: number
+  /** Per 7 days, a discount on daily rentals. */
   weekly?: number
+  /** Per month. Rents by the month when the listing has `months`. */
   monthly?: number
+}
+
+/** How many months a monthly rental can run for (1–12). */
+export interface MonthRange {
+  min: number
+  max: number
 }
 
 export interface Listing {
@@ -88,8 +100,11 @@ export interface Listing {
   condition: Condition
   pricing: ListingPricing
   deposit: number
+  /** Shortest and longest rental by the day (only used when there's a daily price). */
   minDays: number
   maxDays: number
+  /** Present when the listing can be rented by the month. */
+  months?: MonthRange
   pickupOptions: PickupOption[]
   deliveryFee?: number
   /** Every day that can't be booked: the owner's own blocked days plus accepted bookings. */
@@ -104,6 +119,13 @@ export interface Listing {
 }
 
 export interface PriceQuote {
+  /** Days or months; absent on older bookings, which are all by the day. */
+  term?: RentalTerm
+  /** For monthly rentals: how many months, and the price per month. */
+  months?: number
+  monthlyRate?: number
+  /** What's paid at pickup: the first month (or all the rent, by the day), any delivery fee and the deposit. */
+  dueAtPickup?: number
   days: number
   dailyRate: number
   /** days × daily rate, before any weekly/monthly saving. */
@@ -138,6 +160,10 @@ export interface Booking {
   status: BookingStatus
   paymentStatus: PaymentStatus
   message?: string
+  /** Monthly rentals: how many months the owner has marked as paid, in order. */
+  paidMonths?: number
+  /** Monthly rentals: when notice was given, and by whom. `end` moves to the notice end date. */
+  notice?: { at: ISODateTime; by: string } | null
   createdAt: ISODateTime
 }
 

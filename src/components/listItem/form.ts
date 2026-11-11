@@ -24,9 +24,14 @@ export interface ListingForm {
   description: string
   areaId: string
   photos: FormPhoto[]
+  /** Rented by the day, by the month, or both. */
+  byDay: boolean
+  byMonth: boolean
   daily: string
   weekly: string
   monthly: string
+  minMonths: string
+  maxMonths: string
   deposit: string
   minDays: string
   maxDays: string
@@ -40,7 +45,7 @@ export interface ListingForm {
 export const STEPS = [
   { id: 'details', name: 'What it is', fields: ['title', 'categoryId', 'condition', 'description', 'areaId'] },
   { id: 'photos', name: 'Photos', fields: ['photos', 'photoAlt'] },
-  { id: 'price', name: 'Price and deposit', fields: ['pricing', 'weekly', 'monthly', 'deposit', 'minDays', 'maxDays'] },
+  { id: 'price', name: 'Price and deposit', fields: ['term', 'pricing', 'weekly', 'monthly', 'months', 'deposit', 'minDays', 'maxDays'] },
   { id: 'pickup', name: 'Pickup and dates', fields: ['pickupOptions', 'deliveryFee', 'rules', 'blockedDates'] },
   { id: 'review', name: 'Check and publish', fields: [] },
 ] as const satisfies readonly { id: string; name: string; fields: readonly (keyof ListingErrors)[] }[]
@@ -55,9 +60,13 @@ export function emptyForm(areaId: string): ListingForm {
     description: '',
     areaId,
     photos: [],
+    byDay: true,
+    byMonth: false,
     daily: '',
     weekly: '',
     monthly: '',
+    minMonths: '1',
+    maxMonths: '12',
     deposit: '0',
     minDays: '1',
     maxDays: '14',
@@ -79,9 +88,13 @@ export function formFromListing(l: Listing): ListingForm {
     description: l.description,
     areaId: l.areaId,
     photos: l.photos.map((p, i) => ({ id: `saved-${i}-${p.key}`, key: p.key, alt: p.alt, state: 'ready' })),
+    byDay: l.pricing.daily !== undefined,
+    byMonth: l.months !== undefined,
     daily: text(l.pricing.daily),
     weekly: text(l.pricing.weekly),
     monthly: text(l.pricing.monthly),
+    minMonths: text(l.months?.min ?? 1),
+    maxMonths: text(l.months?.max ?? 12),
     deposit: text(l.deposit),
     minDays: text(l.minDays),
     maxDays: text(l.maxDays),
@@ -102,9 +115,10 @@ function num(s: string): number | undefined {
 
 export function toDraft(f: ListingForm, status: ListingStatus): ListingDraft {
   const pickupOptions: PickupOption[] = [...(f.pickup ? ['pickup' as const] : []), ...(f.delivery ? ['delivery' as const] : [])]
-  const weekly = num(f.weekly)
-  const monthly = num(f.monthly)
+  const weekly = f.byDay ? num(f.weekly) : undefined
+  const monthly = f.byMonth ? (num(f.monthly) ?? (status === 'draft' ? undefined : Number.NaN)) : f.byDay ? num(f.monthly) : undefined
   const deliveryFee = num(f.deliveryFee)
+  const daily = f.byDay ? (num(f.daily) ?? (status === 'draft' ? undefined : Number.NaN)) : undefined
   return {
     title: f.title,
     description: f.description,
@@ -112,10 +126,12 @@ export function toDraft(f: ListingForm, status: ListingStatus): ListingDraft {
     areaId: f.areaId,
     photos: f.photos.filter((p) => p.state === 'ready' && p.key).map((p) => ({ key: p.key!, alt: p.alt })),
     condition: (f.condition || 'good') as Condition,
-    pricing: { daily: num(f.daily) ?? (status === 'draft' ? 0 : Number.NaN), ...(weekly !== undefined ? { weekly } : {}), ...(monthly !== undefined ? { monthly } : {}) },
+    pricing: { ...(daily !== undefined ? { daily } : {}), ...(weekly !== undefined ? { weekly } : {}), ...(monthly !== undefined ? { monthly } : {}) },
     deposit: num(f.deposit) ?? 0,
     minDays: num(f.minDays) ?? Number.NaN,
     maxDays: num(f.maxDays) ?? Number.NaN,
+    // Explicitly undefined when off, so an edit switches monthly rentals off.
+    months: f.byMonth ? { min: num(f.minMonths) ?? Number.NaN, max: num(f.maxMonths) ?? Number.NaN } : undefined,
     pickupOptions,
     ...(f.delivery ? { deliveryFee: deliveryFee ?? Number.NaN } : {}),
     blockedDates: f.blockedDates,
