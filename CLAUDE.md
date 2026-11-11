@@ -18,6 +18,8 @@ Human, warm copy (no corporate filler). Mobile-first. Accessible contrast and ke
 - Every form control uses the shared components (ui/Field, ui/Checkbox); consent boxes are never pre-ticked.
 - Business details live only in src/config/business.ts; never invent them.
 - Accessibility: text ≥4.5:1, control outlines ≥3:1, visible focus on every tab stop, alt text on every image.
+- People never write listings, bookings, reviews, conversations or messages directly: each goes through a Lambda (saveListing/deleteMyListing, booking functions, messages) that sets the owner/sender itself and checks shared rules (e.g. shared/listingRules). Keep model auth read-only for people; prove it in scripts/check-access.ts.
+- Listing photos: resized to WebP in the browser (strips GPS), public read only under listing-photos/, deleted when removed from a listing or on account deletion.
 
 ## Search and rendering (keep these working)
 - `npm run build` = SPA build + SSR build (src/entry-server.tsx) + scripts/prerender.mjs, which writes HTML for public pages and every active listing, plus robots.txt, sitemap.xml and amplify-rewrites.json. Set VITE_SITE_URL (https, no path) in Amplify; check:launch requires it.
@@ -25,4 +27,5 @@ Human, warm copy (no corporate filler). Mobile-first. Accessible contrast and ke
 - Every page sets its metadata with <Seo/> from src/lib/seo.ts (STATIC_PAGES) or listingMeta; private, unfinished and error pages are noindex. New public pages: add to STATIC_PAGES.
 - Pages must render the same on the server and on first client render: no Date.now()/localStorage/window in render (use useHydrated or suppressHydrationWarning for "time ago"). Lazy pages use lazyPage() so they can be preloaded before hydration.
 - Never add robots rules by prefix that could catch /listing (e.g. use "/list$").
+- `git push` may need the GitHub CLI login: `git -c credential.helper= -c 'credential.https://github.com.helper=!gh auth git-credential' push`.
 - Amplify builds with Node 22 / npm 10; this Mac has npm 11, which writes lock files npm 10 rejects. After any dependency change, run `npx npm@10 install --package-lock-only` and check `npx npm@10 ci --dry-run` passes before pushing.
