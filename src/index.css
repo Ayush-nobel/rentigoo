@@ -10,12 +10,12 @@
   color-scheme: light;
   --bg: #faf7f0;
   --surface: #ffffff;
-  --surface-sunken: #f3eee2;
-  --line: #e4ddcc;
+  --surface-sunken: #f1f0ec;
+  --line: #e6e4df;
   /* Input and control outlines: ≥3:1 on every surface (WCAG 1.4.11). */
-  --line-strong: #857e6e;
+  --line-strong: #85827a;
   --text: #24221b;
-  --muted: #5f5a4c;
+  --muted: #5c5a54;
   --accent: #f2d04e;
   --accent-hover: #e8c23a;
   --on-accent: #24221b;
@@ -39,18 +39,18 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
     --bg: #24221b;
-    --surface: #2f2c24;
-    --surface-sunken: #1c1a14;
-    --line: #433f33;
-    --line-strong: #8a8473;
+    --surface: #2d2c28;
+    --surface-sunken: #1c1b18;
+    --line: #3e3c37;
+    --line-strong: #8a8880;
     --text: #ffffff;
-    --muted: #b9b3a3;
+    --muted: #b5b3ac;
     --accent-text: #f2d04e;
     --accent-edge: transparent;
     --ink: #faf7f0;
     --on-ink: #24221b;
     --logo-ink: #ffffff;
-    --panel: #1c1a14;
+    --panel: #1c1b18;
     --danger: #ff8a7a;
     --success: #6fd48e;
     --focus: #f2d04e;
@@ -61,18 +61,18 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #24221b;
-  --surface: #2f2c24;
-  --surface-sunken: #1c1a14;
-  --line: #433f33;
-  --line-strong: #8a8473;
+  --surface: #2d2c28;
+  --surface-sunken: #1c1b18;
+  --line: #3e3c37;
+  --line-strong: #8a8880;
   --text: #ffffff;
-  --muted: #b9b3a3;
+  --muted: #b5b3ac;
   --accent-text: #f2d04e;
   --accent-edge: transparent;
   --ink: #faf7f0;
   --on-ink: #24221b;
   --logo-ink: #ffffff;
-  --panel: #1c1a14;
+  --panel: #1c1b18;
   --danger: #ff8a7a;
   --success: #6fd48e;
   --focus: #f2d04e;
@@ -392,6 +392,53 @@ dialog.sheet::backdrop {
 @starting-style {
   dialog.sheet[open]::backdrop {
     background-color: transparent;
+  }
+}
+
+/*
+ * Scroll-linked reveals, in the spirit of Apple's product pages. Pure CSS, so
+ * prerendered pages animate before hydration; browsers without scroll
+ * timelines, and anyone who asks for reduced motion, just see the content.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--delay, 0s);
+  }
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+    .reveal-grow {
+      animation: grow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    /* Each step brightens as it reaches the middle of the screen. */
+    .spotlight {
+      animation: spotlight linear both;
+      animation-timeline: view();
+      animation-range: cover 15% cover 45%;
+    }
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+@keyframes grow {
+  from {
+    opacity: 0.4;
+    transform: scale(0.88);
+  }
+}
+@keyframes spotlight {
+  from {
+    opacity: 0.35;
   }
 }
 

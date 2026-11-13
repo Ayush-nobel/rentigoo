@@ -37,7 +37,7 @@ export function EarningsEstimator() {
         : `It would pay for itself in about ${plural(Math.ceil(r.monthsToPayBack), 'month')}${monthly ? ' of renting' : ''}.`
 
   return (
-    <section aria-labelledby="earn-title" className="rounded-[28px] bg-accent p-5 text-on-accent sm:p-8">
+    <section aria-labelledby="earn-title" className="rounded-[28px] bg-accent p-5 text-on-accent sm:p-10">
       <h2 id="earn-title" className="text-3xl">
         What could your things earn?
       </h2>

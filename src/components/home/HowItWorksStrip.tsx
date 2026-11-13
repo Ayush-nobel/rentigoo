@@ -16,32 +16,30 @@ const STEPS = [
   },
 ]
 
+/** Full-width dark band: the heading stays put while each step lights up as you scroll past it. */
 export function HowItWorksStrip() {
   return (
-    <section aria-labelledby="how-title" className="mx-auto max-w-7xl px-4 sm:px-6">
-      <div className="rounded-[28px] border border-line bg-panel px-6 py-10 text-on-panel sm:px-10 sm:py-12">
-        <h2 id="how-title" className="text-3xl sm:text-4xl">
-          Renting from a neighbour takes three steps
-        </h2>
-        <ol className="mt-8 grid gap-8 md:grid-cols-3">
+    <section aria-labelledby="how-title" className="bg-panel text-on-panel">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-24 sm:px-6 sm:py-32 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+        <div className="lg:sticky lg:top-32 lg:self-start">
+          <h2 id="how-title" className="text-4xl tracking-tight sm:text-6xl">
+            Renting from a neighbour takes three steps
+          </h2>
+          <Link to="/how-it-works" className="mt-8 inline-flex min-h-11 items-center rounded font-semibold text-accent underline underline-offset-4 hover:no-underline">
+            How renting and listing work
+          </Link>
+        </div>
+        <ol className="space-y-16 sm:space-y-24">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="flex gap-4">
-              <span
-                aria-hidden="true"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-accent font-display text-xl font-extrabold text-on-accent"
-              >
+            <li key={s.title} className="spotlight">
+              <span aria-hidden="true" className="font-display text-6xl leading-none font-bold text-accent sm:text-7xl">
                 {i + 1}
               </span>
-              <div>
-                <h3 className="font-sans text-lg font-semibold">{s.title}</h3>
-                <p className="mt-1 opacity-80">{s.body}</p>
-              </div>
+              <h3 className="mt-4 text-2xl sm:text-3xl">{s.title}</h3>
+              <p className="mt-3 max-w-md text-lg text-white/75">{s.body}</p>
             </li>
           ))}
         </ol>
-        <Link to="/how-it-works" className="mt-8 inline-block rounded font-semibold underline underline-offset-4 hover:no-underline">
-          How renting and listing work
-        </Link>
       </div>
     </section>
   )

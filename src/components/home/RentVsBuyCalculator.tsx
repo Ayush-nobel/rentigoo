@@ -56,7 +56,7 @@ export function RentVsBuyCalculator() {
   else verdict = 'It’s a draw. Rent if you’d rather not store it.'
 
   return (
-    <section aria-labelledby="rvb-title" className="rounded-[28px] border border-line bg-surface p-5 sm:p-8">
+    <section aria-labelledby="rvb-title" className="rounded-[28px] bg-sunken p-5 sm:p-10">
       <h2 id="rvb-title" className="text-3xl">
         Rent it or buy it?
       </h2>
@@ -110,7 +110,7 @@ export function RentVsBuyCalculator() {
         )}
       </div>
 
-      <details className="smooth group mt-5 rounded-2xl bg-sunken px-4 py-3">
+      <details className="smooth group mt-5 rounded-2xl bg-surface px-4 py-3">
         <summary className="cursor-pointer rounded font-semibold">Resale value and upkeep</summary>
         <div className="mt-4 grid gap-5 pb-2 sm:grid-cols-2">
           <NumberInput
@@ -156,7 +156,7 @@ function CostBars({ buy, rent, over }: { buy: number; rent: number; over: string
             <span className="font-semibold">{row.label}</span>
             <AnimatedNumber value={row.value} format={rupees} className="font-display text-xl font-bold tabular-nums" />
           </div>
-          <div className="mt-1.5 h-3.5 rounded-[4px] bg-sunken" aria-hidden="true">
+          <div className="mt-1.5 h-3.5 rounded-[4px] bg-surface" aria-hidden="true">
             <div
               className={`h-full rounded-[4px] transition-[width] duration-300 ${row.bar}`}
               style={{ width: `${Math.max(1.5, (row.value / max) * 100)}%` }}

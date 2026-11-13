@@ -11,21 +11,23 @@ const POINTS = [
 export function TrustStrip() {
   return (
     <section aria-labelledby="trust-title" className="mx-auto max-w-7xl px-4 sm:px-6">
-      <h2 id="trust-title" className="text-3xl sm:text-4xl">
+      <h2 id="trust-title" className="reveal mx-auto max-w-3xl text-center text-3xl tracking-tight sm:text-5xl">
         Lending to a stranger feels less strange here
       </h2>
-      <ul className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="reveal mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {POINTS.map(({ icon: Icon, title, body }) => (
           <li key={title}>
-            <Icon aria-hidden="true" className="size-7" strokeWidth={1.75} />
+            <Icon aria-hidden="true" className="size-8" strokeWidth={1.5} />
             <h3 className="mt-3 font-sans text-lg font-semibold">{title}</h3>
             <p className="mt-1 text-muted">{body}</p>
           </li>
         ))}
       </ul>
-      <Link to="/trust-and-safety" className="mt-8 inline-block rounded font-semibold text-accent-text underline underline-offset-4 hover:no-underline">
-        How we keep renting safe
-      </Link>
+      <p className="mt-12 text-center">
+        <Link to="/trust-and-safety" className="inline-flex min-h-11 items-center rounded font-semibold text-accent-text underline underline-offset-4 hover:no-underline">
+          How we keep renting safe
+        </Link>
+      </p>
     </section>
   )
 }

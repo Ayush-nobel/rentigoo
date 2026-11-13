@@ -37,7 +37,7 @@ export default function Home() {
   }, [areaId])
 
   return (
-    <div className="space-y-20 sm:space-y-24">
+    <div className="space-y-28 pb-12 sm:space-y-40">
       <Seo {...STATIC_PAGES['/']!} jsonLd={present([organization(), website()])} />
       {deleted && (
         <p role="status" className="mx-auto mt-6 max-w-7xl rounded-field bg-sunken px-4 py-3 font-medium sm:px-6">
@@ -48,7 +48,7 @@ export default function Home() {
       <CategoryGrid />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />
       <HowItWorksStrip />
-      <div id="calculators" className="mx-auto grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-2">
+      <div id="calculators" className="reveal mx-auto grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-2">
         <RentVsBuyCalculator />
         <EarningsEstimator />
       </div>
