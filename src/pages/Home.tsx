@@ -44,7 +44,7 @@ export default function Home() {
           Your account is deleted. We removed {plural(deleted.deletedListings, 'listing')} and {plural(deleted.deletedReviews, 'review')}. Thanks for being part of RentiGoo.
         </p>
       )}
-      <Hero showcase={featured.data?.items ?? []} />
+      <Hero showcase={featured.data?.items ?? []} loading={featured.status === 'loading'} />
       <CategoryGrid />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />
       <HowItWorksStrip />

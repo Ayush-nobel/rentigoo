@@ -11,7 +11,7 @@ import { PriceTag } from '../ui/PriceTag'
 
 const SEARCH_IDEAS = ['Air purifier', 'Projector', 'Camping tent', 'Drill', 'PS5', 'Party speaker']
 
-export function Hero({ showcase }: { showcase: Listing[] }) {
+export function Hero({ showcase, loading }: { showcase: Listing[]; loading: boolean }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [q, setQ] = useState('')
@@ -86,7 +86,7 @@ export function Hero({ showcase }: { showcase: Listing[] }) {
         </div>
       </div>
 
-      <Showcase listings={showcase} />
+      {(loading || showcase.length > 0) && <Showcase listings={showcase} />}
     </section>
   )
 }
