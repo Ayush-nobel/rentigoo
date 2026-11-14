@@ -29,13 +29,12 @@ export function HowItWorksStrip() {
             How renting and listing work
           </Link>
         </div>
-        <ol className="space-y-16 sm:space-y-24">
+        <ol className="space-y-14 sm:space-y-20">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="spotlight">
-              <span aria-hidden="true" className="font-display text-6xl leading-none font-bold text-accent sm:text-7xl">
-                {i + 1}
-              </span>
-              <h3 className="mt-4 text-2xl sm:text-3xl">{s.title}</h3>
+            <li key={s.title} className="spotlight border-t border-white/20 pt-6">
+              <h3 className="text-3xl sm:text-4xl">
+                <span className="text-accent">{i + 1}.</span> {s.title}
+              </h3>
               <p className="mt-3 max-w-md text-lg text-white/75">{s.body}</p>
             </li>
           ))}

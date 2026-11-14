@@ -122,7 +122,7 @@ export default function ListingDetail() {
                   .join(', or ')}
               />
               <Fact
-                icon={<span aria-hidden="true" className="grid size-6 place-items-center font-display text-lg font-extrabold">₹</span>}
+                icon={<span aria-hidden="true" className="grid size-6 place-items-center font-display text-lg font-semibold">₹</span>}
                 title="Deposit"
                 body={listing.deposit > 0 ? `${rupees(listing.deposit)}, refundable when the item comes back as it left` : 'No deposit needed'}
               />

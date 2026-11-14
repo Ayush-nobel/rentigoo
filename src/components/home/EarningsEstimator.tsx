@@ -93,7 +93,7 @@ export function EarningsEstimator() {
 
       <div className="mt-6" aria-live="polite">
         <p className="text-lg font-semibold">You could earn about</p>
-        <p className="font-display text-6xl leading-none font-extrabold tabular-nums">
+        <p className="font-display text-6xl leading-none font-semibold tabular-nums">
           <AnimatedNumber value={r.netMonthly} format={rupees} />
           <span className="ml-2 font-sans text-xl font-semibold">a month</span>
         </p>

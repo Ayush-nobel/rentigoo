@@ -5,6 +5,8 @@ import { Hero } from '@/components/home/Hero'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { RentVsBuyCalculator } from '@/components/home/RentVsBuyCalculator'
 import { TrustStrip } from '@/components/home/TrustStrip'
+import { TwoWays } from '@/components/home/TwoWays'
+import { PHOTOGRAPHERS } from '@/data/homePhotos'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 import type { DeletionSummary } from '@shared/types'
@@ -44,7 +46,8 @@ export default function Home() {
           Your account is deleted. We removed {plural(deleted.deletedListings, 'listing')} and {plural(deleted.deletedReviews, 'review')}. Thanks for being part of RentiGoo.
         </p>
       )}
-      <Hero showcase={featured.data?.items ?? []} loading={featured.status === 'loading'} />
+      <Hero />
+      <TwoWays />
       <CategoryGrid />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />
       <HowItWorksStrip />
@@ -53,6 +56,13 @@ export default function Home() {
         <EarningsEstimator />
       </div>
       <TrustStrip />
+      <p className="mx-auto max-w-7xl px-4 text-sm text-muted sm:px-6">
+        Photos on this page set the scene; they aren’t listings. They’re by {PHOTOGRAPHERS.join(', ')}, shared on{' '}
+        <a href="https://unsplash.com/license" className="underline underline-offset-2" rel="noopener noreferrer">
+          Unsplash
+        </a>
+        .
+      </p>
     </div>
   )
 }

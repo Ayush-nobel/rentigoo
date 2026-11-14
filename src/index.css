@@ -102,7 +102,7 @@
 }
 
 @theme {
-  --font-display: 'Baloo 2', ui-rounded, system-ui, sans-serif;
+  --font-display: 'Anek Latin Variable', 'Mukta', system-ui, sans-serif;
   --font-sans: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius-photo: 20px;
   --radius-field: 12px;
@@ -127,8 +127,11 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    line-height: 1.15;
-    font-weight: 700;
+    /* Anek, slightly narrowed: Indian-made, crisp, and less 'friendly app' than a rounded face. */
+    font-stretch: 88%;
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.015em;
     text-wrap: balance;
   }
   p {

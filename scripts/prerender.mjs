@@ -21,7 +21,7 @@ if (!shell.includes('<div id="root"></div>')) throw new Error('index.html is mis
 // re-render late in a different font (that late swap was the "largest paint").
 const css = readdirSync(join(DIST, 'assets')).filter((f) => f.endsWith('.css')).map((f) => readFileSync(join(DIST, 'assets', f), 'utf8')).join('')
 const fontUrl = (name) => css.match(new RegExp(`/assets/${name}-[\\w-]+\\.woff2`))?.[0]
-const preloads = ['baloo-2-latin-800-normal', 'baloo-2-latin-700-normal', 'mukta-latin-400-normal']
+const preloads = ['anek-latin-latin-standard-normal', 'mukta-latin-400-normal']
   .map(fontUrl)
   .filter(Boolean)
   .map((u) => `<link rel="preload" href="${u}" as="font" type="font/woff2" crossorigin />`)

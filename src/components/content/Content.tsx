@@ -29,7 +29,7 @@ export function Steps({ steps }: { steps: { title: string; body: ReactNode }[] }
     <ol className="mt-2 space-y-6">
       {steps.map((s, i) => (
         <li key={s.title} className="flex gap-4">
-          <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-accent font-display text-lg font-extrabold text-on-accent">
+          <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-accent font-display text-lg font-semibold text-on-accent">
             {i + 1}
           </span>
           <div className="pt-1">
