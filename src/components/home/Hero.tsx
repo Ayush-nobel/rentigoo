@@ -2,10 +2,12 @@ import { MapPin, Search } from 'lucide-react'
 import { useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { AREAS, REGIONS } from '@shared/areas'
+import { whatsappUrl } from '@/config/business'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '../ui/Button'
 
 const SEARCH_IDEAS = ['Camping tent', 'Projector', 'Drill', 'PS5', 'Sofa', 'Party speaker']
+const WHATSAPP = whatsappUrl()
 const delay = (s: number) => ({ '--delay': `${s}s` }) as CSSProperties
 
 export function Hero() {
@@ -73,6 +75,15 @@ export function Hero() {
             </Link>
           ))}
         </p>
+        {WHATSAPP && (
+          <p className="rise mt-4 text-lg" style={delay(0.35)}>
+            Need something?{' '}
+            <a href={WHATSAPP} rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded font-semibold underline underline-offset-4">
+              WhatsApp us
+            </a>{' '}
+            and we’ll find it nearby.
+          </p>
+        )}
       </div>
     </section>
   )

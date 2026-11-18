@@ -1,6 +1,7 @@
 import { CategoryGrid } from '@/components/home/CategoryGrid'
 import { FeaturedListings } from '@/components/home/FeaturedListings'
 import { Hero } from '@/components/home/Hero'
+import { HowPayingWorks } from '@/components/content/HowPayingWorks'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { RentOrBuyExample } from '@/components/home/RentOrBuyExample'
 import { TrustStrip } from '@/components/home/TrustStrip'
@@ -54,8 +55,9 @@ export default function Home() {
       <Hero />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />
       <CategoryGrid />
-      <RentOrBuyExample />
+      <RentOrBuyExample listings={featured.data?.items} />
       <HowItWorksStrip />
+      <HowPayingWorks className="mx-auto max-w-7xl px-4 sm:px-6" />
       <TrustStrip />
     </div>
   )

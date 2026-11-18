@@ -16,6 +16,7 @@ import { absoluteUrl, DEFAULT_IMAGE, fullTitle, SITE_NAME, SITE_URL, STATIC_PAGE
 import { routes } from './router'
 
 export { STATIC_PAGES, SITE_URL, listingMeta, loadListingPage }
+export { categoryPageMeta } from './lib/categoryPages'
 export { HOME_LISTINGS } from './pages/homeData'
 export { CATEGORIES } from '@shared/categories'
 
@@ -83,6 +84,11 @@ export function headTags(meta: PageMeta): string {
 export async function homeListings() {
   const r = await api.searchListings({ sort: 'relevance' })
   return r.items.slice(0, HOME_LISTINGS)
+}
+
+/** One category's listings, as its /rent/<category> page shows them. */
+export async function categoryListings(categoryId: string) {
+  return (await api.searchListings({ category: categoryId, sort: 'relevance' })).items
 }
 
 export async function allListings() {

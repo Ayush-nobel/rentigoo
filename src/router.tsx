@@ -24,6 +24,7 @@ const About = lazyPage(() => import('./pages/About'))
 const NotFound = lazyPage(() => import('./pages/NotFound'))
 const RentOrBuy = lazyPage(() => import('./pages/RentOrBuy'))
 const Earn = lazyPage(() => import('./pages/Earn'))
+const CategoryPage = lazyPage(() => import('./pages/CategoryPage'))
 
 /**
  * Every route. Used by the browser router (main.tsx) and the build-time
@@ -51,6 +52,7 @@ export const routes: RouteObject[] = [
       { path: 'about', element: <About /> },
       { path: 'rent-or-buy', element: <RentOrBuy /> },
       { path: 'earn', element: <Earn /> },
+      { path: 'rent/:categoryId', element: <CategoryPage /> },
       { path: 'login', element: <Login /> },
       { path: 'signup', element: <Signup /> },
       { path: '*', element: <NotFound /> },

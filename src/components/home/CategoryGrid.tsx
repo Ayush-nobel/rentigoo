@@ -12,7 +12,7 @@ export function CategoryGrid() {
       <ul className="reveal mt-8 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-3 lg:grid-cols-5">
         {CATEGORIES.map((c) => (
           <li key={c.id}>
-            <Link to={`/browse?category=${c.id}`} className="flex min-h-14 items-center gap-3 rounded-xl py-2 pr-2 hover:bg-sunken">
+            <Link to={`/rent/${c.id}`} className="flex min-h-14 items-center gap-3 rounded-xl py-2 pr-2 hover:bg-sunken">
               <CategoryIcon id={c.id} className="size-6 shrink-0" />
               <span className="leading-tight font-semibold">{c.name}</span>
             </Link>

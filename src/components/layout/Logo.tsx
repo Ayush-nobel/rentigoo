@@ -36,8 +36,9 @@ export function LogoArt({ variant = 'wordmark', className, title = 'RentiGoo' }:
 /** Logo linking home, as used in the header and footer. */
 export function Logo({ className }: { className?: string }) {
   return (
-    <Link to="/" aria-label="RentiGoo home" className={cx('inline-flex h-11 items-center rounded-lg sm:h-12', className)}>
+    <Link to="/" className={cx('inline-flex h-11 items-center rounded-lg sm:h-12', className)}>
       <LogoArt title="" />
+      <span className="sr-only">RentiGoo home</span>
     </Link>
   )
 }

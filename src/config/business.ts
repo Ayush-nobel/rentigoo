@@ -34,7 +34,7 @@ export interface BusinessDetails {
 // Provided by the founder on 2026-11-10. An unregistered business run by one
 // person is in law a sole proprietorship: the legal person is the proprietor.
 export const BUSINESS: BusinessDetails = {
-  legalName: 'Rentigoo Technologies (proprietor: Ayush Shukla)',
+  legalName: 'RentiGoo Technologies (proprietor: Ayush Shukla)',
   entityType: 'Sole proprietorship, not registered as a company',
   registrationNumber: null,
   gstin: null, // Not GST-registered: no GST may be charged (see shared/fees.ts).

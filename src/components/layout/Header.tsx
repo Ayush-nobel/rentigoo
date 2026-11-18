@@ -1,6 +1,7 @@
-import { LogOut, Plus } from 'lucide-react'
+import { LogOut, MessageCircle, Plus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
+import { whatsappUrl } from '@/config/business'
 import { useAuth } from '@/context/AuthContext'
 import { cx } from '@/lib/cx'
 import { Avatar } from '../ui/Avatar'
@@ -13,6 +14,8 @@ const NAV = [
   { to: '/how-it-works', label: 'How it works' },
   { to: '/trust-and-safety', label: 'Safety' },
 ]
+
+const WHATSAPP = whatsappUrl()
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cx('rounded-full px-4 py-2 font-medium hover:bg-sunken', isActive && 'bg-sunken')
@@ -35,10 +38,20 @@ export function Header() {
             List an item
           </ButtonLink>
           <ThemeToggle />
-          {user ? <AccountMenu /> : (
-            <ButtonLink to="/login" variant="outline" size="sm">
-              Log in
-            </ButtonLink>
+          {user ? (
+            <AccountMenu />
+          ) : (
+            <>
+              <Link to="/login" className="inline-flex min-h-11 items-center rounded-full px-3 font-medium hover:bg-sunken max-md:hidden">
+                Log in
+              </Link>
+              {WHATSAPP && (
+                <a href={WHATSAPP} rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-4 text-[0.9375rem] font-semibold text-on-ink hover:opacity-90">
+                  <MessageCircle aria-hidden="true" className="size-4" />
+                  WhatsApp us
+                </a>
+              )}
+            </>
           )}
         </div>
       </div>

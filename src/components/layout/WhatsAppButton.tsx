@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 import { cx } from '@/lib/cx'
 import { whatsappUrl } from '@/config/business'
+import { useAuth } from '@/context/AuthContext'
 
 /** Pages where it shows: browsing and help. Not on forms, messages or listings (the booking bar sits there on phones). */
 const SHOW_ON = ['/', '/browse', '/how-it-works', '/trust-and-safety', '/faq', '/about', '/contact', '/rent-or-buy', '/earn']
+const onPage = (p: string) => SHOW_ON.includes(p) || p.startsWith('/rent/')
 
 /** Floating "WhatsApp us" button: above the tab bar on phones, bottom right on wider screens. */
 export function WhatsAppButton() {
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const url = whatsappUrl()
   // On phones it waits until you've scrolled a little, so it never covers the search box on first view.
   const [scrolled, setScrolled] = useState(false)
@@ -19,7 +22,8 @@ export function WhatsAppButton() {
     window.addEventListener('scroll', check, { passive: true })
     return () => window.removeEventListener('scroll', check)
   }, [pathname])
-  if (!url || !SHOW_ON.includes(pathname)) return null
+  // Visitors already have "WhatsApp us" in the sticky header; this is for people signed in.
+  if (!url || !user || !onPage(pathname)) return null
   return (
     <a
       href={url}

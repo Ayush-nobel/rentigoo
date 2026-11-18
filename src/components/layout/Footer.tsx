@@ -31,7 +31,7 @@ const groups = [
   },
   {
     title: 'Rent',
-    links: CATEGORIES.slice(0, 6).map((c) => ({ to: `/browse?category=${c.id}`, label: c.name })),
+    links: CATEGORIES.map((c) => ({ to: `/rent/${c.id}`, label: c.name })),
   },
   {
     title: 'Near you',

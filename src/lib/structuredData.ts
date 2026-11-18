@@ -16,6 +16,8 @@ export function organization(): object | null {
     logo: absoluteUrl('/brand/icon-512.png'),
     areaServed: { '@type': 'City', name: LAUNCH_CITY },
     ...(BUSINESS.supportEmail ? { email: BUSINESS.supportEmail } : {}),
+    ...(BUSINESS.supportPhone ? { telephone: BUSINESS.supportPhone.replace(/\s/g, '') } : {}),
+    ...(BUSINESS.address ? { address: { '@type': 'PostalAddress', streetAddress: BUSINESS.address, addressLocality: LAUNCH_CITY, addressRegion: 'Madhya Pradesh', addressCountry: 'IN' } } : {}),
   }
 }
 

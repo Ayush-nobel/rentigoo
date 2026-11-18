@@ -54,7 +54,7 @@ export default function Browse() {
         {...STATIC_PAGES['/browse']!}
         title={filters.q ? `“${filters.q}” to rent in ${LAUNCH_CITY}` : filters.category ? `${categoryName(filters.category)} to rent in ${LAUNCH_CITY}` : STATIC_PAGES['/browse']!.title}
         // One canonical per category; other filter combinations point back to it, and searches aren't indexed.
-        path={filters.category && !filters.q ? `/browse?category=${filters.category}` : '/browse'}
+        path={filters.category && !filters.q ? `/rent/${filters.category}` : '/browse'}
         noindex={Boolean(filters.q)}
       />
       <h1 className="text-4xl sm:text-5xl">{heading}</h1>

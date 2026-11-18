@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto'
 
 const DIST = 'dist'
 const ssr = await import(pathToFileURL(join(process.cwd(), 'dist-ssr/entry-server.js')).href)
-const { renderPage, headTags, STATIC_PAGES, SITE_URL, listingMeta, allListings, homeListings, CATEGORIES, loadListingPage } = ssr
+const { renderPage, headTags, STATIC_PAGES, SITE_URL, listingMeta, allListings, homeListings, categoryListings, categoryPageMeta, CATEGORIES, loadListingPage } = ssr
 
 const shell = readFileSync(join(DIST, 'index.html'), 'utf8')
 if (!shell.includes('<div id="root"></div>')) throw new Error('index.html is missing <div id="root"></div>')
@@ -67,6 +67,19 @@ for (const [path, meta] of Object.entries(STATIC_PAGES)) {
   written.push(path)
 }
 
+// 1b. One page per category (/rent/cameras …), built with its listings: what people search for.
+for (const c of CATEGORIES) {
+  const path = `/rent/${c.id}`
+  let data = null
+  try {
+    data = { [`category:${c.id}`]: await categoryListings(c.id) }
+  } catch (e) {
+    console.warn(`Couldn’t load ${c.id} listings (${e.message}). That page will load them in the browser.`)
+  }
+  write(path, page(headTags(categoryPageMeta(c.id)), await renderPage(path, data ?? {}), path, data))
+  written.push(path)
+}
+
 // 2. Every active listing, fully rendered with its owner, reviews and related items.
 let listings = []
 try {
@@ -94,7 +107,7 @@ const robots = ['User-agent: *', 'Allow: /', ...PRIVATE.map((p) => `Disallow: ${
 if (SITE_URL) {
   const urls = [
     ...Object.entries(STATIC_PAGES).filter(([, m]) => !m.noindex).map(([p]) => ({ loc: `${SITE_URL}${p === '/' ? '/' : p}` })),
-    ...CATEGORIES.map((c) => ({ loc: `${SITE_URL}/browse?category=${c.id}` })),
+    ...CATEGORIES.map((c) => ({ loc: `${SITE_URL}/rent/${c.id}` })),
     ...listings.map((l) => ({ loc: `${SITE_URL}/listing/${l.id}`, lastmod: l.createdAt.slice(0, 10) })),
   ]
   const xmlEsc = (s) => s.replace(/&/g, '&amp;')

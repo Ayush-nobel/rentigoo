@@ -3,6 +3,7 @@ import { LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
 import { LISTING_LIMITS } from '@shared/listingRules'
 import { ContentPage, Section, Steps } from '@/components/content/Content'
+import { HowPayingWorks } from '@/components/content/HowPayingWorks'
 import { Seo } from '@/components/layout/Seo'
 import { ButtonLink } from '@/components/ui/Button'
 import { STATIC_PAGES } from '@/lib/seo'
@@ -26,7 +27,7 @@ export default function HowItWorks() {
                 title: 'Send a request',
                 body: <p>Pick your dates and you’ll see the full breakdown: rent, any delivery fee and the refundable deposit. Sending a request costs nothing. You can message the owner first if you have questions.</p>,
               },
-              { title: 'The owner says yes (or no)', body: <p>If they accept, those dates are blocked for you. Use Messages to agree a time and place for pickup.</p> },
+              { title: 'The owner says yes (or no)', body: <p>If they accept, those dates are blocked for you. You still haven’t paid anything. Use Messages to agree a time and place for pickup.</p> },
               {
                 title: 'Pick it up and pay',
                 body: <p>Check the item together, then pay the rent and deposit to the owner directly, by UPI or cash. Take a couple of photos of its condition; it helps everyone if questions come up later.</p>,
@@ -90,10 +91,7 @@ export default function HowItWorks() {
               Renters pay a {FEES.serviceFeePct}% service fee on the rent, and owners pay a {FEES.ownerCommissionPct}% commission. Both are shown before anyone commits.
             </p>
           )}
-          <p>
-            The deposit is the owner’s safety net. It goes back to the renter in full when the item is returned in the same condition, apart from normal wear. If something is damaged, the
-            owner can keep part of it to cover the repair, and must show the bill or quote.
-          </p>
+          <HowPayingWorks heading={false} />
           <p>Weekly and monthly prices are applied automatically when they work out cheaper, so longer rentals cost less per day.</p>
         </Section>
 
