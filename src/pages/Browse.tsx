@@ -26,13 +26,16 @@ export default function Browse() {
   const filtersButton = useRef<HTMLButtonElement>(null)
 
 
-  /** Apply a change; anything other than "load more" goes back to page 1. */
-  const update = (patch: Partial<SearchFilters>, opts: { replace?: boolean } = {}) => {
+  /**
+   * Apply a change; anything other than "load more" goes back to page 1. Filters live in the URL so a search can be
+   * shared, but each change replaces the history entry: the back button leaves Browse instead of undoing filters.
+   */
+  const update = (patch: Partial<SearchFilters>) => {
     const next = { ...filters, ...patch }
     if (!('page' in patch)) delete next.page
-    setParams(toBrowseParams(next), { replace: opts.replace ?? false, preventScrollReset: true })
+    setParams(toBrowseParams(next), { replace: true, preventScrollReset: true })
   }
-  const clearAll = () => setParams(toBrowseParams({ q: filters.q, sort: filters.sort }), { preventScrollReset: true })
+  const clearAll = () => setParams(toBrowseParams({ q: filters.q, sort: filters.sort }), { replace: true, preventScrollReset: true })
 
   const key = params.toString()
   const result = useAsync(() => api.searchListings(filters), [key])
@@ -104,7 +107,7 @@ export default function Browse() {
               icon={<PackageSearch aria-hidden="true" className="size-7" />}
               title={filters.q && count === 0 ? `No “${filters.q}” to rent yet` : 'Nothing matches those filters'}
               action={
-                <Button variant="outline" onClick={() => setParams(new URLSearchParams())}>
+                <Button variant="outline" onClick={() => setParams(new URLSearchParams(), { replace: true })}>
                   Clear search and filters
                 </Button>
               }
@@ -162,7 +165,7 @@ export default function Browse() {
           </div>
         }
       >
-        <FilterPanel filters={filters} onChange={(p) => update(p, { replace: true })} />
+        <FilterPanel filters={filters} onChange={(p) => update(p)} />
       </Sheet>
     </div>
   )

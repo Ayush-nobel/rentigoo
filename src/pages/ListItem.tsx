@@ -31,9 +31,12 @@ export default function ListItem() {
   const location = useLocation()
   const existing = useAsync(() => (editId ? api.getListing(editId) : Promise.resolve(null)), [editId])
 
+  // Until it has loaded, `existing` can still hold the listing from before the URL changed.
+  const listing = editId && existing.data?.id === editId ? existing.data : null
+
   if (!user) return null
-  if (existing.status === 'loading') return <PageLoading />
-  if (editId && (existing.status === 'error' || !existing.data || existing.data.ownerId !== user.id)) {
+  if (existing.status === 'loading' || (editId && existing.status === 'success' && !listing && existing.data)) return <PageLoading />
+  if (editId && (existing.status === 'error' || !listing || listing.ownerId !== user.id)) {
     return (
       <>
         <Seo title="Listing not found" description="" noindex />
@@ -43,15 +46,28 @@ export default function ListItem() {
       </>
     )
   }
-  // A fresh form for each visit (e.g. "List another item"), and when switching to editing.
-  return <Editor key={editId ?? location.key} listing={existing.data ?? null} defaultArea={user.areaId} />
+  // A fresh form for each visit (e.g. "List another item"), and when switching to editing. Moving between
+  // steps carries the session along in history state, so the form (and what's typed in it) survives.
+  const session = (location.state as StepState | null)?.listSession ?? location.key
+  return <Editor key={editId ?? session} session={session} listing={listing} defaultArea={user.areaId} />
 }
 
-function Editor({ listing, defaultArea }: { listing: Listing | null; defaultArea: string }) {
+/** History state for a step of the form: which form it belongs to, and the step of the entry before it. */
+interface StepState {
+  listSession?: string
+  fromStep?: number
+}
+
+function Editor({ listing, defaultArea, session }: { listing: Listing | null; defaultArea: string; session: string }) {
   const today = todayIST()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState<ListingForm>(() => (listing ? formFromListing(listing) : emptyForm(defaultArea)))
-  const [step, setStep] = useState(0)
   const [reached, setReached] = useState(listing ? STEPS.length - 1 : 0)
+  // Each step is its own history entry (?step=photos), so the browser's back button goes to the previous step.
+  const stepInUrl = STEPS.findIndex((s) => s.id === new URLSearchParams(location.search).get('step'))
+  const step = Math.min(Math.max(stepInUrl, 0), reached)
+  const cameFrom = (location.state as StepState | null)?.fromStep
   // Problems found when trying to move on; each one disappears as soon as it's fixed.
   const [flagged, setErrors] = useState<ListingErrors>({})
   const [dirty, setDirty] = useState(false)
@@ -110,11 +126,25 @@ function Editor({ listing, defaultArea }: { listing: Listing | null; defaultArea
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty, saved])
 
+  // A message about saving belongs to the step it was shown on.
+  const [errorStep, setErrorStep] = useState(step)
+  if (errorStep !== step) {
+    setErrorStep(step)
+    setSaveError(null)
+  }
+
   const goTo = (i: number) => {
     setErrors({})
     setSaveError(null)
-    setStep(i)
     setReached((r) => Math.max(r, i))
+    if (i === step) return
+    // Going back to the step we came from: use the existing history entry rather than adding one.
+    if (i === cameFrom) return void navigate(-1)
+    const p = new URLSearchParams(location.search)
+    if (i === 0) p.delete('step')
+    else p.set('step', STEPS[i]!.id)
+    const back = i < step
+    navigate({ search: p.size ? `?${p}` : '' }, { replace: back, state: { listSession: session, fromStep: back ? cameFrom : step } satisfies StepState })
   }
 
   const next = (e: FormEvent) => {
