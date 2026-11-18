@@ -49,6 +49,10 @@ export function memoryStore(
       if (paymentStatus) b.paymentStatus = paymentStatus
       return structuredClone(b)
     },
+    async setBookingFee(id, fee) {
+      const b = bookings.get(id)!
+      b.fee = { ...(b.fee ?? { amount: 0 }), ...fee }
+    },
     async updateBookingTerms(id, patch) {
       Object.assign(bookings.get(id)!, patch)
       return structuredClone(bookings.get(id)!)

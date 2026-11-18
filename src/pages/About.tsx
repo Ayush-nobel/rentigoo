@@ -1,3 +1,4 @@
+import { BOOKING_FEE_LIVE } from '@/lib/features'
 import { Link } from 'react-router'
 import { AREAS, LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
@@ -47,7 +48,7 @@ export default function About() {
             items={[
               <>
                 No hidden costs. You see the full price, deposit included, before you ask.{' '}
-                {free ? <Link to="/how-it-works#money">It’s free to use right now.</Link> : <Link to="/how-it-works#money">Our fees are shown up front.</Link>}
+                {free && !BOOKING_FEE_LIVE ? <Link to="/how-it-works#money">It’s free to use right now.</Link> : <Link to="/how-it-works#money">Our fees are shown up front.</Link>}
               </>,
               'No ads, no tracking and no analytics. We don’t sell your data, and we don’t share it with advertisers.',
               <>

@@ -1,7 +1,6 @@
 import type { Listing } from '@shared/types'
 import { areaName, LAUNCH_CITY } from '@shared/areas'
 import { Link } from 'react-router'
-import { whatsappUrl } from '@/config/business'
 import { ButtonLink } from '../ui/Button'
 import { ListingCard, ListingCardSkeleton } from '../listing/ListingCard'
 import { RequestForm } from './RequestForm'
@@ -12,8 +11,6 @@ interface Props {
   areaId?: string
   failed?: boolean
 }
-
-const WHATSAPP = whatsappUrl()
 
 export function FeaturedListings({ listings, areaId, failed }: Props) {
   const title = areaId ? `Rentals around ${areaName(areaId)}` : `Rentals across ${LAUNCH_CITY}`
@@ -53,17 +50,9 @@ export function FeaturedListings({ listings, areaId, failed }: Props) {
               : Array.from({ length: 3 }, (_, i) => <ListingCardSkeleton key={i} />)}
           </div>
           {listings && (
-            <p className="mt-8 text-muted">
-              Can’t find it?{' '}
-              {WHATSAPP ? (
-                <a href={WHATSAPP} rel="noopener noreferrer" className="font-semibold text-text underline underline-offset-4">
-                  Tell us on WhatsApp
-                </a>
-              ) : (
-                'Tell us'
-              )}{' '}
-              and we’ll look for someone nearby who has it.
-            </p>
+            <div className="mt-12">
+              <RequestForm />
+            </div>
           )}
         </>
       )}

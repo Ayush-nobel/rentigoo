@@ -36,8 +36,8 @@ export function fullTitle(title: string): string {
 /** Static pages: what search engines see for each. Listing pages are built from their data. */
 export const STATIC_PAGES: Record<string, PageMeta> = {
   '/': {
-    title: '',
-    description: 'Rent cameras, tools, party gear, baby gear and more from people across Bhopal. Or earn from the things you already own. Free to join.',
+    title: 'Rent a camera, party speaker and more in Bhopal',
+    description: 'Rent a camera, party speaker, tent, drill or sofa in Bhopal from people near you, by the day or by the month. Prices and deposits shown upfront. List your things for free.',
     path: '/',
   },
   '/browse': {

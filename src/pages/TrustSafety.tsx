@@ -59,7 +59,7 @@ export default function TrustSafety() {
             items={[
               'Read the owner’s reviews and message them before you request.',
               'For a first rental, meet somewhere public or in a building lobby, in daylight if you can.',
-              'Check the item works before you hand over any money, and add a pickup check with photos to the booking (Dashboard → the booking → Pickup and return photos).',
+              'Bring a government photo ID to show the owner. Check the item works before you hand over any money, and add the pickup check with photos to the booking (Dashboard → the booking → Pickup and return photos).',
               'Pay only when you have the item in hand. Never pay in advance or through a link someone sends you.',
             ]}
           />
@@ -69,7 +69,7 @@ export default function TrustSafety() {
           <Points
             items={[
               'Set a deposit that would cover a repair, not the whole item. Renters are more likely to book.',
-              'Do the pickup check together at handover: tick the checklist and photograph the item, including any existing marks. Do the same when it comes back.',
+              'Ask to see the renter’s government photo ID, then do the pickup check together: tick the checklist and photograph the item, including any existing marks. Do the same when it comes back, and report damage within 24 hours.',
               'Hand it over only after you’ve received the rent and deposit.',
               'Write your rules into the listing, so renters agree to them before they ask.',
             ]}

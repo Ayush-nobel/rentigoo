@@ -1,3 +1,5 @@
+import { POLICY } from '@shared/policy'
+import { BOOKING_FEE_LIVE } from '@/lib/features'
 import { PHONE_CHECK_LIVE } from '@/lib/features'
 import type { FaqItem } from '@shared/types'
 import { FEES } from '@shared/fees'
@@ -69,8 +71,9 @@ export const FAQS: FaqItem[] = [
     id: 'f8',
     section: 'payments',
     q: 'What fees does RentiGoo charge?',
-    a:
-      FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0
+    a: BOOKING_FEE_LIVE
+      ? `Renters pay a ₹${POLICY.bookingFee} booking fee online, once the owner accepts. That's all RentiGoo charges: listing is free, owners pay no commission, and the rent and deposit go straight to the owner. The fee is refunded if the owner cancels.`
+      : FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0
         ? 'None right now. While renters pay owners directly at pickup, RentiGoo charges no service fee and takes no commission. Listing is free. If we introduce fees when online payments start, we’ll update our Terms first and show every fee before you request.'
         : `Renters pay a ${FEES.serviceFeePct}% service fee on the rent${FEES.gstOnFeePct > 0 ? `, plus ${FEES.gstOnFeePct}% GST on that fee` : ''}. Owners pay a ${FEES.ownerCommissionPct}% commission on the rent they earn. There’s no fee to list, and the deposit is never charged a fee.`,
   },

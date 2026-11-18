@@ -9,7 +9,8 @@ export function organization(): object | null {
   if (!SITE_URL) return null
   return {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    // A local business in Bhopal (and an organisation), so local searches can show it.
+    '@type': ['Organization', 'LocalBusiness'],
     name: SITE_NAME,
     ...(BUSINESS.legalName ? { legalName: BUSINESS.legalName } : {}),
     url: SITE_URL,
@@ -17,6 +18,8 @@ export function organization(): object | null {
     areaServed: { '@type': 'City', name: LAUNCH_CITY },
     ...(BUSINESS.supportEmail ? { email: BUSINESS.supportEmail } : {}),
     ...(BUSINESS.supportPhone ? { telephone: BUSINESS.supportPhone.replace(/\s/g, '') } : {}),
+    image: absoluteUrl('/brand/icon-512.png'),
+    description: 'Peer-to-peer rentals in Bhopal: rent cameras, party speakers, camping gear, tools and furniture from people nearby.',
     ...(BUSINESS.address ? { address: { '@type': 'PostalAddress', streetAddress: BUSINESS.address, addressLocality: LAUNCH_CITY, addressRegion: 'Madhya Pradesh', addressCountry: 'IN' } } : {}),
   }
 }

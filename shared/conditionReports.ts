@@ -9,10 +9,13 @@ import type { Booking } from './types'
 export type ConditionStage = 'pickup' | 'return'
 
 export const CONDITION_CHECKS = [
-  { id: 'works', label: 'It works: switched on or tried out' },
-  { id: 'complete', label: 'Every part and accessory listed is there' },
-  { id: 'marksNoted', label: 'Any scratches, dents or marks are in the photos or notes' },
-] as const
+  { id: 'idShown', label: 'The renter showed a government photo ID', stages: ['pickup'] },
+  { id: 'works', label: 'It works: switched on or tried out', stages: ['pickup', 'return'] },
+  { id: 'complete', label: 'Every part and accessory listed is there', stages: ['pickup', 'return'] },
+  { id: 'marksNoted', label: 'Any scratches, dents or marks are in the photos or notes', stages: ['pickup', 'return'] },
+] as const satisfies readonly { id: string; label: string; stages: readonly ConditionStage[] }[]
+/** The checklist for one stage. */
+export const checksFor = (stage: ConditionStage) => CONDITION_CHECKS.filter((c) => (c.stages as readonly ConditionStage[]).includes(stage))
 export type ConditionCheckId = (typeof CONDITION_CHECKS)[number]['id']
 
 export const CONDITION_LIMITS = { photosMax: 6, notesMax: 500, keepDaysAfterEnd: 30 }

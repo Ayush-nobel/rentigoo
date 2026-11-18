@@ -1,7 +1,8 @@
 import { CategoryGrid } from '@/components/home/CategoryGrid'
 import { FeaturedListings } from '@/components/home/FeaturedListings'
 import { Hero } from '@/components/home/Hero'
-import { HowPayingWorks } from '@/components/content/HowPayingWorks'
+import { FeesDeposits } from '@/components/home/FeesDeposits'
+import { FounderBlock } from '@/components/home/FounderBlock'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { RentOrBuyExample } from '@/components/home/RentOrBuyExample'
 import { TrustStrip } from '@/components/home/TrustStrip'
@@ -57,8 +58,9 @@ export default function Home() {
       <CategoryGrid />
       <RentOrBuyExample listings={featured.data?.items} />
       <HowItWorksStrip />
-      <HowPayingWorks className="mx-auto max-w-7xl px-4 sm:px-6" />
+      <FeesDeposits />
       <TrustStrip />
+      <FounderBlock />
     </div>
   )
 }

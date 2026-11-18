@@ -103,6 +103,10 @@ export interface RentiGooApi {
   /** After DigiLocker sends the person back with this request id. */
   finishIdCheck(requestId: string): Promise<{ verified: boolean }>
   forgetIdCheck(): Promise<{ verified: boolean }>
+  /** Renter, after the owner accepts: the payment page for the booking fee. */
+  startBookingFee(bookingId: string, returnUrl: string): Promise<{ url: string }>
+  /** After the payment page sends the renter back, with its query parameters. */
+  confirmBookingFee(bookingId: string, params: Record<string, string>): Promise<{ paid: boolean }>
   getOwnerStats(): Promise<OwnerStats>
   listMyBookings(): Promise<Booking[]>
   listRequestsForMe(): Promise<Booking[]>

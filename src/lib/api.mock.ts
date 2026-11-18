@@ -12,6 +12,7 @@ import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
 import { cleanDraft, listingErrors, photoFolder, type ListingDraft } from '@shared/listingRules'
+import { POLICY } from '@shared/policy'
 import { conditionPhotoFolder, conditionProblem, conditionReportProblem, type ConditionReport, type ConditionReportView } from '@shared/conditionReports'
 import { ownerStatsFrom } from '@shared/earnings'
 import { normaliseIndianMobile, OTP } from '@shared/phone'
@@ -317,6 +318,7 @@ export const mockApi: RentiGooApi = {
       if (!isRangeAvailable(b.start, b.end, l.blockedDates)) throw new ApiError('Those dates are no longer free, so this request can’t be accepted.', 'conflict')
     }
     b.status = to
+    if (accept) b.fee = { status: 'due', amount: POLICY.bookingFee }
     save()
     return delay(findBooking(bookingId))
   },
@@ -324,6 +326,7 @@ export const mockApi: RentiGooApi = {
   async cancelBooking(bookingId) {
     const b = findBooking(bookingId)
     if (!canTransition(b, 'cancelled', me())) throw new ApiError('This booking can’t be cancelled now.', 'forbidden')
+    if (b.fee?.status === 'paid' && me() === b.ownerId) b.fee = { ...b.fee, status: 'refunded' }
     b.status = 'cancelled'
     save()
     return delay(findBooking(bookingId))
@@ -332,6 +335,7 @@ export const mockApi: RentiGooApi = {
   async markHandedOver(bookingId) {
     const b = findBooking(bookingId)
     if (!canTransition(b, 'active', me())) throw new ApiError('This booking can’t be changed that way now.', 'conflict')
+    if (b.fee?.status === 'due') throw new ApiError('The renter needs to pay the booking fee before you hand it over.', 'conflict')
     b.status = 'active'
     save()
     return delay(findBooking(bookingId))
@@ -371,6 +375,24 @@ export const mockApi: RentiGooApi = {
   },
 
   // ID checks in demo mode: a pretend DigiLocker that says yes straight away.
+  async startBookingFee(bookingId, returnUrl) {
+    const b = findBooking(bookingId)
+    if (b.renterId !== me() || b.fee?.status !== 'due') throw new ApiError('There’s nothing to pay for this booking right now.', 'invalid')
+    const u = new URL(returnUrl)
+    u.searchParams.set('razorpay_payment_link_status', 'paid')
+    u.searchParams.set('razorpay_payment_id', `pay_demo_${Date.now()}`)
+    return delay({ url: u.toString() })
+  },
+
+  async confirmBookingFee(bookingId, params) {
+    const b = findBooking(bookingId)
+    if (b.renterId !== me()) throw new ApiError('Booking not found.', 'not-found')
+    if (params.razorpay_payment_link_status !== 'paid') throw new ApiError('The payment didn’t go through. Nothing was charged.', 'invalid')
+    b.fee = { status: 'paid', amount: b.fee?.amount ?? POLICY.bookingFee, paidAt: new Date().toISOString() }
+    save()
+    return delay({ paid: true })
+  },
+
   async getIdStatus() {
     const uid = me()
     return delay({ available: true, verified: Boolean(db.users.find((u) => u.id === uid)?.verified.govtId) })

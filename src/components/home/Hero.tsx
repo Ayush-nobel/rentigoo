@@ -1,4 +1,4 @@
-import { MapPin, Search } from 'lucide-react'
+import { ChevronDown, MapPin, Search } from 'lucide-react'
 import { useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { AREAS, REGIONS } from '@shared/areas'
@@ -60,6 +60,7 @@ export function Hero() {
                   </optgroup>
                 ))}
               </select>
+              <ChevronDown aria-hidden="true" className="pointer-events-none size-5 shrink-0" />
             </label>
             <Button type="submit" size="lg" variant="ink" className="sm:px-8">
               Search

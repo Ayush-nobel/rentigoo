@@ -10,6 +10,8 @@ import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
 import { conditionReportsFn } from '../functions/condition-reports/resource'
 import { idCheckFn } from '../functions/id-check/resource'
+import { bookingFeeFn } from '../functions/booking-fee/resource'
+import { feeRefundsFn } from '../functions/fee-refunds/resource'
 import { purgeConditionReportsFn } from '../functions/purge-condition-reports/resource'
 
 /**
@@ -167,6 +169,13 @@ const schema = a
         message: a.string(),
         paidMonths: a.integer(), // monthly rentals: months the owner has marked paid
         notice: a.ref('Notice'), // monthly rentals: notice to end early
+        // The booking fee (online, after acceptance), written by the booking functions only.
+        feeStatus: a.string(), // 'due' | 'paid' | 'refund_due' | 'refunded'
+        feeAmount: a.integer(),
+        feePaidAt: a.datetime(),
+        feeLinkId: a.string(),
+        feeLinkUrl: a.string(),
+        feePaymentId: a.string(),
       })
       .secondaryIndexes((index) => [
         index('listingId').queryField('listBookingsByListing'),
@@ -308,6 +317,22 @@ const schema = a
       .handler(a.handler.function(saveListingFn)),
 
     // Deletes the caller's listing and its photos (refused while it's booked).
+    // ---------- booking fee (online, after the owner accepts) ----------
+    FeeResult: a.customType({ paid: a.boolean().required() }),
+    FeeStart: a.customType({ url: a.string().required() }),
+    startBookingFee: a
+      .mutation()
+      .arguments({ bookingId: a.string().required(), returnUrl: a.string().required() })
+      .returns(a.ref('FeeStart'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(bookingFeeFn)),
+    confirmBookingFee: a
+      .mutation()
+      .arguments({ bookingId: a.string().required(), params: a.json().required() })
+      .returns(a.ref('FeeResult'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(bookingFeeFn)),
+
     // ---------- ID checks (only the id-check function reads or writes these) ----------
     // Keyed by account: a pending DigiLocker request, and the fingerprint of the checked ID. Never the ID details.
     IdCheck: a.model({ pendingRequestId: a.string(), verifiedHash: a.string(), verifiedAt: a.datetime() }).authorization(functionsOnly),
@@ -435,7 +460,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn), allow.resource(conditionReportsFn), allow.resource(purgeConditionReportsFn), allow.resource(idCheckFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn), allow.resource(conditionReportsFn), allow.resource(purgeConditionReportsFn), allow.resource(idCheckFn), allow.resource(bookingFeeFn), allow.resource(feeRefundsFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

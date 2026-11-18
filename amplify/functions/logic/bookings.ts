@@ -6,7 +6,7 @@ import { bookingProblem, canTransition } from '../../../shared/bookingRules'
 import { FEES } from '../../../shared/fees'
 import { ownerStatsFrom } from '../../../shared/earnings'
 import { addMonths, monthSchedule, noticeEnd, occupiedDates, quoteListing, quoteListingMonths, termOf } from '../../../shared/pricing'
-import type { Booking, BookingStatus, ISODate, Listing, OwnerStats, Review } from '../../../shared/types'
+import type { Booking, BookingStatus, ISODate, Listing, OwnerStats, Review, BookingFee, FeeStatus } from '../../../shared/types'
 
 /** Listing as stored: owner-set blocked days plus server-maintained booked days. */
 export type StoredListing = Listing & { bookedDates: ISODate[] }
@@ -21,6 +21,8 @@ export interface Store {
   listBookingsForOwner(ownerId: string): Promise<StoredBooking[]>
   createBooking(b: Omit<StoredBooking, 'id' | 'createdAt'>): Promise<StoredBooking>
   setBookingStatus(id: string, status: BookingStatus, paymentStatus?: Booking['paymentStatus']): Promise<StoredBooking>
+  /** The booking fee's state (see bookingFee.ts). */
+  setBookingFee(id: string, fee: Partial<BookingFee> & { status: FeeStatus }): Promise<void>
   /** Monthly rentals: payments marked and notice given. */
   updateBookingTerms(id: string, patch: Pick<Partial<Booking>, 'paidMonths' | 'notice' | 'end'>): Promise<StoredBooking>
   listReviewsForBooking(bookingId: string): Promise<Review[]>
@@ -108,12 +110,21 @@ const ACTION_STATUS: Record<Exclude<BookingAction, 'markPaid' | 'giveNotice'>, B
   return: 'completed',
 }
 
-export async function respondToBooking(store: Store, bookingId: string, action: BookingAction, actorId: string, today?: ISODate): Promise<StoredBooking> {
+export async function respondToBooking(
+  store: Store,
+  bookingId: string,
+  action: BookingAction,
+  actorId: string,
+  today?: ISODate,
+  /** When online payments are on: the fee the renter pays after acceptance. */
+  opts: { bookingFee?: number } = {},
+): Promise<StoredBooking> {
   const booking = await store.getBooking(bookingId)
   if (!booking || !booking.participants.includes(actorId)) throw new RuleError('Booking not found.')
   if (action === 'markPaid' || action === 'giveNotice') return monthlyAction(store, booking, action, actorId, today)
   const to = ACTION_STATUS[action]
   if (!to || !canTransition(booking, to, actorId)) throw new RuleError('This booking can’t be changed that way now.')
+  if (to === 'active' && booking.fee?.status === 'due') throw new RuleError('The renter needs to pay the booking fee before you hand it over.')
 
   const others = await store.listBookingsForListing(booking.listingId)
   if (action === 'accept') {
@@ -123,7 +134,16 @@ export async function respondToBooking(store: Store, bookingId: string, action: 
     }
   }
 
-  const updated = await store.setBookingStatus(booking.id, to, to === 'completed' ? 'paid' : undefined)
+  let updated = await store.setBookingStatus(booking.id, to, to === 'completed' ? 'paid' : undefined)
+  // The booking fee: due once accepted; refunded if the owner cancels after it's paid (not if the renter does).
+  if (to === 'accepted' && opts.bookingFee) {
+    await store.setBookingFee(booking.id, { status: 'due', amount: opts.bookingFee })
+    updated = { ...updated, fee: { status: 'due', amount: opts.bookingFee } }
+  }
+  if (to === 'cancelled' && actorId === booking.ownerId && booking.fee?.status === 'paid') {
+    await store.setBookingFee(booking.id, { status: 'refund_due' })
+    updated = { ...updated, fee: { ...booking.fee, status: 'refund_due' } }
+  }
 
   // Keep the public calendar in step with accepted and in-progress bookings.
   if (['accepted', 'cancelled', 'completed'].includes(to)) {

@@ -5,6 +5,7 @@
 import type { PhotoUploadStore } from './photos'
 import type { ConditionStore } from './conditionReports'
 import { forgetIdCheck, IdClaimTaken, type IdStore } from './idCheck'
+import type { FeeStore } from './bookingFee'
 import type { ConditionReport } from '../../../shared/conditionReports'
 import { Amplify } from 'aws-amplify'
 import { generateClient } from 'aws-amplify/data'
@@ -77,6 +78,16 @@ export function bookingFromDb(b: any): StoredBooking {
     message: b.message ?? undefined,
     paidMonths: b.paidMonths ?? undefined,
     notice: b.notice ?? null,
+    fee: b.feeStatus
+      ? {
+          status: b.feeStatus,
+          amount: b.feeAmount ?? 0,
+          paidAt: b.feePaidAt ?? undefined,
+          linkId: b.feeLinkId ?? undefined,
+          linkUrl: b.feeLinkUrl ?? undefined,
+          paymentId: b.feePaymentId ?? undefined,
+        }
+      : null,
   }
 }
 
@@ -116,6 +127,14 @@ export function amplifyStore(client: Client): Store {
       const updated = check(await m.Booking.update({ id, status, ...(paymentStatus ? { paymentStatus: toDb(paymentStatus) } : {}) }))
       if (!updated) throw new Error('Booking was not updated')
       return bookingFromDb(updated)
+    },
+    async setBookingFee(id, fee) {
+      const f = fee as Record<string, unknown>
+      const row: Record<string, unknown> = { id, feeStatus: fee.status }
+      for (const [k, col] of [['amount', 'feeAmount'], ['paidAt', 'feePaidAt'], ['linkId', 'feeLinkId'], ['linkUrl', 'feeLinkUrl'], ['paymentId', 'feePaymentId']] as const) {
+        if (f[k] !== undefined) row[col] = f[k]
+      }
+      check(await m.Booking.update(row as never))
     },
     async updateBookingTerms(id, patch) {
       const updated = check(await m.Booking.update({ id, ...patch } as never))
@@ -423,6 +442,19 @@ export function idStore(client: Client): IdStore {
     },
     async setProfileIdVerified(userId, verified) {
       await m.UserProfile.update({ id: userId, verifiedGovtId: verified } as never)
+    },
+  }
+}
+
+/** Store for the booking fee. */
+export function feeStore(client: Client): FeeStore {
+  const base = amplifyStore(client)
+  const m = client.models
+  return {
+    getBooking: base.getBooking,
+    setFee: base.setBookingFee,
+    async listRefundsDue() {
+      return (await all((nextToken) => m.Booking.list({ filter: { feeStatus: { eq: 'refund_due' } }, nextToken }))).map(bookingFromDb)
     },
   }
 }

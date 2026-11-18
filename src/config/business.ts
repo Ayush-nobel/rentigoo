@@ -82,3 +82,14 @@ export function shown(v: string | null, label: string): string {
 export function whatsappUrl(b: BusinessDetails = BUSINESS): string | null {
   return b.whatsapp ? `https://wa.me/${b.whatsapp}` : null
 }
+
+/** The person behind RentiGoo, for the "Who's behind RentiGoo" block on Home. */
+export const FOUNDER: { name: string; photo: string | null; story: string | null } = {
+  name: 'Ayush Shukla',
+  // TODO(founder): add a real photo of yourself at public/brand/founder.webp (square, at least 400 px wide)
+  // and set photo: '/brand/founder.webp'. Until then the block shows your initials.
+  photo: null,
+  // TODO(founder): 2–3 lines in your own words: who you are and why you started RentiGoo in Bhopal.
+  // Until then the block shows only facts we already publish (your name, that RentiGoo is run from Bhopal).
+  story: null,
+}

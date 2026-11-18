@@ -1,3 +1,6 @@
+import { rupees } from '@/lib/format'
+import { BOOKING_FEE_LIVE } from '@/lib/features'
+import { DEPOSIT_CAPS, POLICY } from '@shared/policy'
 import { LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
 import { LEGAL, MIN_AGE } from '@shared/legal'
@@ -118,7 +121,11 @@ const sections: LegalSection[] = [
           Every price is in Indian rupees. The breakdown before you request shows the rent, any weekly or monthly saving, any delivery fee, and the refundable
           deposit. We never add charges after you request.
         </p>
-        {FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0 ? (
+        {BOOKING_FEE_LIVE ? (
+          <p>
+            <strong>Fees:</strong> RentiGoo charges renters only the booking fee below. Owners pay no commission, and listing is free.
+          </p>
+        ) : FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0 ? (
           <p>
             <strong>Fees:</strong> RentiGoo currently charges no service fee to renters and takes no commission from owners. Listing is free. If we introduce
             fees, we’ll update these terms first and show every fee in the breakdown before you request.
@@ -129,8 +136,15 @@ const sections: LegalSection[] = [
             shown in the breakdown. Owners pay a commission of {FEES.ownerCommissionPct}% of the rent they earn. Listing is free.
           </p>
         )}
+        {BOOKING_FEE_LIVE && (
+          <p>
+            <strong>Booking fee:</strong> once the owner accepts, you pay RentiGoo a {rupees(POLICY.bookingFee)} booking fee online to lock in the dates. The owner
+            hands the item over only after it’s paid. It covers the pickup and return checks and our help if something goes wrong. Refunds are in our{' '}
+            <L to={LEGAL.refunds.path}>Cancellation and Refund Policy</L>.
+          </p>
+        )}
         <p>
-          <strong>How you pay today:</strong> RentiGoo doesn’t take online payments yet. You pay the owner the “Due at pickup” amount when you collect the item,
+          <strong>{BOOKING_FEE_LIVE ? 'Rent and deposit:' : 'How you pay today:'}</strong> {BOOKING_FEE_LIVE ? 'RentiGoo doesn’t take rent or deposits online.' : 'RentiGoo doesn’t take online payments yet.'} You pay the owner the “Due at pickup” amount when you collect the item,
           by UPI or cash (for monthly rentals, each later month is paid the same way when it starts), and the owner gives you back the deposit when you return it. We’ll update these terms before online payments start.
         </p>
       </>
@@ -141,17 +155,26 @@ const sections: LegalSection[] = [
     title: 'Deposits and damage',
     body: (
       <ul>
-        <li>The owner sets the deposit, and it’s shown before you request.</li>
-        <li>When the item comes back in the same condition (apart from normal wear), the owner must return the full deposit at the time of return.</li>
         <li>
-          If the item comes back damaged or incomplete, the owner may keep only the reasonable cost of repair or replacement, and must show the renter the bill
-          or a written quote.
+          The owner sets the deposit, up to RentiGoo’s cap for that kind of item (for example {rupees(DEPOSIT_CAPS.cameras!)} for a camera), and it’s shown before
+          you request.
         </li>
         <li>
-          At pickup and at return, either of you can record a check with photos on the booking. Do it together: if there’s a disagreement, it’s the first thing we
-          look at. The checks are deleted 30 days after the rental ends.
+          At pickup, the renter shows the owner a government photo ID, and both of you check the item and add photos to the booking (the pickup check). Do the
+          same at return. These checks are what disputes are decided on, and they’re deleted 30 days after the rental ends.
         </li>
-        <li>If you can’t agree, contact our grievance officer (see “Complaints and grievance officer” below). We’ll look at what both of you send us.</li>
+        <li>
+          When the item comes back in the same condition (apart from normal wear), the owner must return the full deposit within {POLICY.depositReturnHours} hours
+          of the return.
+        </li>
+        <li>
+          If the item comes back damaged or incomplete, the owner must tell RentiGoo within {POLICY.damageReportHours} hours of the return, with photos. They may
+          keep only the reasonable cost of repair or replacement, and must show the renter the bill or a written quote.
+        </li>
+        <li>
+          If you can’t agree, RentiGoo decides, using the pickup and return photos and anything else you both send us, and you both agree to follow that decision.
+          Contact our grievance officer (see “Complaints and grievance officer” below). This doesn’t affect your rights under consumer law.
+        </li>
       </ul>
     ),
   },

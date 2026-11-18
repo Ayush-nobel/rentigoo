@@ -13,6 +13,8 @@ import { phoneCheckFn } from './functions/phone-check/resource'
 import { submitReviewFn } from './functions/submit-review/resource'
 import { conditionReportsFn } from './functions/condition-reports/resource'
 import { idCheckFn } from './functions/id-check/resource'
+import { bookingFeeFn } from './functions/booking-fee/resource'
+import { feeRefundsFn } from './functions/fee-refunds/resource'
 import { purgeConditionReportsFn } from './functions/purge-condition-reports/resource'
 import { storage } from './storage/resource'
 
@@ -32,6 +34,8 @@ const backend = defineBackend({
   conditionReportsFn,
   purgeConditionReportsFn,
   idCheckFn,
+  bookingFeeFn,
+  feeRefundsFn,
 })
 
 // createMyProfile reads the person's email_verified attribute straight from
@@ -144,5 +148,20 @@ if (idMode === 'setu') {
   backend.idCheckFn.addEnvironment('SETU_PRODUCT_INSTANCE_ID', process.env.SETU_PRODUCT_INSTANCE_ID!)
   backend.idCheckFn.addEnvironment('SETU_CLIENT_SECRET', secret('SETU_CLIENT_SECRET'))
   if (process.env.SETU_BASE_URL) backend.idCheckFn.addEnvironment('SETU_BASE_URL', process.env.SETU_BASE_URL)
+}
+
+// The booking fee (shared/policy.ts), paid online through Razorpay payment links.
+// Production switches on when RAZORPAY_KEY_ID is set as an environment variable on
+// the main branch and RAZORPAY_KEY_SECRET as an Amplify secret. Until then: off,
+// bookings carry no fee and the site says booking is free (vite.config.ts, same rule).
+// Sandboxes use test mode: no Razorpay, the "payment page" comes straight back as paid.
+const feeMode = !process.env.AWS_BRANCH ? 'test' : process.env.RAZORPAY_KEY_ID ? 'razorpay' : 'off'
+for (const fn of [backend.bookingFeeFn, backend.feeRefundsFn, backend.respondToBookingFn]) fn.addEnvironment('BOOKING_FEE_MODE', feeMode)
+backend.bookingFeeFn.addEnvironment('RETURN_ORIGINS', feeMode === 'test' ? `${siteUrl},http://localhost:*,http://127.0.0.1:*` : siteUrl)
+if (feeMode === 'razorpay') {
+  for (const fn of [backend.bookingFeeFn, backend.feeRefundsFn]) {
+    fn.addEnvironment('RAZORPAY_KEY_ID', process.env.RAZORPAY_KEY_ID!)
+    fn.addEnvironment('RAZORPAY_KEY_SECRET', secret('RAZORPAY_KEY_SECRET'))
+  }
 }
 

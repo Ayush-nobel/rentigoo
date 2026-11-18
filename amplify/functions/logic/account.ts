@@ -62,6 +62,7 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
   const touchedListings = new Set<string>()
   for (const b of open) {
     await store.setBookingStatus(b.id, 'cancelled')
+    if (b.ownerId === userId && b.fee?.status === 'paid') await store.setBookingFee(b.id, { status: 'refund_due' })
     if (b.status === 'accepted') touchedListings.add(b.listingId)
   }
   const owned = await store.listListingsOwnedBy(userId)

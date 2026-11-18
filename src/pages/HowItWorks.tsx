@@ -1,6 +1,9 @@
 import { Link } from 'react-router'
 import { LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
+import { POLICY } from '@shared/policy'
+import { BOOKING_FEE_LIVE } from '@/lib/features'
+import { rupees } from '@/lib/format'
 import { LISTING_LIMITS } from '@shared/listingRules'
 import { ContentPage, Section, Steps } from '@/components/content/Content'
 import { HowPayingWorks } from '@/components/content/HowPayingWorks'
@@ -27,12 +30,19 @@ export default function HowItWorks() {
                 title: 'Send a request',
                 body: <p>Pick your dates and you’ll see the full breakdown: rent, any delivery fee and the refundable deposit. Sending a request costs nothing. You can message the owner first if you have questions.</p>,
               },
-              { title: 'The owner says yes (or no)', body: <p>If they accept, those dates are blocked for you. You still haven’t paid anything. Use Messages to agree a time and place for pickup.</p> },
+              {
+                title: 'The owner says yes (or no)',
+                body: BOOKING_FEE_LIVE ? (
+                  <p>If they accept, pay the {rupees(POLICY.bookingFee)} booking fee online from your dashboard to lock in the dates. Then use Messages to agree a time and place for pickup.</p>
+                ) : (
+                  <p>If they accept, those dates are blocked for you. You still haven’t paid anything. Use Messages to agree a time and place for pickup.</p>
+                ),
+              },
               {
                 title: 'Pick it up and pay',
-                body: <p>Check the item together, then pay the rent and deposit to the owner directly, by UPI or cash. Take a couple of photos of its condition; it helps everyone if questions come up later.</p>,
+                body: <p>Show the owner a government photo ID, check the item together and add the pickup check with photos to the booking. Then pay the rent and deposit to the owner directly, by UPI or cash.</p>,
               },
-              { title: 'Bring it back', body: <p>Return it on time, in the condition you got it. The owner marks it as returned and gives you the deposit back.</p> },
+              { title: 'Bring it back', body: <p>Return it on time, in the condition you got it, and add the return check with photos. The owner gives the deposit back within {POLICY.depositReturnHours} hours, unless they report damage with photos.</p> },
               { title: 'Review each other', body: <p>Once it’s returned, you can both leave a review. Only people who actually completed a rental can review it.</p> },
             ]}
           />
@@ -72,7 +82,7 @@ export default function HowItWorks() {
               },
               { title: 'Answer requests', body: <p>Requests show up in your dashboard. Accept the ones that suit you and decline the rest. Nobody can book without your yes.</p> },
               { title: 'Hand it over', body: <p>Meet the renter, check the item together and collect the rent and deposit. Mark it as handed over in your dashboard.</p> },
-              { title: 'Get it back', body: <p>When it comes back as it left, give the deposit back in full and mark it as returned. Then review the renter.</p> },
+              { title: 'Get it back', body: <p>Do the return check together. If it came back as it left, give the deposit back in full within {POLICY.depositReturnHours} hours and mark it as returned. Report any damage to us with photos within {POLICY.damageReportHours} hours. Then review the renter.</p> },
             ]}
           />
           <ButtonLink to="/list" className="mt-2">
@@ -81,7 +91,12 @@ export default function HowItWorks() {
         </Section>
 
         <Section id="money" title="Money">
-          {free ? (
+          {BOOKING_FEE_LIVE ? (
+            <p>
+              Listing is free, and owners pay no commission. Renters pay one {rupees(POLICY.bookingFee)} booking fee, online, once the owner accepts. Everything else
+              goes straight to the owner. See our <Link to="/terms">Terms</Link> and <Link to="/refunds">refunds</Link>.
+            </p>
+          ) : free ? (
             <p>
               RentiGoo is free to use right now: no service fee for renters and no commission for owners. While payments happen in person at pickup, we don’t charge anything.
               We’ll update this page and our <Link to="/terms">Terms</Link> before that changes.

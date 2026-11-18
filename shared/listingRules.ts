@@ -1,3 +1,4 @@
+import { depositCap } from './policy'
 import { getArea } from './areas'
 import { getCategory } from './categories'
 import { parseISODate } from './pricing'
@@ -186,7 +187,9 @@ export function listingErrors(
       e.monthly = 'A month should cost more than a week.'
     }
   }
-  if (!whole(d.deposit) || d.deposit < 0 || d.deposit > L.depositMax) e.deposit = 'Set a deposit between ₹0 and ₹5,00,000, in whole rupees.'
+  const cap = depositCap(d.categoryId, L.depositMax)
+  if (!whole(d.deposit) || d.deposit < 0) e.deposit = 'Set a deposit in whole rupees, or ₹0 for none.'
+  else if (d.deposit > cap) e.deposit = `The most a deposit can be for this kind of item is ₹${cap.toLocaleString('en-IN')}.`
 
   if (!whole(d.minDays) || d.minDays < 1) e.minDays = 'The shortest rental is at least 1 day.'
   if (!whole(d.maxDays) || d.maxDays > L.maxDaysCap) e.maxDays = `The longest rental can be up to ${L.maxDaysCap} days.`

@@ -9,10 +9,12 @@ import { defineConfig } from 'vite'
 const phoneCheckLive = Boolean(process.env.DLT_ENTITY_ID && process.env.DLT_TEMPLATE_ID && process.env.SMS_SENDER_ID)
 // ID checks are live only when the Setu keys are set (same rule as amplify/backend.ts).
 const idCheckLive = Boolean(process.env.SETU_CLIENT_ID && process.env.SETU_PRODUCT_INSTANCE_ID)
+// The booking fee is charged only when the Razorpay keys are set (same rule as amplify/backend.ts).
+const bookingFeeLive = Boolean(process.env.RAZORPAY_KEY_ID)
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  define: { __PHONE_CHECK_LIVE__: JSON.stringify(phoneCheckLive), __ID_CHECK_LIVE__: JSON.stringify(idCheckLive) },
+  define: { __PHONE_CHECK_LIVE__: JSON.stringify(phoneCheckLive), __ID_CHECK_LIVE__: JSON.stringify(idCheckLive), __BOOKING_FEE_LIVE__: JSON.stringify(bookingFeeLive) },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

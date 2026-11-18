@@ -166,7 +166,20 @@ export interface Booking {
   paidMonths?: number
   /** Monthly rentals: when notice was given, and by whom. `end` moves to the notice end date. */
   notice?: { at: ISODateTime; by: string } | null
+  /** The booking fee, when online payments are on and the owner has accepted. */
+  fee?: BookingFee | null
   createdAt: ISODateTime
+}
+
+export type FeeStatus = 'due' | 'paid' | 'refund_due' | 'refunded'
+export interface BookingFee {
+  status: FeeStatus
+  amount: number
+  paidAt?: ISODateTime
+  /** Razorpay ids (server use). */
+  linkId?: string
+  linkUrl?: string
+  paymentId?: string
 }
 
 export interface Review {

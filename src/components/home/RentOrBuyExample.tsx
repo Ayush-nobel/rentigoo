@@ -31,11 +31,11 @@ export function RentOrBuyExample({ listings = [] }: { listings?: Listing[] }) {
             in {areaName(real.areaId)} rents for {rupees(daily)} a day, so {WEEKEND_DAYS} days come to {rupees(rent)}.
           </>
         ) : (
-          <>
-            {WEEKEND_DAYS} days at {rupees(daily)} a day, our estimate of a typical DSLR price in Bhopal.
-          </>
+          // TODO(founder): confirm these figures (3 days at ₹750/day; ₹85,000 for a new DSLR with a lens). They come from
+          // the camera estimates in shared/categories.ts. Your brief said "entry-level DSLR", but those cost about ₹40–50k.
+          <>Based on {WEEKEND_DAYS} days at {rupees(daily)}/day vs a new mid-range DSLR with a lens.</>
         )}{' '}
-        The buying price is our estimate for a new mid-range DSLR with a lens, and you get the deposit back.
+        Both are our estimates for Bhopal, and you get the deposit back.
       </p>
       <ul className="mt-5 flex flex-wrap gap-x-8 gap-y-2">
         <li>

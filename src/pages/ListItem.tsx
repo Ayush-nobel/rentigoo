@@ -7,6 +7,7 @@ import { CATEGORIES, categoryName, getCategory } from '@shared/categories'
 import { FEES } from '@shared/fees'
 import { CONDITIONS, LISTING_LIMITS, type ListingErrors } from '@shared/listingRules'
 import { bestRent } from '@shared/pricing'
+import { depositCap, POLICY } from '@shared/policy'
 import type { Listing, ListingStatus } from '@shared/types'
 import { PageLoading } from '@/components/layout/AppShell'
 import { Seo } from '@/components/layout/Seo'
@@ -558,7 +559,7 @@ function PriceStep({ form, edit, errors }: StepProps) {
         {...numberProps}
         value={form.deposit}
         error={errors.deposit}
-        hint="The renter pays it at pickup, and you give it all back when the item returns as it left. ₹0 for no deposit."
+        hint={`The renter pays it at pickup. Give it all back within ${POLICY.depositReturnHours} hours of the return unless you report damage with photos. Up to ${rupees(depositCap(form.categoryId))} for this kind of item; ₹0 for none.`}
         onChange={(e) => edit({ deposit: e.target.value })}
       />
     </>

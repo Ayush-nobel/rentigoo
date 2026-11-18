@@ -50,6 +50,9 @@ describe('listingErrors', () => {
     expect(listingErrors({ ...good, pricing: { daily: 600, weekly: 4200 } }, { today: TODAY }).weekly).toMatch(/less than 7 days/)
     expect(listingErrors({ ...good, pricing: { daily: 600, weekly: 3000, monthly: 2000 } }, { today: TODAY }).monthly).toMatch(/more than a week/)
     expect(listingErrors({ ...good, deposit: -1 }, { today: TODAY }).deposit).toBeDefined()
+    // Deposits are capped by kind of item (shared/policy.ts).
+    expect(listingErrors({ ...good, categoryId: 'cameras', deposit: 10_000 }, { today: TODAY }).deposit).toBeUndefined()
+    expect(listingErrors({ ...good, categoryId: 'cameras', deposit: 10_001 }, { today: TODAY }).deposit).toMatch(/₹10,000/)
   })
 
   it('checks rental length, pickup and delivery fee', () => {
@@ -78,7 +81,7 @@ describe('cleanDraft', () => {
 })
 
 describe('monthly listings', () => {
-  const monthlyOnly: ListingDraft = { ...good, pricing: { monthly: 2500 }, months: { min: 3, max: 12 }, categoryId: 'furniture' }
+  const monthlyOnly: ListingDraft = { ...good, pricing: { monthly: 2500 }, months: { min: 3, max: 12 }, categoryId: 'furniture', deposit: 2000 }
   it('accepts a monthly-only listing, and one offering both', () => {
     expect(listingErrors(monthlyOnly, { today: TODAY })).toEqual({})
     expect(listingErrors({ ...good, pricing: { daily: 200, monthly: 4000 }, months: { min: 1, max: 6 } }, { today: TODAY })).toEqual({})

@@ -56,7 +56,8 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
     actions.push({ label: 'Accept', run: () => api.respondToBooking(b.id, true), done: `Accepted. Those dates are now blocked for ${title}.` })
     actions.push({ label: 'Decline', variant: 'outline', run: () => api.respondToBooking(b.id, false), done: 'Request declined.' })
   }
-  if (role === 'owner' && b.status === 'accepted') {
+  const feeDue = b.status === 'accepted' && b.fee?.status === 'due'
+  if (role === 'owner' && b.status === 'accepted' && !feeDue) {
     actions.push({ label: 'Mark as handed over', run: () => api.markHandedOver(b.id), done: `Marked as handed over. Mark it as returned when ${otherName} brings it back.` })
   }
   if (monthly && underway && role === 'owner' && nextDue) {
@@ -218,6 +219,8 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
         </blockquote>
       )}
 
+      <FeeNote booking={b} role={role} otherName={otherName} />
+
       <ConditionChecks booking={b} myId={role === 'owner' ? b.ownerId : b.renterId} otherName={otherName} />
 
       {error && (
@@ -296,3 +299,55 @@ function Row({ term, children }: { term: string; children: ReactNode }) {
     </div>
   )
 }
+
+/** The booking fee on a card: pay it (renter), wait for it (owner), or what happened to it. */
+function FeeNote({ booking: b, role, otherName }: { booking: Booking; role: Role; otherName: string }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fee = b.fee
+  if (!fee) return null
+  const amount = rupees(fee.amount)
+  const pay = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const { url } = await api.startBookingFee(b.id, `${window.location.origin}/booking-fee?booking=${encodeURIComponent(b.id)}`)
+      window.location.href = url
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'The payment page didn’t open. Please try again.')
+      setBusy(false)
+    }
+  }
+  if (fee.status === 'due' && b.status === 'accepted') {
+    return (
+      <div className="mt-4 rounded-xl border-2 border-ink p-4">
+        {role === 'renter' ? (
+          <>
+            <p className="font-semibold">Pay the {amount} booking fee to lock in these dates.</p>
+            <p className="mt-1 text-[0.9375rem] text-muted">Paid online to RentiGoo. The rent and deposit you pay the owner at pickup, as before.</p>
+            <Button size="sm" className="mt-3" onClick={() => void pay()} disabled={busy}>
+              {busy ? 'Opening the payment page…' : `Pay ${amount}`}
+            </Button>
+          </>
+        ) : (
+          <p className="font-semibold">Waiting for {otherName} to pay the {amount} booking fee. Hand the item over once it’s paid.</p>
+        )}
+        {error && (
+          <p role="alert" className="mt-2 font-medium text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    )
+  }
+  const text =
+    fee.status === 'paid'
+      ? `Booking fee of ${amount} paid${fee.paidAt ? ` on ${shortDate(fee.paidAt.slice(0, 10))}` : ''}.`
+      : fee.status === 'refund_due'
+        ? `The ${amount} booking fee is being refunded.`
+        : fee.status === 'refunded'
+          ? `The ${amount} booking fee was refunded.`
+          : null
+  return text ? <p className="mt-3 text-[0.9375rem] text-muted">{text}</p> : null
+}
+

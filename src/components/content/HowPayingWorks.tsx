@@ -1,5 +1,8 @@
 import { Link } from 'react-router'
 import { FEES } from '@shared/fees'
+import { POLICY } from '@shared/policy'
+import { BOOKING_FEE_LIVE } from '@/lib/features'
+import { rupees } from '@/lib/format'
 
 const free = FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0
 
@@ -9,16 +12,22 @@ const free = FEES.serviceFeePct === 0 && FEES.ownerCommissionPct === 0
  * Keep in step with the Terms ("Paying" and "Deposits and damage").
  */
 export function HowPayingWorks({ headingId = 'paying-title', className, heading = true }: { headingId?: string; className?: string; heading?: boolean }) {
+  const fee = rupees(POLICY.bookingFee)
   const rows: [string, React.ReactNode][] = [
     ['What you pay', 'The rent for your dates and a refundable deposit, plus a delivery fee if you choose delivery. The listing shows every amount before you ask.'],
-    ['When', 'Nothing when you send a request. You pay at pickup, once you’ve seen the item and it works.'],
-    ['To whom', `Straight to the owner, by UPI or cash. ${free ? 'RentiGoo takes nothing right now.' : `RentiGoo’s ${FEES.serviceFeePct}% fee is included in the total you see.`}`],
-    ['The deposit', 'The owner gives it back in full when you return the item in the same condition, apart from normal wear.'],
+    [
+      'When',
+      BOOKING_FEE_LIVE
+        ? `Nothing when you send a request. Once the owner accepts, a ${fee} booking fee online. The rent and deposit at pickup, once you’ve seen the item works.`
+        : 'Nothing when you send a request. You pay at pickup, once you’ve seen the item and it works.',
+    ],
+    ['To whom', `Rent and deposit straight to the owner, by UPI or cash.${BOOKING_FEE_LIVE ? ` The ${fee} booking fee to RentiGoo.` : free ? ' RentiGoo takes nothing right now.' : ''}`],
+    ['The deposit', `Capped by kind of item, and back in full within ${POLICY.depositReturnHours} hours of the return, unless damage is reported with photos.`],
     [
       'If something breaks',
       <>
-        The owner can keep only what the repair or replacement costs, and must show you the bill or a written quote. If you don’t agree, tell us: we’ll look at
-        the pickup and return photos on the booking and anything else you both send. <Link to="/terms#deposits" className="underline underline-offset-4">The rules in full</Link>
+        The owner can keep only what the repair or replacement costs, with a bill or written quote. If you don’t agree, RentiGoo decides from the pickup and return
+        photos on the booking. <Link to="/terms#deposits" className="underline underline-offset-4">The rules in full</Link>
       </>,
     ],
   ]

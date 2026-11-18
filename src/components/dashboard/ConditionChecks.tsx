@@ -1,6 +1,6 @@
 import { Camera, Check, ImagePlus, X } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
-import { CONDITION_CHECKS, CONDITION_LIMITS, conditionProblem, type ConditionCheckId, type ConditionReportView, type ConditionStage } from '@shared/conditionReports'
+import { CONDITION_CHECKS, CONDITION_LIMITS, checksFor, conditionProblem, type ConditionCheckId, type ConditionReportView, type ConditionStage } from '@shared/conditionReports'
 import type { Booking } from '@shared/types'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
@@ -103,7 +103,7 @@ function ReportView({ report: r, who }: { report: ConditionReportView; who: stri
         {who}, {shortDate(r.createdAt.slice(0, 10))}
       </p>
       <ul className="mt-1 space-y-0.5 text-[0.9375rem]">
-        {CONDITION_CHECKS.map((c) => (
+        {checksFor(r.stage).map((c) => (
           <li key={c.id} className="flex items-start gap-1.5">
             {r.checks[c.id] ? <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" /> : <X aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-danger" />}
             <span>
@@ -187,7 +187,7 @@ function ReportForm({
     <form noValidate onSubmit={save} className="mt-3 space-y-4 rounded-xl bg-surface p-4">
       <fieldset>
         <legend className="mb-1 font-semibold">Check together:</legend>
-        {CONDITION_CHECKS.map((c) => (
+        {checksFor(stage).map((c) => (
           <Checkbox key={c.id} label={c.label} checked={checks[c.id]} onChange={(e) => setChecks((cs) => ({ ...cs, [c.id]: e.target.checked }))} />
         ))}
       </fieldset>

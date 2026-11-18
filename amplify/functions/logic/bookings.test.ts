@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ownerStats, requestBooking, respondToBooking, RuleError, submitReview, type StoredListing } from './bookings'
 import { FEES } from '../../../shared/fees'
 import { memoryStore } from './memoryStore'
+import { confirmFeePayment, offFeeProvider, processRefunds, startFeePayment, testFeeProvider } from './bookingFee'
 
 const TODAY = '2026-11-10'
 const listing: StoredListing = {
@@ -217,5 +218,57 @@ describe('monthly rentals', () => {
     const { store } = memoryStore({ listings: [listing] })
     const b = await requestBooking(store, ask(), 'renter', TODAY)
     await expect(respondToBooking(store, b.id, 'giveNotice', 'renter', TODAY)).rejects.toThrow(/can’t be changed/)
+  })
+})
+
+describe('booking fee', () => {
+  const NOW = new Date('2026-11-10T10:00:00Z')
+  const back = 'https://www.rentigoo.in/booking-fee'
+  const allowedReturn = (u: string) => u.startsWith(back)
+
+  async function accepted(fee: number | null = 49) {
+    const m = memoryStore({ listings: [listing] })
+    const b = await requestBooking(m.store, ask(), 'renter', TODAY)
+    await respondToBooking(m.store, b.id, 'accept', 'owner', TODAY, { bookingFee: fee ?? undefined })
+    const feeStore = { getBooking: m.store.getBooking, setFee: m.store.setBookingFee, listRefundsDue: async () => [...m.bookings.values()].filter((x) => x.fee?.status === 'refund_due') }
+    return { m, id: b.id, feeStore }
+  }
+
+  it('is due once the owner accepts, and blocks handover until paid', async () => {
+    const { m, id, feeStore } = await accepted()
+    expect((await m.store.getBooking(id))!.fee).toMatchObject({ status: 'due', amount: 49 })
+    await expect(respondToBooking(m.store, id, 'handover', 'owner', TODAY)).rejects.toThrow(/pay the booking fee/)
+    const { url } = await startFeePayment({ store: feeStore, provider: testFeeProvider, allowedReturn }, 'renter', id, back)
+    const params = Object.fromEntries(new URL(url).searchParams)
+    expect(await confirmFeePayment({ store: feeStore, provider: testFeeProvider, now: NOW }, 'renter', id, params)).toEqual({ paid: true })
+    expect((await m.store.getBooking(id))!.fee?.status).toBe('paid')
+    expect((await respondToBooking(m.store, id, 'handover', 'owner', TODAY)).status).toBe('active')
+  })
+
+  it('is never charged while online payments are off', async () => {
+    const { m, id, feeStore } = await accepted(null)
+    expect((await m.store.getBooking(id))!.fee ?? null).toBeNull()
+    expect((await respondToBooking(m.store, id, 'handover', 'owner', TODAY)).status).toBe('active')
+    await expect(startFeePayment({ store: feeStore, provider: offFeeProvider, allowedReturn }, 'renter', id, back)).rejects.toThrow(/switched on/)
+  })
+
+  it('only the renter pays, only back to our site, and a forged result is refused', async () => {
+    const { id, feeStore } = await accepted()
+    await expect(startFeePayment({ store: feeStore, provider: testFeeProvider, allowedReturn }, 'owner', id, back)).rejects.toThrow(/not found/)
+    await expect(startFeePayment({ store: feeStore, provider: testFeeProvider, allowedReturn }, 'renter', id, 'https://evil.example/booking-fee')).rejects.toThrow()
+    const { url } = await startFeePayment({ store: feeStore, provider: testFeeProvider, allowedReturn }, 'renter', id, back)
+    const forged = { ...Object.fromEntries(new URL(url).searchParams), razorpay_signature: 'forged' }
+    await expect(confirmFeePayment({ store: feeStore, provider: testFeeProvider, now: NOW }, 'renter', id, forged)).rejects.toThrow(/didn’t go through/)
+  })
+
+  it('is refunded when the owner cancels after it’s paid, not when the renter does', async () => {
+    for (const who of ['owner', 'renter'] as const) {
+      const { m, id, feeStore } = await accepted()
+      const { url } = await startFeePayment({ store: feeStore, provider: testFeeProvider, allowedReturn }, 'renter', id, back)
+      await confirmFeePayment({ store: feeStore, provider: testFeeProvider, now: NOW }, 'renter', id, Object.fromEntries(new URL(url).searchParams))
+      await respondToBooking(m.store, id, 'cancel', who, TODAY)
+      const refunded = await processRefunds({ store: feeStore, provider: testFeeProvider })
+      expect([who, refunded, (await m.store.getBooking(id))!.fee?.status]).toEqual(who === 'owner' ? ['owner', 1, 'refunded'] : ['renter', 0, 'paid'])
+    }
   })
 })

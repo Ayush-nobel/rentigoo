@@ -123,6 +123,7 @@ function bookingFromDb(b: any): Booking {
     ...(b.message ? { message: b.message } : {}),
     ...(b.paidMonths != null ? { paidMonths: b.paidMonths } : {}),
     ...(b.notice ? { notice: { at: b.notice.at, by: b.notice.by } } : {}),
+    ...(b.feeStatus ? { fee: { status: b.feeStatus, amount: b.feeAmount ?? 0, ...(b.feePaidAt ? { paidAt: b.feePaidAt } : {}) } } : {}),
     createdAt: b.createdAt,
   }
 }
@@ -332,6 +333,19 @@ export const amplifyApi: RentiGooApi = {
     const b = bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'giveNotice' })))
     listingCache = null
     return b
+  },
+
+  async startBookingFee(bookingId, returnUrl) {
+    me()
+    const r = check(await client().mutations.startBookingFee({ bookingId, returnUrl }))
+    if (!r) throw new ApiError('The payment page didn’t open. Please try again.', 'conflict')
+    return r
+  },
+
+  async confirmBookingFee(bookingId, params) {
+    me()
+    const r = check(await client().mutations.confirmBookingFee({ bookingId, params: JSON.stringify(params) }))
+    return { paid: Boolean(r?.paid) }
   },
 
   async getIdStatus() {
