@@ -334,6 +334,31 @@ export const amplifyApi: RentiGooApi = {
     return b
   },
 
+  async getIdStatus() {
+    me()
+    return check(await client().queries.idCheckStatus()) ?? { available: false, verified: false }
+  },
+
+  async startIdCheck(returnUrl) {
+    me()
+    const r = check(await client().mutations.startIdCheck({ returnUrl }))
+    if (!r) throw new ApiError('The ID check didn’t start. Please try again.', 'conflict')
+    return r
+  },
+
+  async finishIdCheck(requestId) {
+    me()
+    const r = check(await client().mutations.finishIdCheck({ requestId }))
+    if (!r) throw new ApiError('The ID check didn’t finish. Please try again.', 'conflict')
+    return { verified: r.verified }
+  },
+
+  async forgetIdCheck() {
+    me()
+    const r = check(await client().mutations.forgetIdCheck())
+    return { verified: r?.verified ?? false }
+  },
+
   async listConditionReports(bookingId) {
     me()
     const rows = check(await client().queries.bookingConditionReports({ bookingId })) ?? []

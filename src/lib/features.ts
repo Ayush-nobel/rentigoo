@@ -1,2 +1,5 @@
 /** Phone checks send real texts (production with DLT IDs). Public pages describe them only then. */
 export const PHONE_CHECK_LIVE: boolean = typeof __PHONE_CHECK_LIVE__ !== 'undefined' && __PHONE_CHECK_LIVE__
+
+/** ID checks through DigiLocker are switched on (production with Setu keys). Public pages describe them only then. */
+export const ID_CHECK_LIVE: boolean = typeof __ID_CHECK_LIVE__ !== 'undefined' && __ID_CHECK_LIVE__

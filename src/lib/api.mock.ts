@@ -370,6 +370,37 @@ export const mockApi: RentiGooApi = {
     return delay(findBooking(bookingId))
   },
 
+  // ID checks in demo mode: a pretend DigiLocker that says yes straight away.
+  async getIdStatus() {
+    const uid = me()
+    return delay({ available: true, verified: Boolean(db.users.find((u) => u.id === uid)?.verified.govtId) })
+  },
+
+  async startIdCheck(returnUrl) {
+    me()
+    const u = new URL(returnUrl)
+    u.searchParams.set('success', 'True')
+    u.searchParams.set('id', `demo-${crypto.randomUUID()}`)
+    return delay({ url: u.toString() })
+  },
+
+  async finishIdCheck(requestId) {
+    const uid = me()
+    if (!requestId.startsWith('demo-')) throw new ApiError('That ID check wasn’t started from your account. Please start again.', 'invalid')
+    const user = db.users.find((x) => x.id === uid)
+    if (user) user.verified = { ...user.verified, govtId: true }
+    save()
+    return delay({ verified: true })
+  },
+
+  async forgetIdCheck() {
+    const uid = me()
+    const user = db.users.find((x) => x.id === uid)
+    if (user) user.verified = { ...user.verified, govtId: false }
+    save()
+    return delay({ verified: false })
+  },
+
   async listConditionReports(bookingId) {
     const uid = me()
     const b = findBooking(bookingId)

@@ -96,6 +96,13 @@ export interface RentiGooApi {
   uploadConditionPhoto(bookingId: string, photo: { blob: Blob; ext: 'webp' | 'jpg' }): Promise<string>
   /** Records (or replaces) your own check for this stage. */
   saveConditionReport(input: { bookingId: string; stage: ConditionStage; checks: Record<ConditionCheckId, boolean>; notes: string; photoKeys: string[] }): Promise<ConditionReportView>
+  /** ID checks through DigiLocker: whether they're switched on, and whether yours is done. */
+  getIdStatus(): Promise<{ available: boolean; verified: boolean }>
+  /** Starts an ID check; returns the DigiLocker address to send the person to. */
+  startIdCheck(returnUrl: string): Promise<{ url: string }>
+  /** After DigiLocker sends the person back with this request id. */
+  finishIdCheck(requestId: string): Promise<{ verified: boolean }>
+  forgetIdCheck(): Promise<{ verified: boolean }>
   getOwnerStats(): Promise<OwnerStats>
   listMyBookings(): Promise<Booking[]>
   listRequestsForMe(): Promise<Booking[]>

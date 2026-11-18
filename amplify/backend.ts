@@ -1,4 +1,4 @@
-import { defineBackend } from '@aws-amplify/backend'
+import { defineBackend, secret } from '@aws-amplify/backend'
 import { AnyPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam'
 import { auth } from './auth/resource'
 import { data } from './data/resource'
@@ -12,6 +12,7 @@ import { messagesFn } from './functions/messages/resource'
 import { phoneCheckFn } from './functions/phone-check/resource'
 import { submitReviewFn } from './functions/submit-review/resource'
 import { conditionReportsFn } from './functions/condition-reports/resource'
+import { idCheckFn } from './functions/id-check/resource'
 import { purgeConditionReportsFn } from './functions/purge-condition-reports/resource'
 import { storage } from './storage/resource'
 
@@ -30,6 +31,7 @@ const backend = defineBackend({
   phoneCheckFn,
   conditionReportsFn,
   purgeConditionReportsFn,
+  idCheckFn,
 })
 
 // createMyProfile reads the person's email_verified attribute straight from
@@ -126,3 +128,21 @@ if (smsMode === 'sns') {
 }
 // Daily send counters delete themselves (DynamoDB TTL).
 backend.data.resources.cfnResources.amplifyDynamoDbTables['PhoneSendCount']!.timeToLiveAttribute = { attributeName: 'ttl', enabled: true }
+
+// ID checks through DigiLocker (Setu). Production switches on when SETU_CLIENT_ID and
+// SETU_PRODUCT_INSTANCE_ID are set as environment variables on the main branch in
+// Amplify Hosting, and SETU_CLIENT_SECRET as an Amplify secret. Until then: off, and
+// the site says nothing about ID checks (vite.config.ts uses the same rule).
+// Sandboxes use test mode: no DigiLocker, the check always succeeds with the profile name.
+const setuReady = Boolean(process.env.SETU_CLIENT_ID && process.env.SETU_PRODUCT_INSTANCE_ID)
+const idMode = !process.env.AWS_BRANCH ? 'test' : setuReady ? 'setu' : 'off'
+backend.idCheckFn.addEnvironment('ID_CHECK_MODE', idMode)
+const siteUrl = (process.env.VITE_SITE_URL ?? 'https://www.rentigoo.in').replace(/\/$/, '')
+backend.idCheckFn.addEnvironment('ID_RETURN_ORIGINS', idMode === 'test' ? `${siteUrl},http://localhost:*,http://127.0.0.1:*` : siteUrl)
+if (idMode === 'setu') {
+  backend.idCheckFn.addEnvironment('SETU_CLIENT_ID', process.env.SETU_CLIENT_ID!)
+  backend.idCheckFn.addEnvironment('SETU_PRODUCT_INSTANCE_ID', process.env.SETU_PRODUCT_INSTANCE_ID!)
+  backend.idCheckFn.addEnvironment('SETU_CLIENT_SECRET', secret('SETU_CLIENT_SECRET'))
+  if (process.env.SETU_BASE_URL) backend.idCheckFn.addEnvironment('SETU_BASE_URL', process.env.SETU_BASE_URL)
+}
+

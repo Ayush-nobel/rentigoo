@@ -4,6 +4,7 @@
  */
 import type { PhotoUploadStore } from './photos'
 import type { ConditionStore } from './conditionReports'
+import { forgetIdCheck, IdClaimTaken, type IdStore } from './idCheck'
 import type { ConditionReport } from '../../../shared/conditionReports'
 import { Amplify } from 'aws-amplify'
 import { generateClient } from 'aws-amplify/data'
@@ -200,6 +201,9 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
     async forgetPhone(id) {
       await forgetPhoneCheck({ store: phoneStore(client) }, id)
     },
+    async forgetId(id) {
+      await forgetIdCheck({ store: idStore(client) }, id)
+    },
     publicListingsChanged: () => requestRebuild('an owner deleted their account'),
     async listReviewsByAuthor(userId) {
       return (await all((nextToken) => m.Review.listReviewsByAuthor({ authorId: userId }, { nextToken }))).map(reviewFromDb)
@@ -381,6 +385,44 @@ export function conditionStore(client: Client, files: Pick<ConditionStore, 'coun
     },
     async deleteReport(id) {
       check(await m.ConditionReport.delete({ id }))
+    },
+  }
+}
+
+/** Store for ID checks: a record per account, and claims so one ID checks one account. */
+export function idStore(client: Client): IdStore {
+  const m = client.models
+  return {
+    async getProfileName(userId) {
+      return check(await m.UserProfile.get({ id: userId }))?.name ?? null
+    },
+    async getCheck(userId) {
+      const c = check(await m.IdCheck.get({ id: userId }))
+      return c ? { userId, pendingRequestId: c.pendingRequestId ?? null, verifiedHash: c.verifiedHash ?? null, verifiedAt: c.verifiedAt ?? null } : null
+    },
+    async putCheck({ userId, ...rest }) {
+      const existing = check(await m.IdCheck.get({ id: userId }))
+      if (existing) check(await m.IdCheck.update({ id: userId, ...rest }))
+      else check(await m.IdCheck.create({ id: userId, ...rest }))
+    },
+    async deleteCheck(userId) {
+      await m.IdCheck.delete({ id: userId })
+    },
+    async getClaim(hash) {
+      return check(await m.IdClaim.get({ id: hash }))?.userId ?? null
+    },
+    async claim(hash, userId) {
+      const res = await m.IdClaim.create({ id: hash, userId })
+      if (res.errors?.length) {
+        const owner = check(await m.IdClaim.get({ id: hash }))?.userId
+        if (owner !== userId) throw new IdClaimTaken()
+      }
+    },
+    async releaseClaim(hash) {
+      await m.IdClaim.delete({ id: hash })
+    },
+    async setProfileIdVerified(userId, verified) {
+      await m.UserProfile.update({ id: userId, verifiedGovtId: verified } as never)
     },
   }
 }

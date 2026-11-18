@@ -95,6 +95,7 @@ export function memoryStore(
       rebuilds.count++
     },
     async deleteConditionReportsBy() {},
+    async forgetId() {},
     async deletePhotoFolders(prefixes) {
       deletedPhotos.push(...prefixes)
     },

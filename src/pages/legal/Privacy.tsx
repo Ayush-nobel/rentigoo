@@ -1,4 +1,5 @@
 import { LAUNCH_CITY } from '@shared/areas'
+import { ID_CHECK_LIVE } from '@/lib/features'
 import { LEGAL, MIN_AGE } from '@shared/legal'
 import { BusinessContact, L, LegalPage, type LegalSection } from '@/components/legal/LegalPage'
 import { BUSINESS, shown } from '@/config/business'
@@ -71,6 +72,16 @@ const sections: LegalSection[] = [
                 <td>Bookings</td>
                 <td>To run rentals: who, what, dates, the price breakdown, status, and the optional note you send with a request. For monthly rentals, also which months the owner has marked as paid, and any notice given.</td>
               </tr>
+              {ID_CHECK_LIVE && (
+                <tr>
+                  <td>ID check (optional)</td>
+                  <td>
+                    Only if you choose to check your ID through DigiLocker. Our provider, Setu, passes us the name, date of birth and last 4 digits of your Aadhaar once;
+                    we check the name matches your profile and keep only that your ID was checked, when, and a coded fingerprint so one ID can’t check many accounts.
+                    We never keep your Aadhaar number, date of birth, address or photo, and we end our access to your DigiLocker straight away.
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td>Pickup and return checks (optional)</td>
                 <td>
@@ -146,6 +157,11 @@ const sections: LegalSection[] = [
             <strong>Our service providers</strong> store and process data for us under contract, and only to run RentiGoo. Today that is Amazon Web Services
             (sign-in, database, file storage, servers, and the emails that carry your codes).
           </li>
+          {ID_CHECK_LIVE && (
+            <li>
+              <strong>Setu</strong> (DigiLocker access), only if you check your ID, to fetch your Aadhaar details once on our behalf.
+            </li>
+          )}
           <li>
             <strong>WhatsApp</strong>, only if you choose to message us there. WhatsApp (owned by Meta) handles that chat under its own privacy policy. We use your
             number and messages only to help you.

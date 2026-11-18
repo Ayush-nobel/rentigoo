@@ -9,6 +9,7 @@ import { phoneCheckFn } from '../functions/phone-check/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
 import { conditionReportsFn } from '../functions/condition-reports/resource'
+import { idCheckFn } from '../functions/id-check/resource'
 import { purgeConditionReportsFn } from '../functions/purge-condition-reports/resource'
 
 /**
@@ -307,6 +308,28 @@ const schema = a
       .handler(a.handler.function(saveListingFn)),
 
     // Deletes the caller's listing and its photos (refused while it's booked).
+    // ---------- ID checks (only the id-check function reads or writes these) ----------
+    // Keyed by account: a pending DigiLocker request, and the fingerprint of the checked ID. Never the ID details.
+    IdCheck: a.model({ pendingRequestId: a.string(), verifiedHash: a.string(), verifiedAt: a.datetime() }).authorization(functionsOnly),
+    // Keyed by the ID's fingerprint: which account checked it (one ID, one account).
+    IdClaim: a.model({ userId: a.string().required() }).authorization(functionsOnly),
+    IdStatus: a.customType({ available: a.boolean().required(), verified: a.boolean().required() }),
+    IdStart: a.customType({ url: a.string().required() }),
+    idCheckStatus: a.query().returns(a.ref('IdStatus')).authorization((allow) => [allow.authenticated()]).handler(a.handler.function(idCheckFn)),
+    startIdCheck: a
+      .mutation()
+      .arguments({ returnUrl: a.string().required() })
+      .returns(a.ref('IdStart'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(idCheckFn)),
+    finishIdCheck: a
+      .mutation()
+      .arguments({ requestId: a.string().required() })
+      .returns(a.ref('IdStatus'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(idCheckFn)),
+    forgetIdCheck: a.mutation().returns(a.ref('IdStatus')).authorization((allow) => [allow.authenticated()]).handler(a.handler.function(idCheckFn)),
+
     // ---------- pickup and return checks (only the condition-reports function reads or writes these) ----------
     // One per person per stage per booking. Photos are private keys under condition-photos/<author>/.
     ConditionReport: a
@@ -412,7 +435,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn), allow.resource(conditionReportsFn), allow.resource(purgeConditionReportsFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn), allow.resource(conditionReportsFn), allow.resource(purgeConditionReportsFn), allow.resource(idCheckFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

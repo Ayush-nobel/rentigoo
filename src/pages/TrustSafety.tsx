@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { BUSINESS } from '@/config/business'
-import { PHONE_CHECK_LIVE } from '@/lib/features'
+import { ID_CHECK_LIVE, PHONE_CHECK_LIVE } from '@/lib/features'
 import { ContentPage, Points, Section } from '@/components/content/Content'
 import { Seo } from '@/components/layout/Seo'
 import { STATIC_PAGES } from '@/lib/seo'
@@ -24,6 +24,9 @@ export default function TrustSafety() {
             items={[
               'Everyone confirms their email address before they can rent or list.',
               'At pickup and at return, owner and renter can each record a checklist and up to 6 photos on the booking. Both see both, and it’s the first thing we look at in a damage dispute. They’re private, and deleted 30 days after the rental ends.',
+              ...(ID_CHECK_LIVE
+                ? ['People can check their ID through DigiLocker, the government’s document app, and get an “ID checked” badge. We check the name matches their profile and keep only that it was checked, never the ID details. It’s optional.']
+                : []),
               ...(PHONE_CHECK_LIVE
                 ? ['People can check their mobile number with a one-time code. Those who do get a “Phone number checked” badge. It’s optional, so its absence isn’t a warning sign.']
                 : []),
@@ -40,7 +43,10 @@ export default function TrustSafety() {
           <Points
             tone="no"
             items={[
-              PHONE_CHECK_LIVE ? 'We don’t check government IDs.' : 'We don’t check government IDs or phone numbers.',
+              ...(ID_CHECK_LIVE
+                ? []
+                : [PHONE_CHECK_LIVE ? 'We don’t check government IDs.' : 'We don’t check government IDs or phone numbers.']),
+              ...(ID_CHECK_LIVE && !PHONE_CHECK_LIVE ? ['We don’t check phone numbers yet.'] : []),
               'We don’t hold payments or deposits. Money passes directly between renter and owner at pickup.',
               'We don’t insure items, and we don’t guarantee that an owner or renter will do what they agreed.',
             ]}

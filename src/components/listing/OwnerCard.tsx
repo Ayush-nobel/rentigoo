@@ -41,7 +41,7 @@ export function OwnerCard({ owner, listingId }: { owner: UserProfile; listingId:
   }
 
   const checks = [
-    { ok: owner.verified.govtId, label: 'Government ID checked' },
+    { ok: owner.verified.govtId, label: 'ID checked (DigiLocker)' },
     { ok: owner.verified.phone, label: 'Phone number checked' },
     { ok: owner.verified.email, label: 'Email checked' },
   ].filter((c) => c.ok)

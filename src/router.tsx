@@ -25,6 +25,7 @@ const NotFound = lazyPage(() => import('./pages/NotFound'))
 const RentOrBuy = lazyPage(() => import('./pages/RentOrBuy'))
 const Earn = lazyPage(() => import('./pages/Earn'))
 const CategoryPage = lazyPage(() => import('./pages/CategoryPage'))
+const IdCheckReturn = lazyPage(() => import('./pages/IdCheckReturn'))
 
 /**
  * Every route. Used by the browser router (main.tsx) and the build-time
@@ -46,6 +47,7 @@ export const routes: RouteObject[] = [
       { path: 'cookies', element: <Cookies /> },
       { path: 'contact', element: <Contact /> },
       { path: 'account', element: <ProtectedRoute><Account /></ProtectedRoute> },
+      { path: 'account/id-check', element: <ProtectedRoute><IdCheckReturn /></ProtectedRoute> },
       { path: 'how-it-works', element: <HowItWorks /> },
       { path: 'trust-and-safety', element: <TrustSafety /> },
       { path: 'faq', element: <FAQ /> },

@@ -26,6 +26,8 @@ export interface AccountStore extends Store {
   clearBookingMessage(id: string): Promise<void>
   /** Deletes the pickup and return checks they recorded (their photos go with their folder). */
   deleteConditionReportsBy(userId: string): Promise<void>
+  /** Removes their ID check, freeing the ID. */
+  forgetId(id: string): Promise<void>
   /** Removes their phone check, freeing the number. */
   forgetPhone(id: string): Promise<void>
   deleteProfile(id: string): Promise<void>
@@ -102,6 +104,7 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
 
   // 7. Profile, then the login itself (last, so a failure can be retried while signed in).
   await store.forgetPhone(userId)
+  await store.forgetId(userId)
   await store.deleteProfile(userId)
   await store.deleteLogin(userId)
 
