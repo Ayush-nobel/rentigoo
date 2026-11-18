@@ -7,7 +7,7 @@
 | # | Severity | Finding |
 |---|---|---|
 | 1 | ~~High~~ **Fixed 2026-11-18** | Any signed-in user could get the server to delete another owner's listing photos |
-| 2 | Medium | No security headers on the site (no CSP, HSTS, clickjacking protection) |
+| 2 | ~~Medium~~ **Fixed 2026-11-18** | No security headers on the site (no CSP, HSTS, clickjacking protection) |
 | 3 | ~~Medium~~ **Mostly fixed 2026-11-18** | Uploads weren't checked on the server: any file type or size, publicly readable |
 | 4 | Medium | No rate limits on messages, booking requests or listing saves |
 | 5 | Low–Medium | A listing owner can open a chat with any user, unprompted |
@@ -56,7 +56,24 @@ Tie folders to the user, and check it on the server:
 
 Add a test: user B saves a listing with user A's key, then removes it, and A's photo is still there.
 
-## 2. Medium: no security headers (confirmed on the live site)
+## 2. Medium: no security headers (confirmed on the live site) — FIXED 2026-11-18
+
+**Fixed by** `customHttp.yml`, which Amplify Hosting applies to every response:
+- **HSTS:** a one-year max-age. `includeSubDomains` is left out, so a subdomain that's only on http, e.g. for email, can't break.
+- **nosniff, `X-Frame-Options: DENY`, Referrer-Policy and Permissions-Policy.**
+- **An enforced Content-Security-Policy:**
+  - Scripts: only our own bundles, plus the theme script by its hash.
+  - Network requests: only AppSync, Cognito and S3 in ap-south-1.
+  - Framing: `frame-ancestors 'none'`.
+
+**Guard rails:** `scripts/prerender.mjs` fails the build if any page carries an inline script the policy doesn't allow. `npm run preview:static` serves the same headers, so the CSP is tested locally.
+
+**Tested in a browser with the policy enforced:**
+- Listings load from AppSync, Cognito and S3 are reachable, and the theme script runs.
+- Requests to other sites, outside images and injected inline scripts are blocked.
+
+The original finding follows.
+
 
 **Where**
 - `amplify.yml` has no `customHeaders`.

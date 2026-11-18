@@ -9,6 +9,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { createHash } from 'node:crypto'
 
 const DIST = 'dist'
 const ssr = await import(pathToFileURL(join(process.cwd(), 'dist-ssr/entry-server.js')).href)
@@ -126,3 +127,18 @@ const rewrites = [
 writeFileSync('amplify-rewrites.json', JSON.stringify(rewrites, null, 2) + '\n')
 
 console.log(`Prerendered ${written.length} pages (${Object.keys(STATIC_PAGES).length} static, ${listings.length} listings) in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+
+// 6. Every inline script in the built pages must be allowed by the Content-Security-Policy
+//    in customHttp.yml (by its hash), or browsers would refuse to run it on the live site.
+const allowed = new Set(readFileSync('customHttp.yml', 'utf8').match(/'sha256-[A-Za-z0-9+/=]+'/g)?.map((h) => h.slice(1, -1)) ?? [])
+const htmlFiles = readdirSync(DIST, { recursive: true }).filter((f) => String(f).endsWith('.html'))
+const blocked = new Set()
+for (const f of htmlFiles) {
+  for (const [, body] of readFileSync(join(DIST, String(f)), 'utf8').matchAll(/<script(?![^>]*(?:\bsrc=|\btype="application\/(?:ld\+)?json"))[^>]*>([\s\S]*?)<\/script>/g)) {
+    const hash = `sha256-${createHash('sha256').update(body).digest('base64')}`
+    if (!allowed.has(hash)) blocked.add(hash)
+  }
+}
+if (blocked.size) throw new Error(`Inline scripts not allowed by customHttp.yml's Content-Security-Policy. Add to script-src: ${[...blocked].map((h) => `'${h}'`).join(' ')}`)
+console.log(`Content-Security-Policy allows every inline script in ${htmlFiles.length} pages`)
+

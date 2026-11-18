@@ -1,0 +1,27 @@
+# Response headers for every page and file, applied by Amplify Hosting.
+# scripts/prerender.mjs checks that every inline <script> in the built pages is
+# allowed by the script-src hashes below, and fails the build if not.
+# scripts/serve-dist.mjs applies the same headers locally (npm run preview:static).
+#
+# Content-Security-Policy, one directive at a time:
+#   default-src 'self'                  anything not listed: our own site only
+#   script-src  'self' + one hash        our bundles, and the theme script in index.html
+#   style-src   'self' 'unsafe-inline'   prerendered pages carry style="" attributes
+#   img-src     … *.s3.ap-south-1        listing photos; blob: for photos being uploaded
+#   connect-src AppSync (API + live updates), Cognito (sign-in), S3 (photo uploads)
+#   frame-ancestors 'none'               nobody can put RentiGoo inside their page
+customHeaders:
+  - pattern: '**'
+    headers:
+      - key: Strict-Transport-Security
+        value: max-age=31536000
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: X-Frame-Options
+        value: DENY
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - key: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+      - key: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'sha256-s357wUZHokXkNs/KyUDAYBLL8jFvxacekFiLwg4sytQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.s3.ap-south-1.amazonaws.com; font-src 'self'; connect-src 'self' https://*.appsync-api.ap-south-1.amazonaws.com wss://*.appsync-realtime-api.ap-south-1.amazonaws.com https://cognito-idp.ap-south-1.amazonaws.com https://cognito-identity.ap-south-1.amazonaws.com https://*.s3.ap-south-1.amazonaws.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"

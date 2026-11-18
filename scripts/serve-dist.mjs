@@ -11,6 +11,13 @@ import { extname, join, normalize } from 'node:path'
 const port = Number(process.argv[2] ?? 4173)
 const DIST = join(process.cwd(), 'dist')
 const rules = JSON.parse(readFileSync('amplify-rewrites.json', 'utf8'))
+// The same response headers Amplify adds (customHttp.yml), so the CSP is tested locally too.
+// The file is simple enough to read without a YAML library: key/value pairs under one '**' pattern.
+const SECURITY_HEADERS = Object.fromEntries(
+  [...readFileSync('customHttp.yml', 'utf8').matchAll(/- key: (\S+)\n\s+value: "?(.*?)"?\n/g)]// (HSTS and upgrade-insecure-requests are left out: this server is plain http.)
+    .map(([, k, v]) => [k, v.replace(/;\s*upgrade-insecure-requests/, '')])
+    .filter(([k]) => k !== 'Strict-Transport-Security'),
+)
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.xml': 'application/xml', '.txt': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' }
 
 function fileFor(pathname) {
@@ -32,13 +39,13 @@ createServer((req, res) => {
     file = rule ? fileFor(rule.target) : null
   }
   if (!file) {
-    res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' })
+    res.writeHead(404, { ...SECURITY_HEADERS, 'content-type': 'text/html; charset=utf-8' })
     return createReadStream(join(DIST, '404.html')).pipe(res)
   }
   const type = TYPES[extname(file)] ?? 'application/octet-stream'
   // Compress text like Amplify's CDN does, so local measurements are realistic.
   const gzip = /text|javascript|json|xml|svg|manifest/.test(type) && /\bgzip\b/.test(req.headers['accept-encoding'] ?? '')
-  res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache', ...(gzip ? { 'content-encoding': 'gzip', vary: 'accept-encoding' } : {}) })
+  res.writeHead(200, { ...SECURITY_HEADERS, 'content-type': type, 'cache-control': 'no-cache', ...(gzip ? { 'content-encoding': 'gzip', vary: 'accept-encoding' } : {}) })
   if (gzip) createReadStream(file).pipe(createGzip()).pipe(res)
   else createReadStream(file).pipe(res)
 }).listen(port, () => console.log(`Serving dist/ with Amplify rules on http://localhost:${port}`))
