@@ -1,4 +1,4 @@
-import { PHOTO_KEY } from '@shared/listingRules'
+import { LEGACY_PHOTO_KEY, PHOTO_KEY } from '@shared/listingRules'
 import { outputs } from './outputs'
 
 /** Longest side of an uploaded photo, in pixels. Plenty for a phone or a laptop screen. */
@@ -59,11 +59,12 @@ export function rememberLocalPhoto(key: string, blob: Blob) {
  */
 export function photoSrc(key: string): string | undefined {
   if (key.startsWith('ph:')) return undefined
-  if (PHOTO_KEY.test(key)) {
+  if (PHOTO_KEY.test(key) || LEGACY_PHOTO_KEY.test(key)) {
     const local = localPhotos.get(key)
     if (local) return local
     const s = outputs?.storage
-    return key.includes('/mock:') || !s ? undefined : `https://${s.bucket_name}.s3.${s.aws_region}.amazonaws.com/${key}`
+    // Demo mode never has real uploads (a demo photo from an earlier visit is gone).
+    return import.meta.env.VITE_DATA_MODE === 'mock' || key.includes('/mock:') || !s ? undefined : `https://${s.bucket_name}.s3.${s.aws_region}.amazonaws.com/${key}`
   }
   return /^https:\/\//.test(key) ? key : undefined
 }

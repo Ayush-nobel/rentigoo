@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { cleanDraft, listingErrors, type ListingDraft } from './listingRules'
 
 const TODAY = '2026-11-10'
-const KEY = 'listing-photos/ap-south-1:0f8fad5b-d9cb-469f-a165-70867728950e/7c9e6679-7425-40de-944b-e07fc1f90ae7.webp'
+const KEY = 'listing-photos/owner/7c9e6679-7425-40de-944b-e07fc1f90ae7.webp'
 const good: ListingDraft = {
   title: 'Canon EOS 200D with kit lens',
   description: 'Two years old, works perfectly. Comes with a 64 GB card, charger and a bag.',

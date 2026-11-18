@@ -5,7 +5,7 @@ import { memoryStore } from './memoryStore'
 import { deleteMyAccount } from './account'
 
 const TODAY = '2026-11-10'
-const folder = 'listing-photos/ap-south-1:0f8fad5b-d9cb-469f-a165-70867728950e'
+const folder = 'listing-photos/owner'
 const key = (n: number) => `${folder}/7c9e6679-7425-40de-944b-e07fc1f90ae${n}.webp`
 const listing = {
   title: 'Two-person tent',
@@ -66,6 +66,29 @@ describe('saveListing', () => {
     expect(m.forgottenPhones).toEqual(['owner'])
     expect(m.deletedPhotos).toEqual([`${folder}/`])
     expect(m.listings.size).toBe(0)
+  })
+
+  // Security review finding 1: nobody can get the server to delete someone else's photos.
+  const victimKey = 'listing-photos/victim/7c9e6679-7425-40de-944b-e07fc1f90ae9.webp'
+
+  it('refuses a photo from someone else’s folder', async () => {
+    const { store } = memoryStore()
+    await expect(saveListing(store, { listing: { ...listing, photos: [{ key: victimKey, alt: 'Their camera' }] } }, 'attacker', TODAY)).rejects.toThrow(/didn’t upload properly/)
+  })
+
+  it('never deletes someone else’s photo, even one already on the listing', async () => {
+    const m = memoryStore({ profiles: ['attacker'] })
+    // A listing saved before photos were tied to their owner, pointing at the victim's photo.
+    const old = await m.store.createListing({ ...(listing as never), ownerId: 'attacker', photos: [{ key: victimKey, alt: 'Their camera' }, { key: 'listing-photos/attacker/7c9e6679-7425-40de-944b-e07fc1f90ae1.webp', alt: 'Mine' }] })
+    await saveListing(m.store, { id: old.id, listing: { photos: [{ key: 'listing-photos/attacker/7c9e6679-7425-40de-944b-e07fc1f90ae1.webp', alt: 'Mine' }] } }, 'attacker', TODAY)
+    expect(m.deletedPhotos).toEqual([])
+
+    const again = await m.store.createListing({ ...(listing as never), ownerId: 'attacker', photos: [{ key: victimKey, alt: 'Their camera' }] })
+    await deleteMyListing(m.store, again.id, 'attacker')
+    expect(m.deletedPhotos).toEqual([])
+
+    await deleteMyAccount(m.store, 'attacker')
+    expect(m.deletedPhotos).toEqual(['listing-photos/attacker/'])
   })
 })
 

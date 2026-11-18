@@ -65,6 +65,10 @@ for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
   )
 }
 
+// Listing photo uploads: saveListing signs a one-file upload form for the
+// person's own folder (the browser has no write access to the bucket).
+backend.saveListingFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:PutObject'], resources: [bucket.arnForObjects('listing-photos/*')] }))
+
 // Test backends (sandboxes and branches other than main) accept the built-in
 // placeholder pictures, so demo data can be seeded through saveListing like
 // real listings. Production only accepts real uploads.

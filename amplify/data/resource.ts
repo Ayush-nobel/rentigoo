@@ -305,6 +305,21 @@ const schema = a
       .handler(a.handler.function(saveListingFn)),
 
     // Deletes the caller's listing and its photos (refused while it's booked).
+    // Listing photos: the browser can't write to storage itself; it gets a signed form
+    // for one small image in its own folder, and asks here to delete unused uploads.
+    ListingPhotoUpload: a.customType({ key: a.string().required(), url: a.string().required(), fields: a.json().required() }),
+    listingPhotoUpload: a
+      .mutation()
+      .arguments({ ext: a.string().required() })
+      .returns(a.ref('ListingPhotoUpload'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(saveListingFn)),
+    discardListingPhotos: a
+      .mutation()
+      .arguments({ keys: a.string().required().array().required() })
+      .returns(a.boolean())
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(saveListingFn)),
     deleteMyListing: a
       .mutation()
       .arguments({ id: a.id().required() })

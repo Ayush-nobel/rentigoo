@@ -6,9 +6,9 @@
 
 | # | Severity | Finding |
 |---|---|---|
-| 1 | **High** | Any signed-in user can get the server to delete another owner's listing photos |
+| 1 | ~~High~~ **Fixed 2026-11-18** | Any signed-in user could get the server to delete another owner's listing photos |
 | 2 | Medium | No security headers on the site (no CSP, HSTS, clickjacking protection) |
-| 3 | Medium | Uploads aren't checked on the server: any file type or size, publicly readable |
+| 3 | ~~Medium~~ **Mostly fixed 2026-11-18** | Uploads weren't checked on the server: any file type or size, publicly readable |
 | 4 | Medium | No rate limits on messages, booking requests or listing saves |
 | 5 | Low–Medium | A listing owner can open a chat with any user, unprompted |
 | 6 | Low | Profiles can be edited (and deleted) directly, skipping server checks |
@@ -22,7 +22,16 @@ The core authorization design is sound. Listings, bookings, reviews and messages
 
 ---
 
-## 1. High: deleting other people's photos (confirmed)
+## 1. High: deleting other people's photos (confirmed) — FIXED 2026-11-18
+
+**Fixed by:**
+- **Server-issued uploads:** the browser no longer has write access to `listing-photos/`. `listingPhotoUpload` (in the save-listing function) signs a one-file S3 upload form for `listing-photos/<user sub>/<uuid>.webp|jpg`, limited to that type and ≤ 3 MB.
+- **Owner-only photos:** `saveListing` accepts new photos only from the caller's own folder.
+- **Owner-only deletes:** `saveListing`, `deleteMyListing`, `discardListingPhotos` and `deleteMyAccount` only ever delete files in the caller's own folder (`ownPhotos` and `photoFolder` in `shared/listingRules.ts`).
+- **Tests:** the attack now has unit tests (`listings.test.ts`, `photos.test.ts`), and `scripts/check-delete.ts` checks it end to end against the sandbox.
+
+The original finding follows.
+
 
 **Where**
 - `shared/listingRules.ts:64` and `:89`: a photo key is accepted if it matches `listing-photos/<any identity>/<uuid>.webp`. Nothing checks that the folder belongs to the person saving the listing.
@@ -74,7 +83,12 @@ Add custom headers in Amplify Hosting, either in `amplify.yml` under `customHead
 
 Try the CSP as `Content-Security-Policy-Report-Only` for a few days before enforcing it.
 
-## 3. Medium: uploads aren't checked on the server
+## 3. Medium: uploads aren't checked on the server — MOSTLY FIXED 2026-11-18
+
+**Now:** S3 itself enforces the type (WebP or JPEG) and size (≤ 3 MB) through the signed form, and one account can hold at most 300 files.
+
+**Still open:** a lifecycle or cleanup job for uploads never attached to a listing. The browser discards ones you remove in the form, but closing the tab mid-listing leaves them until account deletion. The original finding follows.
+
 
 **Where**
 - `amplify/storage/resource.ts`: any signed-in user can write anything to their own `listing-photos/<id>/` folder.

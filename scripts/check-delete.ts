@@ -55,13 +55,36 @@ report(
   'Consent record is stored (versions and time)',
   `${stored?.termsVersion} / ${stored?.privacyVersion} at ${stored?.consentAt}`,
 )
-// A real uploaded photo, so we can check the file is deleted too.
+// A real uploaded photo, so we can check the file is deleted too. Uploads go through a
+// form the server signs for our own folder; the browser can't write to the bucket itself.
 const photoBytes = readFileSync('public/brand/icon-192.png')
-const { path: photoKey } = await uploadData({
-  path: ({ identityId }) => `listing-photos/${identityId}/${crypto.randomUUID()}.webp`,
-  data: new Blob([photoBytes], { type: 'image/webp' }),
-  options: { contentType: 'image/webp' },
-}).result
+async function postPhoto(bytes: Uint8Array, fieldsOverride: Record<string, string> = {}) {
+  const form = (await client.mutations.listingPhotoUpload({ ext: 'webp' })).data!
+  const fields = { ...(typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields), ...fieldsOverride } as Record<string, string>
+  const body = new FormData()
+  for (const [k, v] of Object.entries(fields)) body.append(k, v)
+  body.append('file', new Blob([bytes as BlobPart], { type: fields['Content-Type'] }))
+  return { key: form.key, status: (await fetch(form.url, { method: 'POST', body })).status }
+}
+const uploaded = await postPhoto(photoBytes)
+const photoKey = uploaded.key
+report(uploaded.status === 204 && photoKey.startsWith(`listing-photos/${me}/`), 'Photo uploads through a signed form into our own folder', `${uploaded.status} ${photoKey}`)
+const tooBig = await postPhoto(new Uint8Array(4 * 1024 * 1024))
+report(tooBig.status === 400, 'S3 refuses an upload over the size limit', String(tooBig.status))
+const asHtml = await postPhoto(photoBytes, { 'Content-Type': 'text/html' })
+report(asHtml.status === 403, 'S3 refuses an upload with another file type', String(asHtml.status))
+const direct = await uploadData({ path: ({ identityId }) => `listing-photos/${identityId}/${crypto.randomUUID()}.webp`, data: new Blob([photoBytes]) }).result.then(
+  () => 'uploaded',
+  () => 'refused',
+)
+report(direct === 'refused', 'Writing straight to the photo bucket is refused', direct)
+const othersPhoto = await client.mutations.saveListing({
+  listing: JSON.stringify({
+    title: 'Someone else’s photo', description: 'Points at a photo in another person’s folder, which the server must refuse.', categoryId: 'tools', areaId: 'mp-nagar',
+    photos: [{ key: 'listing-photos/someone-else/7c9e6679-7425-40de-944b-e07fc1f90ae7.webp', alt: 'Not mine' }], condition: 'good', pricing: { daily: 100 }, deposit: 0, minDays: 1, maxDays: 5, pickupOptions: ['pickup'], blockedDates: [], rules: [], status: 'draft',
+  }),
+})
+report(!othersPhoto.data && /didn’t upload properly/.test(othersPhoto.errors?.[0]?.message ?? ''), 'A listing can’t use a photo from someone else’s folder', othersPhoto.errors?.[0]?.message)
 const photoUrl = `https://${outputs.storage.bucket_name}.s3.${outputs.storage.aws_region}.amazonaws.com/${photoKey}`
 report((await fetch(photoUrl)).status === 200, 'Uploaded listing photo is public', photoKey)
 const listing = await client.mutations.saveListing({

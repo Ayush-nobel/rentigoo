@@ -2,6 +2,7 @@
  * Store backed by the Amplify data client (IAM). Converts between the
  * database's enum spellings (like_new, pay_at_pickup) and the app's.
  */
+import type { PhotoUploadStore } from './photos'
 import { Amplify } from 'aws-amplify'
 import { generateClient } from 'aws-amplify/data'
 import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime'
@@ -324,6 +325,18 @@ export function phoneStore(client: Client): PhoneStore {
     async setProfilePhoneVerified(userId, verified) {
       // The profile may not exist yet (or any more); nothing to update then.
       await m.UserProfile.update({ id: userId, verifiedPhone: verified } as never)
+    },
+  }
+}
+
+/** Store for listing photo uploads (startPhotoUpload, discardPhotos). */
+export function photoUploadStore(client: Client, photos: Omit<PhotoUploadStore, 'photosOnListings'>): PhotoUploadStore {
+  const m = client.models
+  return {
+    ...photos,
+    async photosOnListings(userId) {
+      const owned = await all((nextToken) => m.Listing.listListingsByOwner({ ownerId: userId }, { nextToken }))
+      return owned.flatMap((l) => listingFromDb(l).photos.map((p) => p.key))
     },
   }
 }

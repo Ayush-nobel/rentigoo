@@ -3,7 +3,7 @@
  * the law makes us keep (a minimal record of past transactions) stays, with
  * free-text notes wiped. Each step is safe to re-run if a later step fails.
  */
-import { PHOTO_KEY } from '../../../shared/listingRules'
+import { photoFolder } from '../../../shared/listingRules'
 import { occupiedDates } from '../../../shared/pricing'
 import type { Review } from '../../../shared/types'
 import { BLOCKING, RuleError, type Store, type StoredBooking, type StoredListing } from './bookings'
@@ -67,12 +67,9 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
     await store.setListingBookedDates(listingId, [...new Set(left.flatMap((b) => occupiedDates(b.start, b.end)))].sort())
   }
 
-  // 3. Their listings, and the photo folders those listings were uploaded to
-  //    (whole folders, so photos uploaded but never saved go too).
-  const folders = [
-    ...new Set(owned.flatMap((l) => l.photos.map((p) => p.key)).filter((k) => PHOTO_KEY.test(k)).map((k) => `${k.split('/').slice(0, 2).join('/')}/`)),
-  ]
-  if (folders.length) await store.deletePhotoFolders(folders)
+  // 3. Their listings, and their whole photo folder (so photos uploaded but never saved go too).
+  //    Only their own folder: never one a listing merely points at.
+  await store.deletePhotoFolders([photoFolder(userId)])
   for (const l of owned) await store.deleteListing(l.id)
   if (owned.some((l) => l.status === 'active')) await store.publicListingsChanged()
 

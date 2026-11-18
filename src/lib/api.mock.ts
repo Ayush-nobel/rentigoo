@@ -11,7 +11,7 @@ import { searchListings } from './search'
 import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
-import { cleanDraft, listingErrors, type ListingDraft } from '@shared/listingRules'
+import { cleanDraft, listingErrors, photoFolder, type ListingDraft } from '@shared/listingRules'
 import { ownerStatsFrom } from '@shared/earnings'
 import { normaliseIndianMobile, OTP } from '@shared/phone'
 
@@ -132,9 +132,9 @@ export const mockApi: RentiGooApi = {
   },
 
   async uploadListingPhoto({ blob, ext }) {
-    me()
-    // Demo mode: the photo lives in this browser tab only.
-    const key = `listing-photos/mock:${crypto.randomUUID()}/${crypto.randomUUID()}.${ext}`
+    // Demo mode: the photo lives in this browser tab only. Same key shape as the real
+    // thing: the uploader's own folder.
+    const key = `${photoFolder(me())}${crypto.randomUUID()}.${ext}`
     rememberLocalPhoto(key, blob)
     return delay(key, 400)
   },

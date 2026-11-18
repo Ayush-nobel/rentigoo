@@ -57,11 +57,20 @@ const STATUSES: ListingStatus[] = ['active', 'paused', 'draft']
 const PICKUP: PickupOption[] = ['pickup', 'delivery']
 
 /**
- * Uploaded photos live in the uploader's own folder; seed data uses built-in
- * placeholders (`ph:`). Nothing else is accepted, so a listing can't point at
- * an arbitrary website.
+ * Uploaded photos live in the uploader's own folder, named after their user ID
+ * (the server issues every upload, so the folder can't be chosen by the browser).
+ * Seed data uses built-in placeholders (`ph:`). Nothing else is accepted, so a
+ * listing can't point at an arbitrary website, or at someone else's photos.
  */
-export const PHOTO_KEY = /^listing-photos\/[\w-]+:[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|jpg)$/
+export const PHOTO_KEY = /^listing-photos\/([\w-]{1,64})\/[0-9a-f-]{36}\.(webp|jpg)$/
+/** Keys from before 2026-11-18 (folders named after the Cognito identity): kept on old listings, never accepted new. */
+export const LEGACY_PHOTO_KEY = /^listing-photos\/[\w-]+:[0-9a-f-]{36}\/[0-9a-f-]{36}\.(webp|jpg)$/
+/** Whose folder a photo key is in, or null if it isn't an uploaded photo. */
+export const photoOwner = (key: string): string | null => PHOTO_KEY.exec(key)?.[1] ?? null
+/** A person's photo folder. */
+export const photoFolder = (userId: string) => `listing-photos/${userId}/`
+/** Only the keys in this person's own folder: the server never deletes anyone else's files. */
+export const ownPhotos = (keys: string[], userId: string) => keys.filter((k) => photoOwner(k) === userId)
 const PLACEHOLDER_KEY = /^ph:[a-z-]+:\d+$/
 
 export type ListingErrors = Partial<Record<keyof ListingDraft | 'weekly' | 'monthly' | 'photoAlt' | 'term', string>>
@@ -82,11 +91,16 @@ export function listingErrors(
     knownKeys?: string[]
     /** Test backends only: accept built-in placeholder pictures (`ph:`), so demo data can be seeded. */
     allowPlaceholders?: boolean
+    /** On the server: new photos must be in this person's own folder. */
+    ownerId?: string
   },
 ): ListingErrors {
   const e: ListingErrors = {}
   const known = new Set(opts.knownKeys ?? [])
-  const isPhotoKey = (key: string) => PHOTO_KEY.test(key) || ((known.has(key) || Boolean(opts.allowPlaceholders)) && PLACEHOLDER_KEY.test(key))
+  const isPhotoKey = (key: string) =>
+    known.has(key)
+      ? PHOTO_KEY.test(key) || LEGACY_PHOTO_KEY.test(key) || PLACEHOLDER_KEY.test(key)
+      : (PHOTO_KEY.test(key) && (opts.ownerId === undefined || photoOwner(key) === opts.ownerId)) || (Boolean(opts.allowPlaceholders) && PLACEHOLDER_KEY.test(key))
   const L = LISTING_LIMITS
   const title = (d.title ?? '').trim()
   if (title.length < L.titleMin) e.title = `Give it a title of at least ${L.titleMin} characters, e.g. “Canon EOS 200D with 18–55mm lens”.`

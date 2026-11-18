@@ -3,7 +3,7 @@
  * the same rules the form uses (shared/listingRules); the server sets the
  * owner, ratings and booked days itself.
  */
-import { cleanDraft, listingErrors, PHOTO_KEY, type ListingDraft } from '../../../shared/listingRules'
+import { cleanDraft, listingErrors, ownPhotos, type ListingDraft } from '../../../shared/listingRules'
 import type { ISODate } from '../../../shared/types'
 import { RuleError, type Store, type StoredListing } from './bookings'
 
@@ -50,7 +50,7 @@ export async function saveListing(store: ListingStore, input: SaveListingInput, 
   }
   // null clears an optional field on an edit (e.g. switching off monthly rentals).
   for (const k of ['months', 'deliveryFee'] as const) if (draft[k] === null) delete draft[k]
-  const errors = listingErrors(draft, { today, knownKeys: existing?.photos.map((p) => p.key), allowPlaceholders: opts.allowPlaceholders })
+  const errors = listingErrors(draft, { today, knownKeys: existing?.photos.map((p) => p.key), allowPlaceholders: opts.allowPlaceholders, ownerId: actorId })
   const first = Object.values(errors)[0]
   if (first) throw new RuleError(first)
 
@@ -60,7 +60,7 @@ export async function saveListing(store: ListingStore, input: SaveListingInput, 
   // Photos taken off the listing are deleted, not left lying around.
   if (existing) {
     const kept = new Set(clean.photos.map((p) => p.key))
-    const gone = existing.photos.map((p) => p.key).filter((k) => !kept.has(k) && PHOTO_KEY.test(k))
+    const gone = ownPhotos(existing.photos.map((p) => p.key).filter((k) => !kept.has(k)), actorId)
     if (gone.length) await store.deletePhotos(gone)
   }
   if (existing?.status === 'active' || saved.status === 'active') await store.publicListingsChanged()
@@ -96,7 +96,7 @@ export async function deleteMyListing(store: DeleteListingStore, id: string, act
   }
   const open = bookings.filter((b) => b.status === 'requested')
   for (const b of open) await store.setBookingStatus(b.id, 'declined')
-  const photos = listing.photos.map((p) => p.key).filter((k) => PHOTO_KEY.test(k))
+  const photos = ownPhotos(listing.photos.map((p) => p.key), actorId)
   if (photos.length) await store.deletePhotos(photos)
   await store.deleteListing(id)
   if (listing.status === 'active') await store.publicListingsChanged()

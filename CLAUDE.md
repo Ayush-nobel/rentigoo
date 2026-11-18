@@ -19,7 +19,7 @@ Human, warm copy (no corporate filler). Calm, roomy look: generous white space, 
 - Business details live only in src/config/business.ts; never invent them.
 - Accessibility: text ≥4.5:1, control outlines ≥3:1, visible focus on every tab stop, alt text on every image.
 - People never write listings, bookings, reviews, conversations or messages directly: each goes through a Lambda (saveListing/deleteMyListing, booking functions, messages) that sets the owner/sender itself and checks shared rules (e.g. shared/listingRules). Keep model auth read-only for people; prove it in scripts/check-access.ts.
-- Listing photos: resized to WebP in the browser (strips GPS), public read only under listing-photos/, deleted when removed from a listing or on account deletion.
+- Listing photos: resized to WebP in the browser (strips GPS). The browser can't write to storage: save-listing signs a one-file upload form (type and ≤3 MB enforced by S3) for listing-photos/<user sub>/. A listing may only use photos from its owner's folder, and the server only ever deletes files in the caller's own folder (shared/listingRules ownPhotos/photoFolder). Public read only under listing-photos/; deleted when removed from a listing or on account deletion.
 
 ## Search and rendering (keep these working)
 - `npm run build` = SPA build + SSR build (src/entry-server.tsx) + scripts/prerender.mjs, which writes HTML for public pages and every active listing, plus robots.txt, sitemap.xml and amplify-rewrites.json. Set VITE_SITE_URL (https, no path) in Amplify; check:launch requires it.

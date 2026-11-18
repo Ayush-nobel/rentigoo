@@ -1,5 +1,4 @@
 import { generateClient } from 'aws-amplify/data'
-import { list, remove, uploadData } from 'aws-amplify/storage'
 import { categoryName } from '@shared/categories'
 import type { Booking, Conversation, Listing, Message, Review, UserProfile } from '@shared/types'
 import type { Schema } from '../../amplify/data/resource'
@@ -204,18 +203,20 @@ export const amplifyApi: RentiGooApi = {
 
   async uploadListingPhoto({ blob, ext }) {
     me()
-    const name = `${crypto.randomUUID()}.${ext}`
-    const { path } = await uploadData({
-      path: ({ identityId }) => `listing-photos/${identityId}/${name}`,
-      data: blob,
-      // Each upload gets a new name, so browsers can keep it for good.
-      options: { contentType: ext === 'webp' ? 'image/webp' : 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' },
-    }).result
-    return path
+    // The server signs a one-file upload form for our own folder; S3 checks the type and size.
+    const form = check(await client().mutations.listingPhotoUpload({ ext }))
+    if (!form) throw new ApiError('That photo didn’t upload. Please try again.', 'conflict')
+    const fields = (typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields) as Record<string, string>
+    const body = new FormData()
+    for (const [k, v] of Object.entries(fields)) body.append(k, v)
+    body.append('file', blob) // the file must come last
+    const res = await fetch(form.url, { method: 'POST', body })
+    if (!res.ok) throw new ApiError('That photo didn’t upload. Check your connection and try again.', 'conflict')
+    return form.key
   },
 
   async discardListingPhotos(keys) {
-    await Promise.allSettled(keys.map((path) => remove({ path })))
+    if (keys.length) await client().mutations.discardListingPhotos({ keys }).catch(() => undefined)
   },
 
   async getUser(id) {
@@ -239,14 +240,7 @@ export const amplifyApi: RentiGooApi = {
 
   async deleteMyAccount() {
     me()
-    // Photos uploaded but never saved on a listing: clear our own folder first
-    // (best effort; the server deletes the folders of saved listings too).
-    try {
-      const { items } = await list({ path: ({ identityId }) => `listing-photos/${identityId}/`, options: { listAll: true } })
-      await Promise.allSettled(items.map((i) => remove({ path: i.path })))
-    } catch {
-      /* nothing uploaded, or offline: carry on */
-    }
+    // The server deletes our whole photo folder, including uploads never saved on a listing.
     const summary = check(await client().mutations.deleteMyAccount())
     if (!summary) throw new ApiError('Your account wasn’t deleted. Please try again.', 'conflict')
     listingCache = null
