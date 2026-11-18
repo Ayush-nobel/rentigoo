@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { emailProblem, nameProblem, passwordProblem, areaProblem } from '@shared/accountRules'
 import { AREAS, LAUNCH_CITY } from '@shared/areas'
@@ -59,13 +59,51 @@ export default function Signup() {
   const [notice, setNotice] = useState<string | null>(null)
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
-
+  // On the profile step: what sign-up already collected for this account (undefined while checking).
+  const [known, setKnown] = useState<Pending | null | undefined>(undefined)
+  const autoFinished = useRef(false)
 
   useEffect(() => {
     if (cooldown <= 0) return
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [cooldown])
+
+  // The profile step only asks for what we don't already have. Sign-up details are used only if they
+  // were entered for the account that's signed in now (not someone else's, earlier, in this tab).
+  useEffect(() => {
+    if (step !== 'profile' || status !== 'needs-profile') return
+    let live = true
+    auth.currentEmail().then(
+      (signedIn) => {
+        if (!live) return
+        const p = readPending()
+        const mine = p && signedIn && p.email.trim().toLowerCase() === signedIn.trim().toLowerCase() ? p : null
+        setKnown(mine)
+        setName(mine?.name ?? '')
+        setAreaId(mine?.areaId ?? '')
+      },
+      () => live && setKnown(null),
+    )
+    return () => {
+      live = false
+    }
+  }, [step, status])
+
+  const missing = {
+    name: Boolean(nameProblem(known?.name ?? '')),
+    area: Boolean(areaProblem(known?.areaId ?? '')),
+    consent: !known?.agreed,
+  }
+  const nothingMissing = known !== undefined && !missing.name && !missing.area && !missing.consent
+
+  // Everything's already here: finish without showing a form.
+  useEffect(() => {
+    if (step !== 'profile' || !known || !nothingMissing || autoFinished.current) return
+    autoFinished.current = true
+    void run(() => finishProfile({ name: known.name, areaId: known.areaId }))
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, known, nothingMissing])
 
   const seo = <Seo {...STATIC_PAGES['/signup']!} title={step === 'confirm' ? 'Check your email' : step === 'profile' ? 'Finish your profile' : 'Create your account'} noindex={step !== 'details'} />
 
@@ -169,7 +207,7 @@ export default function Signup() {
     const ap = areaProblem(areaId)
     if (np) errs.name = np
     if (ap) errs.areaId = ap
-    Object.assign(errs, consentErrors())
+    if (missing.consent) Object.assign(errs, consentErrors())
     setFieldErrors(errs)
     if (Object.keys(errs).length) return
     void run(() => finishProfile({ name, areaId }))
@@ -255,15 +293,24 @@ export default function Signup() {
   }
 
   if (step === 'profile') {
+    if (known === undefined || (nothingMissing && !error)) {
+      return (
+        <>{seo}<AuthFrame title="Setting up your account">
+          <p role="status" className="text-lg text-muted">
+            Just a moment…
+          </p>
+        </AuthFrame></>
+      )
+    }
     return (
-      <>{seo}<AuthFrame title="One last thing" intro="Tell people who they’re renting from.">
+      <>{seo}<AuthFrame title="Finish signing up" intro={nothingMissing ? undefined : 'We need a little more before you start.'}>
         <form onSubmit={submitProfile} noValidate className="space-y-5">
           <FormError>{error}</FormError>
-          {nameField}
-          {areaSelect}
-          {consentBlock}
+          {missing.name && nameField}
+          {missing.area && areaSelect}
+          {missing.consent && consentBlock}
           <Button type="submit" size="lg" disabled={busy}>
-            {busy ? 'Saving…' : 'Finish'}
+            {busy ? 'Saving…' : nothingMissing ? 'Try again' : 'Finish'}
           </Button>
         </form>
       </AuthFrame></>
