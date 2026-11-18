@@ -72,6 +72,13 @@ const sections: LegalSection[] = [
                 <td>To run rentals: who, what, dates, the price breakdown, status, and the optional note you send with a request. For monthly rentals, also which months the owner has marked as paid, and any notice given.</td>
               </tr>
               <tr>
+                <td>Pickup and return checks (optional)</td>
+                <td>
+                  If you record one: a short checklist, your notes and up to 6 photos of the item, to settle any disagreement about damage. Only the two people in
+                  the booking can see them (and we can, if one of you asks us to look at a dispute). The photos are private files, never public links.
+                </td>
+              </tr>
+              <tr>
                 <td>Phone check (optional)</td>
                 <td>
                   Only if you choose to check your mobile number, once phone checks are switched on. We text a one-time code to it through Amazon Web Services and the
@@ -168,6 +175,7 @@ const sections: LegalSection[] = [
       <ul>
         <li>Your account, profile, listings, messages and reviews: until you delete your account.</li>
         <li>Listing photos: until you take them off the listing, delete the listing, or delete your account.</li>
+        <li>Pickup and return checks and their photos: deleted automatically 30 days after the rental ends, or sooner if you delete your account.</li>
         <li>Phone check: the fingerprint until you remove the check or delete your account; a count of codes sent to a number, for two days.</li>
         <li>
           A minimal record of past bookings (dates, item, amounts and an internal ID, with no name or messages): for as long as tax, accounting and consumer

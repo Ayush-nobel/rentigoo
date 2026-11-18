@@ -17,8 +17,8 @@ export function HowPayingWorks({ headingId = 'paying-title', className, heading 
     [
       'If something breaks',
       <>
-        The owner can keep only what the repair or replacement costs, and must show you the bill or a written quote. If you don’t agree, tell us and we’ll look at
-        what both of you send. <Link to="/terms#deposits" className="underline underline-offset-4">The rules in full</Link>
+        The owner can keep only what the repair or replacement costs, and must show you the bill or a written quote. If you don’t agree, tell us: we’ll look at
+        the pickup and return photos on the booking and anything else you both send. <Link to="/terms#deposits" className="underline underline-offset-4">The rules in full</Link>
       </>,
     ],
   ]

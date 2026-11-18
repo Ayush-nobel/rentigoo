@@ -11,6 +11,8 @@ import { saveListingFn } from './functions/save-listing/resource'
 import { messagesFn } from './functions/messages/resource'
 import { phoneCheckFn } from './functions/phone-check/resource'
 import { submitReviewFn } from './functions/submit-review/resource'
+import { conditionReportsFn } from './functions/condition-reports/resource'
+import { purgeConditionReportsFn } from './functions/purge-condition-reports/resource'
 import { storage } from './storage/resource'
 
 const backend = defineBackend({
@@ -26,6 +28,8 @@ const backend = defineBackend({
   saveListingFn,
   messagesFn,
   phoneCheckFn,
+  conditionReportsFn,
+  purgeConditionReportsFn,
 })
 
 // createMyProfile reads the person's email_verified attribute straight from
@@ -68,6 +72,20 @@ for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
 // Listing photo uploads: saveListing signs a one-file upload form for the
 // person's own folder (the browser has no write access to the bucket).
 backend.saveListingFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:PutObject'], resources: [bucket.arnForObjects('listing-photos/*')] }))
+
+// Pickup and return check photos: private (no public read; only signed links that
+// expire), in condition-photos/<user sub>/. The condition-reports function signs
+// uploads and view links; the daily purge and account deletion remove them.
+const conditionObjects = bucket.arnForObjects('condition-photos/*')
+const conditionList = new PolicyStatement({ actions: ['s3:ListBucket'], resources: [bucket.bucketArn], conditions: { StringLike: { 's3:prefix': ['condition-photos/*'] } } })
+backend.conditionReportsFn.addEnvironment('PHOTO_BUCKET', bucket.bucketName)
+backend.conditionReportsFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:PutObject', 's3:GetObject', 's3:DeleteObject'], resources: [conditionObjects] }))
+backend.conditionReportsFn.resources.lambda.addToRolePolicy(conditionList)
+backend.purgeConditionReportsFn.addEnvironment('PHOTO_BUCKET', bucket.bucketName) // deleteAccountFn has it already
+for (const fn of [backend.purgeConditionReportsFn, backend.deleteAccountFn]) {
+  fn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:DeleteObject'], resources: [conditionObjects] }))
+  fn.resources.lambda.addToRolePolicy(conditionList)
+}
 
 // Test backends (sandboxes and branches other than main) accept the built-in
 // placeholder pictures, so demo data can be seeded through saveListing like

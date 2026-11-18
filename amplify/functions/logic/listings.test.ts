@@ -64,7 +64,7 @@ describe('saveListing', () => {
     await saveListing(m.store, { listing }, 'owner', TODAY)
     await deleteMyAccount(m.store, 'owner')
     expect(m.forgottenPhones).toEqual(['owner'])
-    expect(m.deletedPhotos).toEqual([`${folder}/`])
+    expect(m.deletedPhotos).toEqual([`${folder}/`, 'condition-photos/owner/'])
     expect(m.listings.size).toBe(0)
   })
 
@@ -88,7 +88,7 @@ describe('saveListing', () => {
     expect(m.deletedPhotos).toEqual([])
 
     await deleteMyAccount(m.store, 'attacker')
-    expect(m.deletedPhotos).toEqual(['listing-photos/attacker/'])
+    expect(m.deletedPhotos).toEqual(['listing-photos/attacker/', 'condition-photos/attacker/'])
   })
 })
 

@@ -23,6 +23,7 @@ export default function TrustSafety() {
             tone="yes"
             items={[
               'Everyone confirms their email address before they can rent or list.',
+              'At pickup and at return, owner and renter can each record a checklist and up to 6 photos on the booking. Both see both, and it’s the first thing we look at in a damage dispute. They’re private, and deleted 30 days after the rental ends.',
               ...(PHONE_CHECK_LIVE
                 ? ['People can check their mobile number with a one-time code. Those who do get a “Phone number checked” badge. It’s optional, so its absence isn’t a warning sign.']
                 : []),
@@ -52,7 +53,7 @@ export default function TrustSafety() {
             items={[
               'Read the owner’s reviews and message them before you request.',
               'For a first rental, meet somewhere public or in a building lobby, in daylight if you can.',
-              'Check the item works before you hand over any money, and take a couple of photos of its condition.',
+              'Check the item works before you hand over any money, and add a pickup check with photos to the booking (Dashboard → the booking → Pickup and return photos).',
               'Pay only when you have the item in hand. Never pay in advance or through a link someone sends you.',
             ]}
           />
@@ -62,7 +63,7 @@ export default function TrustSafety() {
           <Points
             items={[
               'Set a deposit that would cover a repair, not the whole item. Renters are more likely to book.',
-              'Check the item together at handover and photograph it, including any existing marks.',
+              'Do the pickup check together at handover: tick the checklist and photograph the item, including any existing marks. Do the same when it comes back.',
               'Hand it over only after you’ve received the rent and deposit.',
               'Write your rules into the listing, so renters agree to them before they ask.',
             ]}

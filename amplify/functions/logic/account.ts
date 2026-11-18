@@ -4,6 +4,7 @@
  * free-text notes wiped. Each step is safe to re-run if a later step fails.
  */
 import { photoFolder } from '../../../shared/listingRules'
+import { conditionPhotoFolder } from '../../../shared/conditionReports'
 import { occupiedDates } from '../../../shared/pricing'
 import type { Review } from '../../../shared/types'
 import { BLOCKING, RuleError, type Store, type StoredBooking, type StoredListing } from './bookings'
@@ -23,6 +24,8 @@ export interface AccountStore extends Store {
   listMessageIdsBySender(userId: string): Promise<string[]>
   redactMessage(id: string, text: string): Promise<void>
   clearBookingMessage(id: string): Promise<void>
+  /** Deletes the pickup and return checks they recorded (their photos go with their folder). */
+  deleteConditionReportsBy(userId: string): Promise<void>
   /** Removes their phone check, freeing the number. */
   forgetPhone(id: string): Promise<void>
   deleteProfile(id: string): Promise<void>
@@ -69,7 +72,8 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
 
   // 3. Their listings, and their whole photo folder (so photos uploaded but never saved go too).
   //    Only their own folder: never one a listing merely points at.
-  await store.deletePhotoFolders([photoFolder(userId)])
+  await store.deletePhotoFolders([photoFolder(userId), conditionPhotoFolder(userId)])
+  await store.deleteConditionReportsBy(userId)
   for (const l of owned) await store.deleteListing(l.id)
   if (owned.some((l) => l.status === 'active')) await store.publicListingsChanged()
 

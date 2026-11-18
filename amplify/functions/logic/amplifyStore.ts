@@ -3,6 +3,8 @@
  * database's enum spellings (like_new, pay_at_pickup) and the app's.
  */
 import type { PhotoUploadStore } from './photos'
+import type { ConditionStore } from './conditionReports'
+import type { ConditionReport } from '../../../shared/conditionReports'
 import { Amplify } from 'aws-amplify'
 import { generateClient } from 'aws-amplify/data'
 import { getAmplifyDataClientConfig } from '@aws-amplify/backend/function/runtime'
@@ -191,6 +193,10 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
       check(await m.Listing.delete({ id }))
     },
     deletePhotoFolders: photos.deletePhotoFolders,
+    async deleteConditionReportsBy(userId) {
+      const mine = await all((nextToken) => m.ConditionReport.listConditionReportsByAuthor({ authorId: userId }, { nextToken }))
+      for (const r of mine) check(await m.ConditionReport.delete({ id: r.id }))
+    },
     async forgetPhone(id) {
       await forgetPhoneCheck({ store: phoneStore(client) }, id)
     },
@@ -337,6 +343,44 @@ export function photoUploadStore(client: Client, photos: Omit<PhotoUploadStore, 
     async photosOnListings(userId) {
       const owned = await all((nextToken) => m.Listing.listListingsByOwner({ ownerId: userId }, { nextToken }))
       return owned.flatMap((l) => listingFromDb(l).photos.map((p) => p.key))
+    },
+  }
+}
+
+// oxlint-disable-next-line typescript/no-explicit-any
+const reportFromDb = (r: any): ConditionReport => ({
+  id: r.id,
+  bookingId: r.bookingId,
+  stage: r.stage,
+  authorId: r.authorId,
+  checks: typeof r.checks === 'string' ? JSON.parse(r.checks) : r.checks,
+  notes: r.notes,
+  photoKeys: r.photoKeys ?? [],
+  createdAt: r.recordedAt,
+})
+
+/** Store for pickup and return checks. */
+export function conditionStore(client: Client, files: Pick<ConditionStore, 'countPhotos' | 'presignUpload' | 'viewUrl' | 'deletePhotos'>): ConditionStore {
+  const m = client.models
+  return {
+    ...files,
+    async getBooking(id) {
+      const b = check(await m.Booking.get({ id }))
+      return b ? { ...bookingFromDb(b), updatedAt: b.updatedAt } : null
+    },
+    async listReports(bookingId) {
+      return (await all((nextToken) => m.ConditionReport.listConditionReportsByBooking({ bookingId }, { nextToken }))).map(reportFromDb)
+    },
+    async listAllReports() {
+      return (await all((nextToken) => m.ConditionReport.list({ nextToken }))).map(reportFromDb)
+    },
+    async putReport(r) {
+      const row = { id: r.id, bookingId: r.bookingId, stage: r.stage, authorId: r.authorId, checks: JSON.stringify(r.checks), notes: r.notes, photoKeys: r.photoKeys, recordedAt: r.createdAt }
+      const existing = check(await m.ConditionReport.get({ id: r.id }))
+      check(existing ? await m.ConditionReport.update(row as never) : await m.ConditionReport.create(row as never))
+    },
+    async deleteReport(id) {
+      check(await m.ConditionReport.delete({ id }))
     },
   }
 }

@@ -20,6 +20,7 @@ Human, warm copy (no corporate filler). Calm, roomy look: generous white space, 
 - Business details live only in src/config/business.ts; never invent them.
 - Accessibility: text ≥4.5:1, control outlines ≥3:1, visible focus on every tab stop, alt text on every image.
 - People never write listings, bookings, reviews, conversations or messages directly: each goes through a Lambda (saveListing/deleteMyListing, booking functions, messages) that sets the owner/sender itself and checks shared rules (e.g. shared/listingRules). Keep model auth read-only for people; prove it in scripts/check-access.ts.
+- Pickup and return checks (shared/conditionReports.ts, functions/condition-reports): checklist + up to 6 photos per person per stage, private under condition-photos/<sub>/ (never public; only signed view links), visible only to the booking's two people, deleted 30 days after the rental ends by functions/purge-condition-reports (daily) and on account deletion. End-to-end: scripts/check-conditions.ts.
 - Listing photos: resized to WebP in the browser (strips GPS). The browser can't write to storage: save-listing signs a one-file upload form (type and ≤3 MB enforced by S3) for listing-photos/<user sub>/. A listing may only use photos from its owner's folder, and the server only ever deletes files in the caller's own folder (shared/listingRules ownPhotos/photoFolder). Public read only under listing-photos/; deleted when removed from a listing or on account deletion.
 
 ## Search and rendering (keep these working)

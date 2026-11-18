@@ -1,4 +1,5 @@
 import { generateClient } from 'aws-amplify/data'
+import type { ConditionStage } from '@shared/conditionReports'
 import { categoryName } from '@shared/categories'
 import type { Booking, Conversation, Listing, Message, Review, UserProfile } from '@shared/types'
 import type { Schema } from '../../amplify/data/resource'
@@ -331,6 +332,32 @@ export const amplifyApi: RentiGooApi = {
     const b = bookingFromDb(check(await client().mutations.respondToBooking({ bookingId, action: 'giveNotice' })))
     listingCache = null
     return b
+  },
+
+  async listConditionReports(bookingId) {
+    me()
+    const rows = check(await client().queries.bookingConditionReports({ bookingId })) ?? []
+    return rows.filter(Boolean).map((r) => ({ ...r!, stage: r!.stage as ConditionStage, checks: (typeof r!.checks === 'string' ? JSON.parse(r!.checks) : r!.checks) as never, photos: r!.photos.filter(Boolean) as never }))
+  },
+
+  async uploadConditionPhoto(bookingId, { blob, ext }) {
+    me()
+    const form = check(await client().mutations.conditionPhotoUpload({ bookingId, ext }))
+    if (!form) throw new ApiError('That photo didn’t upload. Please try again.', 'conflict')
+    const fields = (typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields) as Record<string, string>
+    const body = new FormData()
+    for (const [k, v] of Object.entries(fields)) body.append(k, v)
+    body.append('file', blob)
+    const res = await fetch(form.url, { method: 'POST', body })
+    if (!res.ok) throw new ApiError('That photo didn’t upload. Check your connection and try again.', 'conflict')
+    return form.key
+  },
+
+  async saveConditionReport(input) {
+    me()
+    const r = check(await client().mutations.saveConditionReport({ ...input, checks: JSON.stringify(input.checks) }))
+    if (!r) throw new ApiError('Your check wasn’t saved. Please try again.', 'conflict')
+    return { ...r, stage: r.stage as ConditionStage, checks: (typeof r.checks === 'string' ? JSON.parse(r.checks) : r.checks) as never, photos: r.photos.filter(Boolean) as never }
   },
 
   async submitReview(bookingId, rating, text) {

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Feedback'
 import { ListingImage } from '@/components/ui/ListingImage'
 import { api, ApiError } from '@/lib'
 import { dateRange, longDate, plural, rupees, shortDate, todayIST } from '@/lib/format'
+import { ConditionChecks } from './ConditionChecks'
 import { ReviewForm } from './ReviewForm'
 
 export type Role = 'owner' | 'renter'
@@ -216,6 +217,8 @@ export function BookingCard({ booking: b, role, listing, other, reviewed, onChan
           <p className="mt-0.5">{b.message}</p>
         </blockquote>
       )}
+
+      <ConditionChecks booking={b} myId={role === 'owner' ? b.ownerId : b.renterId} otherName={otherName} />
 
       {error && (
         <p role="alert" className="mt-3 font-medium text-danger">

@@ -147,6 +147,10 @@ const sections: LegalSection[] = [
           If the item comes back damaged or incomplete, the owner may keep only the reasonable cost of repair or replacement, and must show the renter the bill
           or a written quote.
         </li>
+        <li>
+          At pickup and at return, either of you can record a check with photos on the booking. Do it together: if there’s a disagreement, it’s the first thing we
+          look at. The checks are deleted 30 days after the rental ends.
+        </li>
         <li>If you can’t agree, contact our grievance officer (see “Complaints and grievance officer” below). We’ll look at what both of you send us.</li>
       </ul>
     ),

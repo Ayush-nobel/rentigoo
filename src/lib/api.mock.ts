@@ -12,6 +12,7 @@ import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
 import { cleanDraft, listingErrors, photoFolder, type ListingDraft } from '@shared/listingRules'
+import { conditionPhotoFolder, conditionProblem, conditionReportProblem, type ConditionReport, type ConditionReportView } from '@shared/conditionReports'
 import { ownerStatsFrom } from '@shared/earnings'
 import { normaliseIndianMobile, OTP } from '@shared/phone'
 
@@ -38,6 +39,11 @@ const delay = <T>(value: T, ms = 120 + Math.random() * 180): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), ms))
 
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`
+
+// Pickup and return checks in demo mode: kept for this tab only, like demo photos.
+const conditionReports: ConditionReport[] = []
+const localConditionPhotos = new Map<string, string>()
+const conditionView = ({ photoKeys, ...r }: ConditionReport): ConditionReportView => ({ ...r, photos: photoKeys.map((key) => ({ key, url: localConditionPhotos.get(key) ?? '' })) })
 
 function me(): string {
   const uid = getSessionUserId()
@@ -362,6 +368,35 @@ export const mockApi: RentiGooApi = {
     b.paidMonths = Math.min(b.paidMonths ?? 0, monthSchedule(b.start, b.end, b.quote.monthlyRate!).length)
     save()
     return delay(findBooking(bookingId))
+  },
+
+  async listConditionReports(bookingId) {
+    const uid = me()
+    const b = findBooking(bookingId)
+    if (b.renterId !== uid && b.ownerId !== uid) throw new ApiError('Booking not found.', 'not-found')
+    return delay(conditionReports.filter((r) => r.bookingId === bookingId).map(conditionView))
+  },
+
+  async uploadConditionPhoto(bookingId, { blob, ext }) {
+    const uid = me()
+    const b = findBooking(bookingId)
+    if (b.renterId !== uid && b.ownerId !== uid) throw new ApiError('Booking not found.', 'not-found')
+    const key = `${conditionPhotoFolder(uid)}${crypto.randomUUID()}.${ext}`
+    localConditionPhotos.set(key, URL.createObjectURL(blob))
+    return delay(key, 300)
+  },
+
+  async saveConditionReport(input) {
+    const uid = me()
+    const b = findBooking(input.bookingId)
+    if (b.renterId !== uid && b.ownerId !== uid) throw new ApiError('Booking not found.', 'not-found')
+    const problem = conditionProblem(b, input.stage) ?? conditionReportProblem({ ...input, notes: input.notes.trim() }, uid)
+    if (problem) throw new ApiError(problem, 'invalid')
+    const i = conditionReports.findIndex((r) => r.bookingId === b.id && r.stage === input.stage && r.authorId === uid)
+    const report: ConditionReport = { id: i >= 0 ? conditionReports[i]!.id : crypto.randomUUID(), bookingId: b.id, stage: input.stage, authorId: uid, checks: input.checks, notes: input.notes.trim(), photoKeys: input.photoKeys, createdAt: new Date().toISOString() }
+    if (i >= 0) conditionReports[i] = report
+    else conditionReports.push(report)
+    return delay(conditionView(report))
   },
 
   async submitReview(bookingId, rating, text) {

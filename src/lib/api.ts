@@ -1,4 +1,5 @@
 import type { ListingDraft } from '@shared/listingRules'
+import type { ConditionCheckId, ConditionReportView, ConditionStage } from '@shared/conditionReports'
 import type { Booking, Conversation, DeletionSummary, ISODate, Listing, Message, OwnerStats, Review, UserProfile } from '@shared/types'
 import type { SearchFilters, SearchResult } from './search'
 
@@ -89,6 +90,12 @@ export interface RentiGooApi {
   giveNotice(bookingId: string): Promise<Booking>
   /** After a completed rental, each side can review the other once. */
   submitReview(bookingId: string, rating: number, text: string): Promise<Review>
+  /** Pickup and return checks on a booking: both people's, with view links for the photos. */
+  listConditionReports(bookingId: string): Promise<ConditionReportView[]>
+  /** Uploads one check photo (privately) and returns its key. */
+  uploadConditionPhoto(bookingId: string, photo: { blob: Blob; ext: 'webp' | 'jpg' }): Promise<string>
+  /** Records (or replaces) your own check for this stage. */
+  saveConditionReport(input: { bookingId: string; stage: ConditionStage; checks: Record<ConditionCheckId, boolean>; notes: string; photoKeys: string[] }): Promise<ConditionReportView>
   getOwnerStats(): Promise<OwnerStats>
   listMyBookings(): Promise<Booking[]>
   listRequestsForMe(): Promise<Booking[]>

@@ -8,6 +8,8 @@ import { messagesFn } from '../functions/messages/resource'
 import { phoneCheckFn } from '../functions/phone-check/resource'
 import { respondToBookingFn } from '../functions/respond-to-booking/resource'
 import { submitReviewFn } from '../functions/submit-review/resource'
+import { conditionReportsFn } from '../functions/condition-reports/resource'
+import { purgeConditionReportsFn } from '../functions/purge-condition-reports/resource'
 
 /**
  * Who can do what
@@ -305,6 +307,50 @@ const schema = a
       .handler(a.handler.function(saveListingFn)),
 
     // Deletes the caller's listing and its photos (refused while it's booked).
+    // ---------- pickup and return checks (only the condition-reports function reads or writes these) ----------
+    // One per person per stage per booking. Photos are private keys under condition-photos/<author>/.
+    ConditionReport: a
+      .model({
+        bookingId: a.string().required(),
+        stage: a.string().required(),
+        authorId: a.string().required(),
+        checks: a.json().required(),
+        notes: a.string().required(),
+        photoKeys: a.string().required().array().required(),
+        recordedAt: a.datetime().required(),
+      })
+      .secondaryIndexes((index) => [index('bookingId').queryField('listConditionReportsByBooking'), index('authorId').queryField('listConditionReportsByAuthor')])
+      .authorization(functionsOnly),
+    ConditionPhoto: a.customType({ key: a.string().required(), url: a.string().required() }),
+    ConditionReportView: a.customType({
+      id: a.string().required(),
+      bookingId: a.string().required(),
+      stage: a.string().required(),
+      authorId: a.string().required(),
+      checks: a.json().required(),
+      notes: a.string().required(),
+      photos: a.ref('ConditionPhoto').required().array().required(),
+      createdAt: a.string().required(),
+    }),
+    conditionPhotoUpload: a
+      .mutation()
+      .arguments({ bookingId: a.string().required(), ext: a.string().required() })
+      .returns(a.ref('ListingPhotoUpload'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(conditionReportsFn)),
+    saveConditionReport: a
+      .mutation()
+      .arguments({ bookingId: a.string().required(), stage: a.string().required(), checks: a.json().required(), notes: a.string().required(), photoKeys: a.string().required().array().required() })
+      .returns(a.ref('ConditionReportView'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(conditionReportsFn)),
+    bookingConditionReports: a
+      .query()
+      .arguments({ bookingId: a.string().required() })
+      .returns(a.ref('ConditionReportView').array())
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(conditionReportsFn)),
+
     // Listing photos: the browser can't write to storage itself; it gets a signed form
     // for one small image in its own folder, and asks here to delete unused uploads.
     ListingPhotoUpload: a.customType({ key: a.string().required(), url: a.string().required(), fields: a.json().required() }),
@@ -366,7 +412,7 @@ const schema = a
       .handler(a.handler.function(ownerStatsFn)),
   })
   // The functions read and write models with IAM, bypassing the per-person rules above.
-  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn)])
+  .authorization((allow) => [allow.resource(createProfileFn), allow.resource(deleteAccountFn), allow.resource(requestBookingFn), allow.resource(respondToBookingFn), allow.resource(submitReviewFn), allow.resource(ownerStatsFn), allow.resource(saveListingFn), allow.resource(messagesFn), allow.resource(phoneCheckFn), allow.resource(conditionReportsFn), allow.resource(purgeConditionReportsFn)])
 
 export type Schema = ClientSchema<typeof schema>
 

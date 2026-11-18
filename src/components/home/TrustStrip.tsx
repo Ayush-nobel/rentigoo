@@ -4,7 +4,7 @@ import { BUSINESS, whatsappUrl } from '@/config/business'
 const wa = whatsappUrl()
 
 const POINTS = [
-  { title: 'Email checked on every account', body: 'Nobody can rent or list until they confirm their email.' },
+  { title: 'Photos at pickup and return', body: 'Owner and renter record the item’s condition on the booking, together. If there’s a dispute, that’s what we look at.' },
   { title: 'Deposit shown upfront', body: 'You see it before you ask. Our terms say it comes back when the item does.' },
   { title: 'Reviews from both sides', body: 'Renters and owners review each other. Only people who rented can review.' },
 ]

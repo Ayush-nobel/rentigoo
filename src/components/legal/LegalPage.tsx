@@ -28,7 +28,7 @@ export function LegalPage({ path, title, version, intro, sections }: Props) {
       <Seo {...(STATIC_PAGES[path] ?? { title, description: '', path })} />
       <header>
         <h1 className="text-4xl sm:text-5xl">{title}</h1>
-        <p className="mt-2 text-muted">Last updated {longDate(version)}</p>
+        <p className="mt-2 text-muted">Last updated {longDate(version.slice(0, 10))}</p>
         {missing.length > 0 && (
           <p role="note" className="mt-4 rounded-field border border-danger/40 bg-danger/10 p-3 font-medium">
             Some of our business details are still being added to this page. Until they are, it isn’t complete.

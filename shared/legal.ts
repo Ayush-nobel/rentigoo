@@ -4,8 +4,8 @@
  * person accepted, and when.
  */
 export const LEGAL = {
-  terms: { version: '2026-11-11', title: 'Terms and Conditions', path: '/terms' },
-  privacy: { version: '2026-11-18', title: 'Privacy Policy', path: '/privacy' },
+  terms: { version: '2026-11-18', title: 'Terms and Conditions', path: '/terms' },
+  privacy: { version: '2026-11-18-2', title: 'Privacy Policy', path: '/privacy' },
   cookies: { version: '2026-11-10', title: 'Cookie and Storage Policy', path: '/cookies' },
   refunds: { version: '2026-11-11', title: 'Cancellation and Refund Policy', path: '/refunds' },
 } as const
