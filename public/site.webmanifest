@@ -1,7 +1,7 @@
 {
   "name": "RentiGoo",
   "short_name": "RentiGoo",
-  "description": "Rent anything, anywhere. Rent from people nearby in Bhopal, or earn from the things you own.",
+  "description": "Rent from people in Bhopal, or earn from the things you own.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF7F0",

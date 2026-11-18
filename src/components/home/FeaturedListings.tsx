@@ -21,7 +21,7 @@ export function FeaturedListings({ listings, areaId, failed }: Props) {
         </h2>
         {!empty && (
           <ButtonLink to={areaId ? `/browse?areas=${areaId}` : '/browse'} variant="outline" size="sm">
-            See everything
+            See all
           </ButtonLink>
         )}
       </div>
@@ -30,7 +30,7 @@ export function FeaturedListings({ listings, areaId, failed }: Props) {
       ) : empty ? (
         <div className="mt-6 rounded-[24px] bg-sunken p-6 sm:p-8">
           <p className="text-xl font-semibold">Nothing listed yet.</p>
-          <p className="mt-2 max-w-xl text-muted">RentiGoo has just started in {LAUNCH_CITY}. If you own something you don’t use every week, you can list it for free.</p>
+          <p className="mt-2 max-w-xl text-muted">We’ve just started in {LAUNCH_CITY}. Listing is free.</p>
           <ButtonLink to="/list" className="mt-5">
             List an item
           </ButtonLink>

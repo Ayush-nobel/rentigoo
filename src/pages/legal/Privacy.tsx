@@ -140,6 +140,10 @@ const sections: LegalSection[] = [
             (sign-in, database, file storage, servers, and the emails that carry your codes).
           </li>
           <li>
+            <strong>WhatsApp</strong>, only if you choose to message us there. WhatsApp (owned by Meta) handles that chat under its own privacy policy. We use your
+            number and messages only to help you.
+          </li>
+          <li>
             <strong>Authorities</strong>, when the law requires us to share, for example under a court order.
           </li>
         </ul>

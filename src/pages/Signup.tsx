@@ -330,10 +330,10 @@ export default function Signup() {
       }
       aside={
         <>
-          <p className="font-display text-2xl leading-snug font-bold">Free to join. Free to list.</p>
+          <p className="font-display text-2xl leading-snug font-semibold">Joining and listing are free.</p>
           <ul className="mt-5 space-y-3 opacity-85">
             <li>Rent from people in your part of {LAUNCH_CITY}.</li>
-            <li>Earn from the things in your cupboard.</li>
+            <li>Earn from things you don’t use often.</li>
             <li>Your email stays private. Others see your first name and area.</li>
           </ul>
         </>

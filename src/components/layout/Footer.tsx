@@ -48,9 +48,9 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div>
           <Logo className="h-14! sm:h-16!" />
-          <p className="mt-2 text-sm font-semibold tracking-[0.18em] text-muted uppercase">Rent anything, anywhere</p>
+          <p className="mt-2 font-semibold">Bhopal mein kiraye pe lo, kiraye pe do.</p>
           <p className="mt-4 max-w-xs text-muted">
-            Rent the things you need from people nearby. Earn from the things you don’t use every day.
+            Rent things from people in Bhopal, or earn from the things you don’t use often.
           </p>
 
         </div>

@@ -27,7 +27,7 @@ export default function About() {
           </p>
           <p>
             Renting it from someone nearby often costs far less than buying it, and the owner earns something from a thing they weren’t using. Fewer things get bought for a few
-            days’ use. That’s the whole idea.
+            days’ use.
           </p>
         </Section>
 

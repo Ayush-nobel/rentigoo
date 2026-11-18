@@ -194,12 +194,7 @@ function BackToLogin({ onClick }: { onClick: () => void }) {
 function Aside() {
   return (
     <>
-      <p className="font-display text-2xl leading-snug font-bold">Your bookings, chats and listings are waiting.</p>
-      <ul className="mt-5 space-y-3 opacity-85">
-        <li>See which owners have replied to your requests.</li>
-        <li>Answer renters who want your things this weekend.</li>
-        <li>Pick up where you left off in Messages.</li>
-      </ul>
+      <p className="font-display text-2xl leading-snug font-semibold">Log in to see your bookings, messages and listings.</p>
     </>
   )
 }

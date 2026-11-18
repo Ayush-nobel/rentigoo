@@ -7,7 +7,7 @@ export function CategoryGrid() {
   return (
     <section aria-labelledby="categories-title" className="mx-auto max-w-7xl px-4 sm:px-6">
       <h2 id="categories-title" className="reveal text-3xl sm:text-5xl">
-        Things people rent
+        Categories
       </h2>
       <ul className="reveal mt-8 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-3 lg:grid-cols-5">
         {CATEGORIES.map((c) => (

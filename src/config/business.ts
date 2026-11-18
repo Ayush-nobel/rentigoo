@@ -19,6 +19,8 @@ export interface BusinessDetails {
   branches: string[]
   supportEmail: string | null
   supportPhone: string | null
+  /** WhatsApp number with country code, digits only (for wa.me links). */
+  whatsapp: string | null
   grievanceOfficer: {
     name: string | null
     designation: string | null
@@ -41,6 +43,8 @@ export const BUSINESS: BusinessDetails = {
   branches: [],
   supportEmail: 'support@rentigoo.in',
   supportPhone: '+91 93014 22919',
+  // Founder's number, for WhatsApp and calls (given 2026-11-18).
+  whatsapp: '919301422919',
   grievanceOfficer: {
     name: 'Ayush Shukla',
     designation: 'Founder and CEO',
@@ -72,4 +76,9 @@ export function missingBusinessDetails(b: BusinessDetails = BUSINESS): string[] 
 /** Show a value, or a clearly marked gap (never a guess). */
 export function shown(v: string | null, label: string): string {
   return v && v.trim() ? v : `[${label} to be added]`
+}
+
+/** A link that opens a WhatsApp chat with us, or null if there's no number. */
+export function whatsappUrl(b: BusinessDetails = BUSINESS): string | null {
+  return b.whatsapp ? `https://wa.me/${b.whatsapp}` : null
 }

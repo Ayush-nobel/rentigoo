@@ -27,7 +27,7 @@ export function Hero() {
       <div>
         <h1 className="rise max-w-[16ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">Why buy it when someone nearby has one?</h1>
         <p className="rise mt-6 max-w-lg text-lg text-muted sm:text-xl" style={delay(0.1)}>
-          Rent a tent for the weekend, a drill for one wall, a sofa for the term. From people across Bhopal, at a price you see upfront.
+          Rent from people in Bhopal, by the day or by the month.
         </p>
 
         <form onSubmit={submit} role="search" aria-label="Find something to rent" className="rise mt-9 max-w-xl" style={delay(0.2)}>
@@ -66,7 +66,7 @@ export function Hero() {
         </form>
 
         <p className="rise mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem]" style={delay(0.3)}>
-          <span className="text-muted">People look for</span>
+          <span className="text-muted">Try</span>
           {SEARCH_IDEAS.map((p) => (
             <Link key={p} to={`/browse?q=${encodeURIComponent(p)}`} className="inline-flex min-h-11 items-center rounded font-medium underline decoration-line-strong underline-offset-4 hover:decoration-text">
               {p}

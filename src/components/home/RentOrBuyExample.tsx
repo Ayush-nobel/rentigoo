@@ -12,18 +12,18 @@ export function RentOrBuyExample() {
   return (
     <section aria-label="Renting or buying" className="mx-auto max-w-7xl px-4 sm:px-6">
       <p className="reveal max-w-3xl font-display text-2xl leading-snug font-semibold sm:text-4xl">
-        Renting a DSLR for a wedding weekend: about {rupees(rent)}, instead of about {rupees(camera.avgPurchasePrice)} to buy one.
+        A DSLR for a wedding weekend: about {rupees(rent)} to rent, about {rupees(camera.avgPurchasePrice)} to buy.
       </p>
-      <p className="mt-3 text-muted">Our estimate, for {WEEKEND_DAYS} days at a typical Bhopal price.</p>
+      <p className="mt-3 text-muted">Our estimate: {WEEKEND_DAYS} days at a typical Bhopal price.</p>
       <ul className="mt-5 flex flex-wrap gap-x-8 gap-y-2">
         <li>
           <Link to="/rent-or-buy" className="inline-flex min-h-11 items-center rounded font-semibold underline underline-offset-4 hover:no-underline">
-            Work out rent or buy for anything
+            Rent or buy calculator
           </Link>
         </li>
         <li>
           <Link to="/earn" className="inline-flex min-h-11 items-center rounded font-semibold underline underline-offset-4 hover:no-underline">
-            See what your things could earn
+            What could you earn?
           </Link>
         </li>
       </ul>
