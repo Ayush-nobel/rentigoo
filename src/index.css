@@ -8,10 +8,11 @@
  */
 :root {
   color-scheme: light;
-  --bg: #faf7f0;
+  /* Plain white page: yellow is used in big solid blocks instead (direction A, 2026-11-18). */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-sunken: #f1f0ec;
-  --line: #e6e4df;
+  --surface-sunken: #f3f3f1;
+  --line: #e7e6e3;
   /* Input and control outlines: ≥3:1 on every surface (WCAG 1.4.11). */
   --line-strong: #85827a;
   --text: #24221b;
@@ -77,6 +78,20 @@
   --success: #6fd48e;
   --focus: #f2d04e;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
+}
+
+/* Light colours whatever the theme, for parts that sit on solid yellow (the Home hero band). */
+.light-scope {
+  color-scheme: light;
+  --surface: #ffffff;
+  --surface-sunken: #f3f3f1;
+  --line: #e7e6e3;
+  --line-strong: #85827a;
+  --text: #24221b;
+  --muted: #5c5a54;
+  --ink: #24221b;
+  --on-ink: #ffffff;
+  --focus: #24221b;
 }
 
 @theme inline {

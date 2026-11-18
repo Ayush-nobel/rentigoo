@@ -23,17 +23,17 @@ export function Hero() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 sm:pt-16 lg:pt-20">
-      <div>
+    <section className="light-scope bg-accent text-on-accent">
+      <div className="mx-auto max-w-7xl px-4 pt-10 pb-12 sm:px-6 sm:pt-16 sm:pb-16 lg:pt-20 lg:pb-20">
         <h1 className="rise max-w-[16ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">Why buy it when someone nearby has one?</h1>
-        <p className="rise mt-6 max-w-lg text-lg text-muted sm:text-xl" style={delay(0.1)}>
+        <p className="rise mt-6 max-w-lg text-lg sm:text-xl" style={delay(0.1)}>
           Rent from people in Bhopal, by the day or by the month.
         </p>
 
         <form onSubmit={submit} role="search" aria-label="Find something to rent" className="rise mt-9 max-w-xl" style={delay(0.2)}>
-          <div className="flex flex-col gap-2 rounded-[22px] border border-line-strong bg-surface p-2 sm:flex-row sm:items-stretch sm:rounded-full">
+          <div className="flex flex-col gap-2 rounded-[22px] border-2 border-ink bg-surface p-2 sm:flex-row sm:items-stretch sm:rounded-full">
             <label className="flex min-h-12 flex-1 items-center gap-2.5 rounded-full px-3 sm:px-4">
-              <Search aria-hidden="true" className="size-5 shrink-0 text-muted" />
+              <Search aria-hidden="true" className="size-5 shrink-0" />
               <span className="sr-only">What do you need?</span>
               <input
                 value={q}
@@ -44,7 +44,7 @@ export function Hero() {
             </label>
             <div className="hidden w-px self-stretch bg-line sm:block" aria-hidden="true" />
             <label className="relative flex min-h-12 items-center gap-2 rounded-full px-3 sm:w-48 sm:px-4">
-              <MapPin aria-hidden="true" className="size-5 shrink-0 text-muted" />
+              <MapPin aria-hidden="true" className="size-5 shrink-0" />
               <span className="sr-only">Area</span>
               <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full appearance-none bg-transparent text-lg outline-none">
                 <option value="">All of Bhopal</option>
@@ -59,16 +59,16 @@ export function Hero() {
                 ))}
               </select>
             </label>
-            <Button type="submit" size="lg" className="sm:px-8">
+            <Button type="submit" size="lg" variant="ink" className="sm:px-8">
               Search
             </Button>
           </div>
         </form>
 
         <p className="rise mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem]" style={delay(0.3)}>
-          <span className="text-muted">Try</span>
+          <span>Try</span>
           {SEARCH_IDEAS.map((p) => (
-            <Link key={p} to={`/browse?q=${encodeURIComponent(p)}`} className="inline-flex min-h-11 items-center rounded font-medium underline decoration-line-strong underline-offset-4 hover:decoration-text">
+            <Link key={p} to={`/browse?q=${encodeURIComponent(p)}`} className="inline-flex min-h-11 items-center rounded font-medium underline decoration-ink/50 underline-offset-4 hover:decoration-ink">
               {p}
             </Link>
           ))}

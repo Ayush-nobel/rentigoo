@@ -5,6 +5,7 @@ import { DemoBanner } from './DemoBanner'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { MobileNav } from './MobileNav'
+import { WhatsAppButton } from './WhatsAppButton'
 
 export function AppShell() {
   return (
@@ -26,6 +27,7 @@ export function AppShell() {
         </Suspense>
       </main>
       <Footer />
+      <WhatsAppButton />
       <MobileNav />
       <ScrollRestoration />
     </MotionConfig>

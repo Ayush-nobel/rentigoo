@@ -14,9 +14,11 @@ interface ListingCardProps {
   listing: Listing
   priority?: boolean
   className?: string
+  /** Size of the price tag on the photo. */
+  tag?: 'md' | 'lg'
 }
 
-export function ListingCard({ listing, priority, className }: ListingCardProps) {
+export function ListingCard({ listing, priority, className, tag = 'md' }: ListingCardProps) {
   const delivers = listing.pickupOptions.includes('delivery')
   return (
     <article className={cx('group relative', className)}>
@@ -26,7 +28,7 @@ export function ListingCard({ listing, priority, className }: ListingCardProps) 
           priority={priority}
           className="transition-transform duration-500 group-hover:scale-[1.03]"
         />
-        <PriceTag {...headlinePrice(listing)} className="absolute bottom-3 left-3" />
+        <PriceTag {...headlinePrice(listing)} size={tag} className="absolute bottom-3 left-3" />
       </div>
       <div className="mt-3 px-0.5">
         <div className="flex items-start justify-between gap-3">

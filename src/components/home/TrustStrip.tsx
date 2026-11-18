@@ -12,19 +12,19 @@ const POINTS = [
 export function TrustStrip() {
   return (
     <section aria-labelledby="trust-title" className="mx-auto max-w-7xl px-4 sm:px-6">
-      <h2 id="trust-title" className="reveal max-w-3xl text-4xl sm:text-6xl">
+      <h2 id="trust-title" className="reveal max-w-3xl text-3xl sm:text-5xl">
         Safety
       </h2>
-      <ul className="reveal mt-12 grid gap-x-12 gap-y-10 sm:grid-cols-2">
+      <ul className="reveal mt-8 grid gap-x-12 gap-y-8 sm:grid-cols-2">
         {POINTS.map(({ title, body }) => (
-          <li key={title} className="border-t border-line pt-6">
-            <h3 className="text-2xl">{title}</h3>
-            <p className="mt-2 max-w-md text-lg text-muted">{body}</p>
+          <li key={title} className="border-t border-line pt-5">
+            <h3 className="text-xl">{title}</h3>
+            <p className="mt-1 max-w-md text-muted">{body}</p>
           </li>
         ))}
-        <li className="border-t border-line pt-6">
-          <h3 className="text-2xl">Help if something goes wrong</h3>
-          <p className="mt-2 max-w-md text-lg text-muted">
+        <li className="border-t border-line pt-5">
+          <h3 className="text-xl">Help if something goes wrong</h3>
+          <p className="mt-1 max-w-md text-muted">
             {wa && (
               <>
                 <a href={wa} className="font-semibold text-text underline underline-offset-4" rel="noopener noreferrer">

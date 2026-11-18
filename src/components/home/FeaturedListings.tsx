@@ -36,10 +36,10 @@ export function FeaturedListings({ listings, areaId, failed }: Props) {
           </ButtonLink>
         </div>
       ) : (
-        <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {listings
-            ? listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i < 4} />)
-            : Array.from({ length: 4 }, (_, i) => <ListingCardSkeleton key={i} />)}
+            ? listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i < 3} tag="lg" />)
+            : Array.from({ length: 3 }, (_, i) => <ListingCardSkeleton key={i} />)}
         </div>
       )}
     </section>
