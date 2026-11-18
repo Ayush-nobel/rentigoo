@@ -38,7 +38,7 @@ export function ReviewForm({ bookingId, aboutName, asRenter, onDone, onCancel }:
   }
 
   return (
-    <form noValidate onSubmit={submit} className="mt-4 space-y-4 rounded-[20px] bg-sunken p-4 sm:p-5">
+    <form noValidate onSubmit={submit} className="mt-4 space-y-4 card rounded-[20px] p-4 sm:p-5">
       <StarInput legend={asRenter ? `How was renting from ${aboutName}?` : `How was ${aboutName} as a renter?`} value={rating} onChange={setRating} error={errors.rating} />
       <TextAreaField
         label="Your review"

@@ -26,19 +26,10 @@ const ICONS: Record<string, LucideIcon> = {
   fitness: Dumbbell,
 }
 
-/** Warm, muted tones per category, mixed with the surface so both themes work. */
-export const CATEGORY_TONES: Record<string, string> = {
-  cameras: '#c9a76a',
-  electronics: '#8fa3b8',
-  party: '#d9a0a0',
-  tools: '#b8a07a',
-  outdoor: '#8fae8a',
-  furniture: '#c2a58f',
-  appliances: '#9fb4b0',
-  music: '#b79ab8',
-  baby: '#e0b894',
-  fitness: '#a8b08a',
-}
+/** Warm, muted tones per category (defined in src/index.css as --tone-<category>), mixed with the surface so both themes work. */
+export const CATEGORY_TONES: Record<string, string> = Object.fromEntries(
+  ['cameras', 'electronics', 'party', 'tools', 'outdoor', 'furniture', 'appliances', 'music', 'baby', 'fitness'].map((id) => [id, `var(--tone-${id})`]),
+)
 
 export function categoryIcon(id: string): LucideIcon {
   return ICONS[id] ?? Package

@@ -1,8 +1,8 @@
 # RentiGoo
 Peer-to-peer rental marketplace for India. Launch market: Bhopal, Madhya Pradesh. Deployed to AWS Amplify.
 
-## Brand (from the logo, do not substitute)
-Accent golden yellow #F2D04E, ink #24221B, white text on dark. Page background is plain white (not cream, since 2026-11-18); yellow is used boldly in solid blocks (Home hero band, price tags), with .light-scope on anything that sits on yellow. Logo files go in /public/brand.
+## Brand and colours
+Palette chosen 2026-11-18 (all colours live only in src/index.css as CSS variables; src/lib/themeContrast.test.ts checks WCAG AA): page #FBF7EE, white cards (#FFFFFF, border #EDE6D6, the `card` utility), text #1C1B19, secondary text #5F5E5A, yellow #FFD84D for the hero, buttons and highlights only (never as text on light), dark #161616 only for the footer and the rent-vs-buy strip (`dark-scope bg-panel`); `.light-scope` for anything on yellow. Logo files go in /public/brand.
 
 ## Stack
 Vite + React + TypeScript, Tailwind, Framer Motion, React Router. Backend: AWS Amplify Gen 2 in /amplify (Cognito auth, AppSync + DynamoDB data, S3 photos, Lambda for bookings/reviews). Pricing and calculator logic lives in /shared and is used by both the browser and the Lambdas. Seed/mock data in /src/data; `VITE_DATA_MODE=mock|amplify` picks the data source. Full plan: ~/.claude/plans/plan-a-complete-rentigoo-imperative-cloud.md.

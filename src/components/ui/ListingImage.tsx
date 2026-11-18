@@ -42,7 +42,7 @@ export function ListingImage({ photo, className, priority, sizes, decorative }: 
   }
 
   const [, categoryId = '', n = '0'] = (photo?.key ?? 'ph::0').split(':')
-  const tone = CATEGORY_TONES[categoryId] ?? '#c9bfa8'
+  const tone = CATEGORY_TONES[categoryId] ?? 'var(--tone-default)'
   const v = VARIANTS[Number(n) % VARIANTS.length]!
 
   return (

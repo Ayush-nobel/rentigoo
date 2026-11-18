@@ -35,7 +35,7 @@ export function ConditionChecks({ booking, myId, otherName }: { booking: Booking
   if (!stages.length) return null
   return (
     <details
-      className="mt-4 rounded-xl bg-sunken px-4 py-3"
+      className="card mt-4 rounded-xl px-4 py-3"
       onToggle={(e) => {
         const isOpen = (e.target as HTMLDetailsElement).open
         setOpen(isOpen)

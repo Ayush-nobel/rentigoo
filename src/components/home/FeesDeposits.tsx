@@ -56,7 +56,7 @@ export function FeesDeposits() {
 
       <ul className="mt-8 grid gap-4 md:grid-cols-3">
         {cards.map((c) => (
-          <li key={c.who} className={c.highlight ? 'rounded-[24px] bg-accent p-6 text-on-accent light-scope' : 'rounded-[24px] bg-sunken p-6'}>
+          <li key={c.who} className={c.highlight ? 'rounded-[24px] bg-accent p-6 text-on-accent light-scope' : 'card rounded-[24px] p-6'}>
             <p className="font-semibold">{c.who}</p>
             <p className="mt-1 font-display text-3xl font-semibold">{c.price}</p>
             <p className={c.highlight ? 'mt-2' : 'mt-2 text-muted'}>{c.text}</p>

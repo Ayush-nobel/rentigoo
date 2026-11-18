@@ -45,7 +45,7 @@ export function RequestForm({ intro, defaultWhat = '' }: { intro?: string; defau
   }
 
   return (
-    <section aria-labelledby="need-title" className="rounded-[24px] bg-sunken p-5 sm:p-8">
+    <section aria-labelledby="need-title" className="card rounded-[24px] p-5 sm:p-8">
       <h2 id="need-title" className="text-2xl sm:text-3xl">
         Can’t find it? Tell us what you need.
       </h2>

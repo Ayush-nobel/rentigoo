@@ -2,96 +2,136 @@
 @import 'react-day-picker/style.css';
 
 /*
- * Brand colours come from the logo (see CLAUDE.md). Yellow is a fill colour
- * only: never put it as text or a thin icon on cream/white (1.4:1). For
- * yellow-family text on light backgrounds use --accent-text (5.8:1 on cream).
+ * Every colour on the site lives in this block (and the theme blocks below).
+ * Palette (2026-11-18): warm off-white page, white cards, #FFD84D yellow for the
+ * hero, buttons and highlights only, near-black text, and #161616 dark only for
+ * the footer and the rent-vs-buy strip (.dark-scope).
+ * Yellow is a fill: never use it as text or a thin icon on the light page (about
+ * 1.4:1). For yellow-family text on light, use --accent-text.
+ * src/lib/themeContrast.test.ts checks every text colour here meets WCAG AA.
  */
 :root {
   color-scheme: light;
-  /* Plain white page: yellow is used in big solid blocks instead (direction A, 2026-11-18). */
-  --bg: #ffffff;
+  --bg: #fbf7ee;
   --surface: #ffffff;
-  --surface-sunken: #f3f3f1;
-  --line: #e7e6e3;
+  /* Insets and hover fills on the page. */
+  --surface-sunken: #f3ede0;
+  /* Card borders and dividers (decorative). */
+  --line: #ede6d6;
   /* Input and control outlines: ≥3:1 on every surface (WCAG 1.4.11). */
   --line-strong: #85827a;
-  --text: #24221b;
-  --muted: #5c5a54;
-  --accent: #f2d04e;
-  --accent-hover: #e8c23a;
-  --on-accent: #24221b;
+  --text: #1c1b19;
+  --muted: #5f5e5a;
+  --accent: #ffd84d;
+  --accent-hover: #f5cb2e;
+  --on-accent: #1c1b19;
   --accent-text: #7a5c00;
-  /* Edge on yellow marks so they hold 3:1 against white/cream. */
+  /* Edge on yellow marks so they hold 3:1 against white and the page. */
   --accent-edge: #7a5c00;
-  --ink: #24221b;
+  --ink: #1c1b19;
   --on-ink: #ffffff;
   /* Dark parts of the logo: ink on light, white on dark (brand rule). */
-  --logo-ink: #24221b;
-  /* Feature panels: dark in both themes. */
-  --panel: #24221b;
+  --logo-ink: #1c1b19;
+  /* Dark strips (footer, rent-vs-buy): the same in both themes. */
+  --panel: #161616;
   --on-panel: #ffffff;
   --danger: #b42318;
   --success: #1f7a3d;
-  --focus: #24221b;
-  --shadow: 0 1px 2px rgb(36 34 27 / 0.06), 0 8px 24px -12px rgb(36 34 27 / 0.18);
+  --focus: #1c1b19;
+  --shadow: 0 1px 2px rgb(28 27 25 / 0.06), 0 8px 24px -12px rgb(28 27 25 / 0.16);
+  /* Placeholder pictures for demo listings, one tint per category (mixed with the surface). */
+  --tone-cameras: #c9a76a;
+  --tone-electronics: #8fa3b8;
+  --tone-party: #d9a0a0;
+  --tone-tools: #b8a07a;
+  --tone-outdoor: #8fae8a;
+  --tone-furniture: #c2a58f;
+  --tone-appliances: #9fb4b0;
+  --tone-music: #b79ab8;
+  --tone-baby: #e0b894;
+  --tone-fitness: #a8b08a;
+  --tone-default: #c9bfa8;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #24221b;
-    --surface: #2d2c28;
-    --surface-sunken: #1c1b18;
-    --line: #3e3c37;
+    --bg: #1c1b19;
+    --surface: #262522;
+    --surface-sunken: #161616;
+    --line: #3a3833;
     --line-strong: #8a8880;
     --text: #ffffff;
-    --muted: #b5b3ac;
-    --accent-text: #f2d04e;
+    --muted: #b9b6ae;
+    --accent-text: #ffd84d;
     --accent-edge: transparent;
-    --ink: #faf7f0;
-    --on-ink: #24221b;
+    --ink: #fbf7ee;
+    --on-ink: #1c1b19;
     --logo-ink: #ffffff;
-    --panel: #1c1b18;
+    --panel: #161616;
     --danger: #ff8a7a;
     --success: #6fd48e;
-    --focus: #f2d04e;
+    --focus: #ffd84d;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #24221b;
-  --surface: #2d2c28;
-  --surface-sunken: #1c1b18;
-  --line: #3e3c37;
+  --bg: #1c1b19;
+  --surface: #262522;
+  --surface-sunken: #161616;
+  --line: #3a3833;
   --line-strong: #8a8880;
   --text: #ffffff;
-  --muted: #b5b3ac;
-  --accent-text: #f2d04e;
+  --muted: #b9b6ae;
+  --accent-text: #ffd84d;
   --accent-edge: transparent;
-  --ink: #faf7f0;
-  --on-ink: #24221b;
+  --ink: #fbf7ee;
+  --on-ink: #1c1b19;
   --logo-ink: #ffffff;
-  --panel: #1c1b18;
+  --panel: #161616;
   --danger: #ff8a7a;
   --success: #6fd48e;
-  --focus: #f2d04e;
+  --focus: #ffd84d;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
 }
 
-/* Light colours whatever the theme, for parts that sit on solid yellow (the Home hero band). */
+/* Light colours whatever the theme, for parts that sit on solid yellow (the Home hero band, highlight cards). */
 .light-scope {
   color-scheme: light;
   --surface: #ffffff;
-  --surface-sunken: #f3f3f1;
-  --line: #e7e6e3;
+  --surface-sunken: #f3ede0;
+  --line: #ede6d6;
   --line-strong: #85827a;
-  --text: #24221b;
-  --muted: #5c5a54;
-  --ink: #24221b;
+  --text: #1c1b19;
+  --muted: #5f5e5a;
+  --ink: #1c1b19;
   --on-ink: #ffffff;
-  --focus: #24221b;
+  --focus: #1c1b19;
+}
+
+/* Dark colours whatever the theme, for the dark strips (footer, rent-vs-buy). Use with bg-panel. */
+.dark-scope {
+  color-scheme: dark;
+  --surface: #1f1f1e;
+  --surface-sunken: #222120;
+  --line: #34332f;
+  --line-strong: #8a8880;
+  --text: #ffffff;
+  --muted: #bdb9af;
+  --accent-text: #ffd84d;
+  --accent-edge: transparent;
+  --ink: #fbf7ee;
+  --on-ink: #1c1b19;
+  --logo-ink: #ffffff;
+  --focus: #ffd84d;
+}
+
+/* A white card on the page: white fill, warm hairline border. */
+@utility card {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
 }
 
 @theme inline {

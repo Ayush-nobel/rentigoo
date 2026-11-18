@@ -102,7 +102,7 @@ export function AuthFrame({ title, intro, children, aside }: { title: string; in
         {intro && <div className="mt-3 text-lg text-muted">{intro}</div>}
         <div className="mt-8">{children}</div>
       </section>
-      {aside && <aside className="hidden self-start rounded-[28px] bg-panel p-8 text-on-panel lg:block">{aside}</aside>}
+      {aside && <aside className="card hidden self-start rounded-[28px] p-8 lg:block">{aside}</aside>}
     </div>
   )
 }

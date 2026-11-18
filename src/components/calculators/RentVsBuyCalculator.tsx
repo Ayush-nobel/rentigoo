@@ -71,7 +71,7 @@ export function RentVsBuyCalculator() {
 
   return (
     <div>
-      <section aria-label="The answer" className="rounded-[28px] bg-sunken p-5 sm:p-8">
+      <section aria-label="The answer" className="card rounded-[28px] p-5 sm:p-8">
         <div aria-live="polite">
           <p className="font-display text-3xl leading-tight font-semibold text-balance sm:text-5xl">{answer}</p>
           {detail && <p className="mt-3 text-lg text-muted">{detail}</p>}
@@ -140,7 +140,7 @@ export function RentVsBuyCalculator() {
           )}
         </div>
 
-        <details className="smooth mt-6 rounded-2xl bg-sunken px-4 py-3">
+        <details className="card smooth mt-6 rounded-2xl px-4 py-3">
           <summary className="cursor-pointer rounded font-semibold">Advanced</summary>
           <div className="mt-4 grid gap-5 pb-2 sm:grid-cols-2">
             <NumberInput

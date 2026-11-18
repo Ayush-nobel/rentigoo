@@ -535,7 +535,7 @@ function PriceStep({ form, edit, errors }: StepProps) {
       )}
 
       {examples.some(Boolean) && (
-        <div className="rounded-[20px] bg-sunken p-4 sm:p-5">
+        <div className="card rounded-[20px] p-4 sm:p-5">
           <p className="font-semibold">What a renter would pay in rent</p>
           <ul className="mt-2 space-y-1">
             {examples.filter(Boolean).map((x) => (

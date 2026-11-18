@@ -18,7 +18,8 @@ export function RentOrBuyExample({ listings = [] }: { listings?: Listing[] }) {
   const daily = real?.pricing.daily ?? camera.avgDailyRate
   const rent = rentVsBuy({ purchasePrice: camera.avgPurchasePrice, resalePct: 0, upkeepPerYear: 0, years: 1, dailyRate: daily, daysPerYear: WEEKEND_DAYS }).rentCost
   return (
-    <section aria-label="Renting or buying" className="mx-auto max-w-7xl px-4 sm:px-6">
+    <section aria-label="Renting or buying" className="dark-scope bg-panel py-14 text-text sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <p className="reveal max-w-3xl font-display text-2xl leading-snug font-semibold sm:text-4xl">
         A camera for a wedding weekend: {rupees(rent)} to rent, about {rupees(camera.avgPurchasePrice)} to buy.
       </p>
@@ -49,6 +50,7 @@ export function RentOrBuyExample({ listings = [] }: { listings?: Listing[] }) {
           </Link>
         </li>
       </ul>
+      </div>
     </section>
   )
 }

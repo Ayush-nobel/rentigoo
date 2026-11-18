@@ -17,7 +17,7 @@ export function FounderBlock() {
     .slice(0, 2)
   return (
     <section aria-labelledby="founder-title" className="mx-auto max-w-7xl px-4 sm:px-6">
-      <div className="grid items-center gap-6 rounded-[24px] bg-sunken p-6 sm:grid-cols-[auto_1fr] sm:gap-8 sm:p-8">
+      <div className="grid items-center gap-6 card rounded-[24px] p-6 sm:grid-cols-[auto_1fr] sm:gap-8 sm:p-8">
         {FOUNDER.photo ? (
           <img src={FOUNDER.photo} alt={FOUNDER.name} width={128} height={128} className="size-28 rounded-full object-cover sm:size-32" />
         ) : (

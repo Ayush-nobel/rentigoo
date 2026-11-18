@@ -44,7 +44,7 @@ const groups = [
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-line bg-sunken pb-24 md:pb-0">
+    <footer className="dark-scope mt-24 bg-panel pb-24 text-text md:pb-0">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div>
           <Logo className="h-14! sm:h-16!" />
