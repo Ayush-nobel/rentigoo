@@ -102,7 +102,7 @@ writeFileSync(join(DIST, '404.html'), page(headTags({ title: 'Page not found', d
 // 4. robots.txt and sitemap.xml
 // Robots rules match by prefix, so "/list" alone would also block every /listing/… page.
 // "$" anchors the end (supported by Google and Bing): only /list itself is blocked.
-const PRIVATE = ['/account', '/dashboard', '/messages', '/list$', '/list?']
+const PRIVATE = ['/account', '/dashboard', '/messages', '/booking-fee', '/list$', '/list?']
 const robots = ['User-agent: *', 'Allow: /', ...PRIVATE.map((p) => `Disallow: ${p}`)]
 if (SITE_URL) {
   const urls = [
@@ -126,9 +126,14 @@ writeFileSync(join(DIST, 'robots.txt'), robots.join('\n') + '\n')
 
 // 5. App pages that are never prerendered (private) get a copy of the empty app shell as a
 // real file, so Amplify serves /account straight from account.html (no /account/ redirect).
-const APP_ROUTES = ['/account', '/dashboard', '/list', '/messages']
+// Includes the pages people come back to from DigiLocker and the payment page, so those
+// arrive straight away with a 200 (no redirect to a trailing slash, then a 404 fallback).
+const APP_ROUTES = ['/account', '/dashboard', '/list', '/messages', '/account/id-check', '/booking-fee']
 const appShell = readFileSync(join(DIST, 'app.html'), 'utf8')
-for (const r of APP_ROUTES) writeFileSync(join(DIST, `${r}.html`), appShell)
+for (const r of APP_ROUTES) {
+  mkdirSync(dirname(join(DIST, `${r}.html`)), { recursive: true })
+  writeFileSync(join(DIST, `${r}.html`), appShell)
+}
 
 // 6. Routing rules for Amplify Hosting (rules run before files, first match wins):
 //  - /messages/<id> has no files under it, so it can always be the app shell (200)
