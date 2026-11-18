@@ -1,44 +1,61 @@
 import { Link } from 'react-router'
 import { cx } from '@/lib/cx'
-import { LOGO_SIZE } from './logoSize'
 
-type Variant = 'wordmark' | 'mark' | 'full'
+type Size = 'sm' | 'md' | 'lg'
 
-interface LogoArtProps {
-  variant?: Variant
+interface LogoProps {
+  /** sm for the nav (icon about 28px), md, lg for the hero or auth pages. */
+  size?: Size
+  /** Which background it sits on. Leave it out to follow the page (light page, dark theme, or a dark strip). */
+  variant?: 'light' | 'dark'
+  /** Just the R, no wordmark. */
+  iconOnly?: boolean
+  /** Link to the home page (default true). */
+  link?: boolean
   className?: string
-  /** Accessible name; pass '' when a surrounding link already names it. */
-  title?: string
+}
+
+const SIZES: Record<Size, { icon: string; text: string; gap: string }> = {
+  sm: { icon: 'h-7', text: 'text-[1.4rem]', gap: 'gap-2' },
+  md: { icon: 'h-9', text: 'text-[1.8rem]', gap: 'gap-2.5' },
+  lg: { icon: 'h-12', text: 'text-[2.4rem]', gap: 'gap-3' },
 }
 
 /**
- * The RentiGoo logo, traced from public/brand/Rentigoo.jpeg, drawn from one
- * shared sprite file (public/brand/logo-sprite.svg) so every page doesn't carry
- * ~47 KB of paths twice; the browser fetches it once and caches it. Yellow stays
- * the brand yellow; the dark parts follow the theme via CSS variables.
+ * The RentiGoo logo: the R icon (public/brand/r-icon.png, unchanged from the
+ * supplied artwork; r-icon-on-dark.png has the light leg for dark backgrounds)
+ * and "RentiGoo" as live text in Nunito 800, in one colour (--wordmark).
+ * Under 360px wide only the R shows; the name stays readable for screen readers.
  */
-export function LogoArt({ variant = 'wordmark', className, title = 'RentiGoo' }: LogoArtProps) {
-  const width = variant === 'mark' ? LOGO_SIZE.markWidth : LOGO_SIZE.width
-  return (
-    <svg
-      viewBox={`0 0 ${width} ${LOGO_SIZE.height}`}
-      className={cx('block h-full w-auto', className)}
-      role={title ? 'img' : undefined}
-      aria-label={title || undefined}
-      aria-hidden={title ? undefined : true}
-      focusable="false"
-    >
-      <use href={`/brand/logo-sprite.svg#${variant}`} />
-    </svg>
+export function Logo({ size = 'sm', variant, iconOnly = false, link = true, className }: LogoProps) {
+  const s = SIZES[size]
+  const icon = (src: string, extra?: string) => <img src={src} alt="" width={156} height={192} className={cx(s.icon, 'w-auto shrink-0', extra)} />
+  const content = (
+    <>
+      {variant === 'light' ? icon('/brand/r-icon.png') : variant === 'dark' ? icon('/brand/r-icon-on-dark.png') : (
+        <>
+          {icon('/brand/r-icon.png', 'on-light-only')}
+          {icon('/brand/r-icon-on-dark.png', 'on-dark-only')}
+        </>
+      )}
+      <span
+        className={cx(
+          'font-wordmark leading-none font-extrabold tracking-[-0.02em]',
+          s.text,
+          variant === 'light' ? 'text-[color:var(--brand-ink)]' : variant === 'dark' ? 'text-[color:var(--page-bg)]' : 'text-wordmark',
+          iconOnly ? 'sr-only' : 'max-[359px]:sr-only',
+        )}
+      >
+        RentiGoo
+      </span>
+    </>
   )
-}
-
-/** Logo linking home, as used in the header and footer. */
-export function Logo({ className }: { className?: string }) {
-  return (
-    <Link to="/" className={cx('inline-flex h-11 items-center rounded-lg sm:h-12', className)}>
-      <LogoArt title="" />
-      <span className="sr-only">RentiGoo home</span>
+  const classes = cx('inline-flex items-center', s.gap, className)
+  return link ? (
+    <Link to="/" aria-label="RentiGoo home" className={cx(classes, 'min-h-11 rounded-lg')}>
+      {content}
     </Link>
+  ) : (
+    <span className={classes}>{content}</span>
   )
 }

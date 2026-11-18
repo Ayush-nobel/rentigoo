@@ -11,12 +11,23 @@ function block(selector: string): Record<string, string> {
   const start = css.indexOf(`${selector} {`)
   if (start < 0) throw new Error(`No ${selector} block in index.css`)
   const body = css.slice(start, css.indexOf('}', start))
-  return Object.fromEntries([...body.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})/gi)].map(([, k, v]) => [k, v.toLowerCase()]))
+  return Object.fromEntries([...body.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6}|var\(--[\w-]+\))/gi)].map(([, k, v]) => [k, v.toLowerCase()]))
+}
+/** Follows var(--x) references until a hex colour, using the palette in :root for anything a block doesn't set. */
+function resolve(t: Record<string, string>): Record<string, string> {
+  const get = (k: string, depth = 0): string => {
+    const v = t[k] ?? root[k]
+    if (!v || depth > 8) throw new Error(`--${k} has no colour`)
+    const ref = /^var\(--([\w-]+)\)$/.exec(v)
+    return ref ? get(ref[1]!, depth + 1) : v
+  }
+  return Object.fromEntries(Object.keys({ ...root, ...t }).map((k) => [k, get(k)]))
 }
 const root = block(':root')
-const dark = { ...root, ...block(":root[data-theme='dark']") }
-const lightScope = { ...root, ...block('.light-scope') }
-const darkScope = { ...root, ...block('.dark-scope') }
+const palette = resolve(root)
+const dark = resolve({ ...root, ...block(":root[data-theme='dark']") })
+const lightScope = resolve({ ...root, ...block('.light-scope') })
+const darkScope = resolve({ ...root, ...block('.dark-scope') })
 
 function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
@@ -42,12 +53,21 @@ function check(name: string, t: Record<string, string>, backgrounds: string[]) {
   })
 }
 
-check('light theme', root, ['bg', 'surface', 'surface-sunken'])
+check('light theme', palette, ['bg', 'surface', 'surface-sunken'])
 check('dark theme', dark, ['bg', 'surface', 'surface-sunken'])
 describe('on yellow (.light-scope)', () => {
   it('text on accent ≥ 4.5', () => expect(ratio(lightScope.text!, lightScope.accent!)).toBeGreaterThanOrEqual(4.5))
   it('muted on surface ≥ 4.5', () => expect(ratio(lightScope.muted!, lightScope.surface!)).toBeGreaterThanOrEqual(4.5))
   it('ink outline on accent ≥ 3', () => expect(ratio(lightScope.ink!, lightScope.accent!)).toBeGreaterThanOrEqual(3))
+})
+describe('the palette', () => {
+  it('names the brand colours', () => {
+    expect([palette['brand-yellow'], palette['page-bg'], palette['card-bg'], palette['card-border'], palette.text, palette['text-secondary'], palette.dark]).toEqual(['#ffd84d', '#fbf7ee', '#ffffff', '#ede6d6', '#1c1b19', '#5f5e5a', '#161616'])
+  })
+  it('the wordmark reads on light and on the dark footer', () => {
+    expect(ratio(palette.wordmark!, palette['page-bg']!)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(darkScope.wordmark!, darkScope.panel!)).toBeGreaterThanOrEqual(4.5)
+  })
 })
 describe('dark strips (.dark-scope on panel)', () => {
   for (const fg of ['text', 'muted', 'accent-text']) {

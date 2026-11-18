@@ -72,6 +72,7 @@ export function headTags(meta: PageMeta): string {
     `<meta property="og:site_name" content="${SITE_NAME}" />`,
     canonical && `<meta property="og:url" content="${esc(canonical)}" />`,
     `<meta property="og:image" content="${esc(image)}" />`,
+    ...(image.endsWith('/brand/og-image.png') ? ['<meta property="og:image:width" content="1200" />', '<meta property="og:image:height" content="630" />', '<meta property="og:image:alt" content="RentiGoo: rent anything in Bhopal" />'] : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     meta.jsonLd?.length &&
       `<script type="application/ld+json" data-seo>${JSON.stringify(meta.jsonLd).replace(/</g, '\\u003c')}</script>`,

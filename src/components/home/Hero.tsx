@@ -3,11 +3,14 @@ import { useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { AREAS, REGIONS } from '@shared/areas'
 import { whatsappUrl } from '@/config/business'
+import { HERO_PHOTOS } from '@/data/heroPhotos'
+import { cx } from '@/lib/cx'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '../ui/Button'
 
 const SEARCH_IDEAS = ['Camping tent', 'Projector', 'Drill', 'PS5', 'Sofa', 'Party speaker']
 const WHATSAPP = whatsappUrl()
+const photos = HERO_PHOTOS.length > 0
 const delay = (s: number) => ({ '--delay': `${s}s` }) as CSSProperties
 
 export function Hero() {
@@ -25,14 +28,18 @@ export function Hero() {
   }
 
   return (
-    <section className="light-scope bg-accent text-on-accent">
-      <div className="mx-auto max-w-7xl px-4 pt-10 pb-12 sm:px-6 sm:pt-16 sm:pb-16 lg:pt-20 lg:pb-20">
-        <h1 className="rise max-w-[16ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">Why buy it when someone nearby has one?</h1>
+    <section>
+      <div className={cx('mx-auto max-w-7xl px-4 pt-10 pb-12 sm:px-6 sm:pt-16 sm:pb-16 lg:pt-20 lg:pb-20', photos && 'hero-grid')}>
+        <div className="[grid-area:head]">
+        <h1 className="rise max-w-[16ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">
+          Why buy it when someone <span className="marker">nearby</span> has one?
+        </h1>
         <p className="rise mt-6 max-w-lg text-lg sm:text-xl" style={delay(0.1)}>
           Rent from people in Bhopal, by the day or by the month.
         </p>
+        </div>
 
-        <form onSubmit={submit} role="search" aria-label="Find something to rent" className="rise mt-9 max-w-xl" style={delay(0.2)}>
+        <form onSubmit={submit} role="search" aria-label="Find something to rent" className="rise mt-9 max-w-xl [grid-area:form]" style={delay(0.2)}>
           <div className="flex flex-col gap-2 rounded-[22px] border-2 border-ink bg-surface p-2 sm:flex-row sm:items-stretch sm:rounded-full">
             <label className="flex min-h-12 flex-1 items-center gap-2.5 rounded-full px-3 sm:px-4">
               <Search aria-hidden="true" className="size-5 shrink-0" />
@@ -62,12 +69,22 @@ export function Hero() {
               </select>
               <ChevronDown aria-hidden="true" className="pointer-events-none size-5 shrink-0" />
             </label>
-            <Button type="submit" size="lg" variant="ink" className="sm:px-8">
+            <Button type="submit" size="lg" className="sm:px-8">
               Search
             </Button>
           </div>
         </form>
 
+        {photos && (
+          <ul className="rise mt-8 grid grid-cols-2 gap-3 [grid-area:photos] lg:mt-0" style={delay(0.15)}>
+            {HERO_PHOTOS.slice(0, 4).map((p) => (
+              <li key={p.src}>
+                <img src={p.src} alt={p.alt} width={600} height={600} className="aspect-square w-full rounded-[20px] object-cover" />
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="[grid-area:ideas]">
         <p className="rise mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem]" style={delay(0.3)}>
           <span>Try</span>
           {SEARCH_IDEAS.map((p) => (
@@ -85,6 +102,7 @@ export function Hero() {
             and we’ll find it nearby.
           </p>
         )}
+        </div>
       </div>
     </section>
   )

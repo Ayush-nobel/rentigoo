@@ -12,32 +12,43 @@
  */
 :root {
   color-scheme: light;
-  --bg: #fbf7ee;
-  --surface: #ffffff;
+  /* ---- The palette: every colour below points at one of these. ---- */
+  --brand-yellow: #ffd84d; /* buttons, highlights and accents only, never text on light */
+  --page-bg: #fbf7ee;
+  --card-bg: #ffffff;
+  --card-border: #ede6d6;
+  /* The near-black, fixed in every theme (text on yellow, the wordmark on light). */
+  --brand-ink: #1c1b19;
+  --text: var(--brand-ink);
+  --text-secondary: #5f5e5a;
+  --dark: #161616; /* footer and the rent-vs-buy strip only */
+
+  /* ---- What each part of the page uses (light theme). ---- */
+  --bg: var(--page-bg);
+  --surface: var(--card-bg);
   /* Insets and hover fills on the page. */
   --surface-sunken: #f3ede0;
   /* Card borders and dividers (decorative). */
-  --line: #ede6d6;
+  --line: var(--card-border);
   /* Input and control outlines: ≥3:1 on every surface (WCAG 1.4.11). */
   --line-strong: #85827a;
-  --text: #1c1b19;
-  --muted: #5f5e5a;
-  --accent: #ffd84d;
+  --muted: var(--text-secondary);
+  --accent: var(--brand-yellow);
   --accent-hover: #f5cb2e;
-  --on-accent: #1c1b19;
+  --on-accent: var(--brand-ink);
   --accent-text: #7a5c00;
   /* Edge on yellow marks so they hold 3:1 against white and the page. */
   --accent-edge: #7a5c00;
-  --ink: #1c1b19;
-  --on-ink: #ffffff;
-  /* Dark parts of the logo: ink on light, white on dark (brand rule). */
-  --logo-ink: #1c1b19;
+  --ink: var(--brand-ink);
+  --on-ink: var(--card-bg);
+  /* The wordmark: one colour, #1C1B19 on light, #FBF7EE on dark. */
+  --wordmark: var(--brand-ink);
   /* Dark strips (footer, rent-vs-buy): the same in both themes. */
-  --panel: #161616;
+  --panel: var(--dark);
   --on-panel: #ffffff;
   --danger: #b42318;
   --success: #1f7a3d;
-  --focus: #1c1b19;
+  --focus: var(--brand-ink);
   --shadow: 0 1px 2px rgb(28 27 25 / 0.06), 0 8px 24px -12px rgb(28 27 25 / 0.16);
   /* Placeholder pictures for demo listings, one tint per category (mixed with the surface). */
   --tone-cameras: #c9a76a;
@@ -63,15 +74,15 @@
     --line-strong: #8a8880;
     --text: #ffffff;
     --muted: #b9b6ae;
-    --accent-text: #ffd84d;
+    --accent-text: var(--brand-yellow);
     --accent-edge: transparent;
-    --ink: #fbf7ee;
-    --on-ink: #1c1b19;
-    --logo-ink: #ffffff;
-    --panel: #161616;
+    --ink: var(--page-bg);
+    --on-ink: var(--brand-ink);
+    --wordmark: var(--page-bg);
+    --panel: var(--dark);
     --danger: #ff8a7a;
     --success: #6fd48e;
-    --focus: #ffd84d;
+    --focus: var(--brand-yellow);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
   }
 }
@@ -85,30 +96,30 @@
   --line-strong: #8a8880;
   --text: #ffffff;
   --muted: #b9b6ae;
-  --accent-text: #ffd84d;
+  --accent-text: var(--brand-yellow);
   --accent-edge: transparent;
-  --ink: #fbf7ee;
-  --on-ink: #1c1b19;
-  --logo-ink: #ffffff;
-  --panel: #161616;
+  --ink: var(--page-bg);
+  --on-ink: var(--brand-ink);
+  --wordmark: var(--page-bg);
+  --panel: var(--dark);
   --danger: #ff8a7a;
   --success: #6fd48e;
-  --focus: #ffd84d;
+  --focus: var(--brand-yellow);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
 }
 
 /* Light colours whatever the theme, for parts that sit on solid yellow (the Home hero band, highlight cards). */
 .light-scope {
   color-scheme: light;
-  --surface: #ffffff;
+  --surface: var(--card-bg);
   --surface-sunken: #f3ede0;
-  --line: #ede6d6;
+  --line: var(--card-border);
   --line-strong: #85827a;
-  --text: #1c1b19;
-  --muted: #5f5e5a;
-  --ink: #1c1b19;
-  --on-ink: #ffffff;
-  --focus: #1c1b19;
+  --text: var(--brand-ink);
+  --muted: var(--text-secondary);
+  --ink: var(--brand-ink);
+  --on-ink: var(--card-bg);
+  --focus: var(--brand-ink);
 }
 
 /* Dark colours whatever the theme, for the dark strips (footer, rent-vs-buy). Use with bg-panel. */
@@ -120,12 +131,61 @@
   --line-strong: #8a8880;
   --text: #ffffff;
   --muted: #bdb9af;
-  --accent-text: #ffd84d;
+  --accent-text: var(--brand-yellow);
   --accent-edge: transparent;
-  --ink: #fbf7ee;
-  --on-ink: #1c1b19;
-  --logo-ink: #ffffff;
-  --focus: #ffd84d;
+  --ink: var(--page-bg);
+  --on-ink: var(--brand-ink);
+  --wordmark: var(--page-bg);
+  --focus: var(--brand-yellow);
+}
+
+/* Marker-pen highlight behind a word (the hero's "nearby"): an inset shadow, not a gradient. */
+.marker {
+  box-shadow: inset 0 -0.38em 0 var(--brand-yellow);
+  padding: 0 0.06em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Hero with photos: headline and search on the left, photos on the right; on phones the photos come under the search. */
+.hero-grid {
+  display: grid;
+  grid-template-areas: 'head' 'form' 'photos' 'ideas';
+}
+@media (min-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    column-gap: 3rem;
+    grid-template-areas: 'head photos' 'form photos' 'ideas photos';
+    align-items: start;
+  }
+}
+
+/* The logo's R: the dark-legged one on light backgrounds, the light-legged one on dark. */
+.on-dark-only {
+  display: none;
+}
+:root[data-theme='dark'] .on-light-only,
+.dark-scope .on-light-only {
+  display: none;
+}
+:root[data-theme='dark'] .on-dark-only,
+.dark-scope .on-dark-only {
+  display: block;
+}
+.light-scope .on-dark-only {
+  display: none;
+}
+.light-scope .on-light-only {
+  display: block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .on-light-only {
+    display: none;
+  }
+  :root:not([data-theme='light']) .on-dark-only {
+    display: block;
+  }
 }
 
 /* A white card on the page: white fill, warm hairline border. */
@@ -151,12 +211,24 @@
   --color-on-ink: var(--on-ink);
   --color-panel: var(--panel);
   --color-on-panel: var(--on-panel);
+  --color-wordmark: var(--wordmark);
   --color-danger: var(--danger);
   --color-success: var(--success);
   --shadow-card: var(--shadow);
 }
 
+/* Nunito 800 for the "RentiGoo" wordmark only. Self-hosted (no request to Google).
+   Copyright 2014 The Nunito Project Authors; SIL Open Font License 1.1. */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./assets/fonts/nunito-800-latin.woff2') format('woff2');
+}
+
 @theme {
+  --font-wordmark: 'Nunito', 'Mukta', system-ui, sans-serif;
   --font-display: 'Anek Latin Variable', 'Mukta', system-ui, sans-serif;
   --font-sans: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius-photo: 20px;

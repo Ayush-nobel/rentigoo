@@ -47,12 +47,11 @@ export function Footer() {
     <footer className="dark-scope mt-24 bg-panel pb-24 text-text md:pb-0">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div>
-          <Logo className="h-14! sm:h-16!" />
-          <p className="mt-2 font-semibold">Bhopal mein kiraye pe lo, kiraye pe do.</p>
+          <Logo size="md" variant="dark" />
+          <p className="mt-3 text-sm text-muted">Rent anything, anywhere</p>
           <p className="mt-4 max-w-xs text-muted">
             Rent things from people in Bhopal, or earn from the things you don’t use often.
           </p>
-
         </div>
         {groups.map((g) => (
           <nav key={g.title} aria-label={g.title}>
