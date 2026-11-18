@@ -15,6 +15,8 @@ const groups = [
       { to: '/how-it-works', label: 'How it works' },
       { to: '/trust-and-safety', label: 'Trust and safety' },
       { to: '/faq', label: 'Questions and answers' },
+      { to: '/rent-or-buy', label: 'Rent or buy?' },
+      { to: '/earn', label: 'What could you earn?' },
       { to: '/contact', label: 'Contact and complaints' },
     ],
   },

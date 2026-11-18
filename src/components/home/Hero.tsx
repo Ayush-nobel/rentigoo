@@ -3,7 +3,6 @@ import { useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { AREAS, REGIONS } from '@shared/areas'
 import { useAuth } from '@/context/AuthContext'
-import { HERO_PHOTO } from '@/data/homePhotos'
 import { Button } from '../ui/Button'
 
 const SEARCH_IDEAS = ['Camping tent', 'Projector', 'Drill', 'PS5', 'Sofa', 'Party speaker']
@@ -24,9 +23,9 @@ export function Hero() {
   }
 
   return (
-    <section className="mx-auto grid max-w-7xl items-end gap-10 px-4 pt-10 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-20">
-      <div className="lg:pb-16">
-        <h1 className="rise max-w-[14ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">Why buy it when someone nearby has one?</h1>
+    <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 sm:pt-16 lg:pt-20">
+      <div>
+        <h1 className="rise max-w-[16ch] text-[2.9rem] leading-[0.98] sm:text-7xl lg:text-[5.25rem]">Why buy it when someone nearby has one?</h1>
         <p className="rise mt-6 max-w-lg text-lg text-muted sm:text-xl" style={delay(0.1)}>
           Rent a tent for the weekend, a drill for one wall, a sofa for the term. From people across Bhopal, at a price you see upfront.
         </p>
@@ -75,26 +74,6 @@ export function Hero() {
           ))}
         </p>
       </div>
-
-      <figure className="rise relative" style={delay(0.15)}>
-        <picture>
-          <source media="(min-width: 1024px)" srcSet="/images/home/hero-1200.webp" />
-          <img
-            src="/images/home/hero-720.webp"
-            alt={HERO_PHOTO.alt}
-            width={1200}
-            height={1500}
-            fetchPriority="high"
-            className="aspect-[4/3] w-full rounded-[32px] object-cover object-bottom sm:aspect-[16/10] lg:aspect-[4/5]"
-          />
-        </picture>
-        <figcaption className="mt-2 text-right text-sm text-muted">
-          Triund, Himachal. Photo:{' '}
-          <a href={HERO_PHOTO.source} className="underline underline-offset-2" rel="noopener noreferrer">
-            {HERO_PHOTO.by}
-          </a>
-        </figcaption>
-      </figure>
     </section>
   )
 }

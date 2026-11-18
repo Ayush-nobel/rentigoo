@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TextField } from '../ui/Field'
+import { TextField } from '@/components/ui/Field'
 import { number } from '@/lib/format'
 
 interface Props {

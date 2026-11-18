@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url'
 
 const DIST = 'dist'
 const ssr = await import(pathToFileURL(join(process.cwd(), 'dist-ssr/entry-server.js')).href)
-const { renderPage, headTags, STATIC_PAGES, SITE_URL, listingMeta, allListings, CATEGORIES, loadListingPage } = ssr
+const { renderPage, headTags, STATIC_PAGES, SITE_URL, listingMeta, allListings, homeListings, CATEGORIES, loadListingPage } = ssr
 
 const shell = readFileSync(join(DIST, 'index.html'), 'utf8')
 if (!shell.includes('<div id="root"></div>')) throw new Error('index.html is missing <div id="root"></div>')
@@ -53,9 +53,16 @@ function write(path, html) {
 const written = []
 const t0 = Date.now()
 
-// 1. Public static pages.
+// 1. Public static pages. Home is built with its listings in the HTML, so they show before any script runs.
+let home = null
+try {
+  home = { 'home:listings': await homeListings() }
+} catch (e) {
+  console.warn(`Couldn’t load listings for Home (${e.message}). They will load in the browser.`)
+}
 for (const [path, meta] of Object.entries(STATIC_PAGES)) {
-  write(path, page(headTags(meta), await renderPage(path), path))
+  const data = path === '/' ? home : null
+  write(path, page(headTags(meta), await renderPage(path, data ?? {}), path, data))
   written.push(path)
 }
 

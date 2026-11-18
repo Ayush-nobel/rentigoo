@@ -22,6 +22,8 @@ const HowItWorks = lazyPage(() => import('./pages/HowItWorks'))
 const TrustSafety = lazyPage(() => import('./pages/TrustSafety'))
 const About = lazyPage(() => import('./pages/About'))
 const NotFound = lazyPage(() => import('./pages/NotFound'))
+const RentOrBuy = lazyPage(() => import('./pages/RentOrBuy'))
+const Earn = lazyPage(() => import('./pages/Earn'))
 
 /**
  * Every route. Used by the browser router (main.tsx) and the build-time
@@ -47,6 +49,8 @@ export const routes: RouteObject[] = [
       { path: 'trust-and-safety', element: <TrustSafety /> },
       { path: 'faq', element: <FAQ /> },
       { path: 'about', element: <About /> },
+      { path: 'rent-or-buy', element: <RentOrBuy /> },
+      { path: 'earn', element: <Earn /> },
       { path: 'login', element: <Login /> },
       { path: 'signup', element: <Signup /> },
       { path: '*', element: <NotFound /> },

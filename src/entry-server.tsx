@@ -9,12 +9,14 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { api } from './lib'
 import { InitialDataProvider } from './lib/initialData'
+import { HOME_LISTINGS } from './pages/homeData'
 import { listingMeta } from './lib/listingMeta'
 import { loadListingPage } from './lib/listingPage'
 import { absoluteUrl, DEFAULT_IMAGE, fullTitle, SITE_NAME, SITE_URL, STATIC_PAGES, type PageMeta } from './lib/seo'
 import { routes } from './router'
 
 export { STATIC_PAGES, SITE_URL, listingMeta, loadListingPage }
+export { HOME_LISTINGS } from './pages/homeData'
 export { CATEGORIES } from '@shared/categories'
 
 /**
@@ -77,6 +79,12 @@ export function headTags(meta: PageMeta): string {
 }
 
 /** Every active listing, read with public (guest) access. */
+/** The listings Home shows first: the same pick the page makes in the browser for someone not signed in. */
+export async function homeListings() {
+  const r = await api.searchListings({ sort: 'relevance' })
+  return r.items.slice(0, HOME_LISTINGS)
+}
+
 export async function allListings() {
   const r = await api.searchListings({ page: 50, sort: 'newest' })
   return r.items

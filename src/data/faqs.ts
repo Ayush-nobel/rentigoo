@@ -57,7 +57,7 @@ export const FAQS: FaqItem[] = [
     id: 'f6',
     section: 'owning',
     q: 'How much should I charge?',
-    a: 'A good starting point is 1–3% of what the item costs new, per day. The earnings estimator on our home page shows typical rates for each category. You can always change your price later.',
+    a: 'A good starting point is 1–3% of what the item costs new, per day. Our “What could your things earn?” page (rentigoo.in/earn) shows typical rates for each category. You can always change your price later.',
   },
   {
     id: 'f7',

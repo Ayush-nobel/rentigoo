@@ -3,11 +3,11 @@ import { ownerEarnings, ownerEarningsMonthly } from '@shared/calculators'
 import { CATEGORIES, getCategory } from '@shared/categories'
 import { FEES } from '@shared/fees'
 import { plural, rupees } from '@/lib/format'
-import { ButtonLink } from '../ui/Button'
-import { SelectField, SliderField } from '../ui/Field'
-import { AnimatedNumber } from '../ui/AnimatedNumber'
+import { ButtonLink } from '@/components/ui/Button'
+import { SelectField, SliderField } from '@/components/ui/Field'
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber'
 import { NumberInput } from './NumberInput'
-import { TermSwitch } from '../ui/TermSwitch'
+import { TermSwitch } from '@/components/ui/TermSwitch'
 import type { RentalTerm } from '@shared/types'
 
 const DEFAULT = 'party'
@@ -37,13 +37,8 @@ export function EarningsEstimator() {
         : `It would pay for itself in about ${plural(Math.ceil(r.monthsToPayBack), 'month')}${monthly ? ' of renting' : ''}.`
 
   return (
-    <section aria-labelledby="earn-title" className="rounded-[28px] bg-accent p-5 text-on-accent sm:p-10">
-      <h2 id="earn-title" className="text-3xl">
-        What could your things earn?
-      </h2>
-      <p className="mt-2">That speaker in the cupboard has a second job waiting.</p>
-
-      <div className="mt-6 grid gap-5 rounded-2xl bg-surface p-4 text-text sm:p-5">
+    <section aria-label="Earnings estimate" className="rounded-[28px] bg-accent p-5 text-on-accent sm:p-10">
+      <div className="grid gap-5 rounded-2xl bg-surface p-4 text-text sm:p-5">
         <TermSwitch legend="How you’d rent it out" value={term} onChange={setTerm} />
         <SelectField
           label="What would you rent out?"

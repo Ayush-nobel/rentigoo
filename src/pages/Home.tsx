@@ -1,21 +1,20 @@
 import { CategoryGrid } from '@/components/home/CategoryGrid'
-import { EarningsEstimator } from '@/components/home/EarningsEstimator'
 import { FeaturedListings } from '@/components/home/FeaturedListings'
 import { Hero } from '@/components/home/Hero'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
-import { RentVsBuyCalculator } from '@/components/home/RentVsBuyCalculator'
+import { RentOrBuyExample } from '@/components/home/RentOrBuyExample'
 import { TrustStrip } from '@/components/home/TrustStrip'
-import { TwoWays } from '@/components/home/TwoWays'
-import { PHOTOGRAPHERS } from '@/data/homePhotos'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
-import type { DeletionSummary } from '@shared/types'
+import type { DeletionSummary, Listing } from '@shared/types'
 import { useAuth } from '@/context/AuthContext'
 import { Seo } from '@/components/layout/Seo'
 import { useAsync } from '@/hooks/useAsync'
 import { STATIC_PAGES } from '@/lib/seo'
 import { organization, present, website } from '@/lib/structuredData'
 import { api } from '@/lib'
+import { useInitialData } from '@/lib/initialData'
+import { HOME_DATA_KEY, HOME_LISTINGS } from './homeData'
 import { plural } from '@/lib/format'
 
 export default function Home() {
@@ -28,18 +27,24 @@ export default function Home() {
     if (deleted && status === 'signed-in') void signOut()
   }, [deleted, status, signOut])
 
-  const featured = useAsync(async () => {
-    // Prefer listings near the signed-in person; fall back to the whole city.
-    if (areaId) {
-      const near = await api.searchListings({ areas: [areaId], sort: 'relevance' })
-      if (near.items.length >= 4) return { items: near.items.slice(0, 8), areaId }
-    }
-    const all = await api.searchListings({ sort: 'relevance' })
-    return { items: all.items.slice(0, 8), areaId: undefined }
-  }, [areaId])
+  // Built into the page at deploy time, so listings show before any script runs; refreshed in the browser.
+  const prerendered = useInitialData<Listing[]>(HOME_DATA_KEY)
+  const featured = useAsync(
+    async () => {
+      // Prefer listings near the signed-in person; fall back to the whole city.
+      if (areaId) {
+        const near = await api.searchListings({ areas: [areaId], sort: 'relevance' })
+        if (near.items.length >= 4) return { items: near.items.slice(0, HOME_LISTINGS), areaId }
+      }
+      const all = await api.searchListings({ sort: 'relevance' })
+      return { items: all.items.slice(0, HOME_LISTINGS), areaId: undefined }
+    },
+    [areaId],
+    { initial: prerendered && { items: prerendered, areaId: undefined } },
+  )
 
   return (
-    <div className="space-y-28 pb-12 sm:space-y-40">
+    <div className="space-y-20 pb-12 sm:space-y-28">
       <Seo {...STATIC_PAGES['/']!} jsonLd={present([organization(), website()])} />
       {deleted && (
         <p role="status" className="mx-auto mt-6 max-w-7xl rounded-field bg-sunken px-4 py-3 font-medium sm:px-6">
@@ -47,22 +52,11 @@ export default function Home() {
         </p>
       )}
       <Hero />
-      <TwoWays />
-      <CategoryGrid />
       <FeaturedListings listings={featured.data?.items} areaId={featured.data?.areaId} failed={featured.status === 'error'} />
+      <CategoryGrid />
+      <RentOrBuyExample />
       <HowItWorksStrip />
-      <div id="calculators" className="reveal mx-auto grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-2">
-        <RentVsBuyCalculator />
-        <EarningsEstimator />
-      </div>
       <TrustStrip />
-      <p className="mx-auto max-w-7xl px-4 text-sm text-muted sm:px-6">
-        Photos on this page set the scene; they aren’t listings. They’re by {PHOTOGRAPHERS.join(', ')}, shared on{' '}
-        <a href="https://unsplash.com/license" className="underline underline-offset-2" rel="noopener noreferrer">
-          Unsplash
-        </a>
-        .
-      </p>
     </div>
   )
 }

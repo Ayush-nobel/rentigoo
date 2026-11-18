@@ -50,6 +50,16 @@ export const STATIC_PAGES: Record<string, PageMeta> = {
     description: 'How renting and lending work on RentiGoo in Bhopal, step by step: requests, pickup, payment, deposits, returns and reviews.',
     path: '/how-it-works',
   },
+  '/rent-or-buy': {
+    title: 'Rent or buy?',
+    description: 'Should you buy it or rent it? Put in what it costs and how often you’d use it, and see an estimate of which works out cheaper in Bhopal.',
+    path: '/rent-or-buy',
+  },
+  '/earn': {
+    title: 'What could your things earn?',
+    description: 'A rough estimate of what renting out a camera, speaker, tent or sofa could earn you each month on RentiGoo in Bhopal.',
+    path: '/earn',
+  },
   '/trust-and-safety': {
     title: 'Trust and safety',
     description: 'What RentiGoo checks today, what it doesn’t yet, how to rent and lend safely, the signs of a scam, and what to do if something goes wrong.',
