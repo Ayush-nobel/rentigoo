@@ -44,7 +44,7 @@ export interface ListingForm {
 
 export const STEPS = [
   { id: 'details', name: 'What it is', fields: ['title', 'categoryId', 'condition', 'description', 'areaId'] },
-  { id: 'photos', name: 'Photos', fields: ['photos', 'photoAlt'] },
+  { id: 'photos', name: 'Photos', fields: ['photos'] },
   { id: 'price', name: 'Price and deposit', fields: ['term', 'pricing', 'weekly', 'monthly', 'months', 'deposit', 'minDays', 'maxDays'] },
   { id: 'pickup', name: 'Pickup and dates', fields: ['pickupOptions', 'deliveryFee', 'rules', 'blockedDates'] },
   { id: 'review', name: 'Check and publish', fields: [] },

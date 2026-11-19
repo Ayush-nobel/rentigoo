@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cleanDraft, listingErrors, type ListingDraft } from './listingRules'
+import { cleanDraft, listingErrors, photoAlt, type ListingDraft } from './listingRules'
 
 const TODAY = '2026-11-10'
 const KEY = 'listing-photos/owner/7c9e6679-7425-40de-944b-e07fc1f90ae7.webp'
@@ -31,9 +31,15 @@ describe('listingErrors', () => {
     expect(listingErrors({ ...draft, title: 'Cam' }, { today: TODAY }).title).toMatch(/at least 6/)
   })
 
-  it('needs photos with descriptions before publishing', () => {
+  it('needs a photo before publishing, but no description', () => {
     expect(listingErrors({ ...good, photos: [] }, { today: TODAY }).photos).toMatch(/at least one photo/)
-    expect(listingErrors({ ...good, photos: [{ key: KEY, alt: ' ' }] }, { today: TODAY }).photoAlt).toMatch(/Describe each photo/)
+    expect(listingErrors({ ...good, photos: [{ key: KEY, alt: '' }] }, { today: TODAY })).toEqual({})
+  })
+
+  it('describes photos from the title when the owner gave none', () => {
+    expect(photoAlt('', ' Sony  A7 III ', 0)).toBe('Sony A7 III')
+    expect(photoAlt('', 'Sony A7 III', 2)).toBe('Sony A7 III, photo 3')
+    expect(photoAlt('Camera with lens, front', 'Sony A7 III', 1)).toBe('Camera with lens, front')
   })
 
   it('refuses photos that are not our uploads', () => {

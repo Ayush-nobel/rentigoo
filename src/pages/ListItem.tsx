@@ -233,7 +233,6 @@ function Editor({ listing, defaultArea, session }: { listing: Listing | null; de
                 photos={form.photos}
                 update={updatePhotos}
                 error={errors.photos}
-                altError={errors.photoAlt}
                 onDiscard={(keys) => void api.discardListingPhotos(keys)}
               />
             </>

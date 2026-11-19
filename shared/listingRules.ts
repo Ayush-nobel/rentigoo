@@ -148,9 +148,6 @@ export function listingErrors(
   if (!getCategory(d.categoryId)) e.categoryId = 'Choose a category.'
   if (!getArea(d.areaId)) e.areaId = 'Choose the area where renters collect it.'
   if (!e.photos && d.photos.length === 0) e.photos = 'Add at least one photo so renters can see what they’re getting.'
-  if (!e.photos && !e.photoAlt && d.photos.some((p) => p.alt.trim().length < L.altMin)) {
-    e.photoAlt = 'Describe each photo in a few words, for people who use screen readers.'
-  }
 
   const daily = d.pricing?.daily
   const monthly = d.pricing?.monthly
@@ -204,6 +201,18 @@ export function listingErrors(
   return e
 }
 
+/**
+ * Screen-reader text for a photo. Owners no longer type one, so it's the
+ * listing title and the photo's place ("Sony A7 III, photo 2"); older
+ * listings keep the description they were saved with.
+ */
+export function photoAlt(alt: string, title: string, i: number): string {
+  const own = alt.trim().replace(/\s+/g, ' ')
+  if (own.length >= LISTING_LIMITS.altMin) return own
+  const name = title.trim().replace(/\s+/g, ' ').slice(0, LISTING_LIMITS.altMax - 10) || 'Listing'
+  return i === 0 ? name : `${name}, photo ${i + 1}`
+}
+
 /** Tidy what the owner typed before it's stored: trimmed text, no stray fields. */
 export function cleanDraft(d: ListingDraft, today: ISODate): ListingDraft {
   const delivery = d.pickupOptions.includes('delivery')
@@ -212,7 +221,7 @@ export function cleanDraft(d: ListingDraft, today: ISODate): ListingDraft {
     description: d.description.trim(),
     categoryId: d.categoryId,
     areaId: d.areaId,
-    photos: d.photos.map((p) => ({ key: p.key, alt: p.alt.trim().replace(/\s+/g, ' ') })),
+    photos: d.photos.map((p, i) => ({ key: p.key, alt: photoAlt(p.alt, d.title, i) })),
     condition: d.condition,
     pricing: {
       ...(d.pricing.daily !== undefined ? { daily: d.pricing.daily } : {}),

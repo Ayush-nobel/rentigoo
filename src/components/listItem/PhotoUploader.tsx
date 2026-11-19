@@ -2,7 +2,6 @@ import { AlertCircle, ArrowDown, ArrowUp, ImagePlus, Loader2, Trash2 } from 'luc
 import { useId, useRef, useState } from 'react'
 import { LISTING_LIMITS } from '@shared/listingRules'
 import { Button } from '@/components/ui/Button'
-import { TextField } from '@/components/ui/Field'
 import { ListingImage } from '@/components/ui/ListingImage'
 import { api } from '@/lib'
 import { preparePhoto } from '@/lib/photos'
@@ -14,7 +13,6 @@ interface Props {
   /** Functional updates, because uploads finish one by one. */
   update: (fn: (photos: FormPhoto[]) => FormPhoto[]) => void
   error?: string
-  altError?: string
   /** Called with keys uploaded this visit that were removed again. */
   onDiscard: (keys: string[]) => void
 }
@@ -25,7 +23,7 @@ interface Props {
  * a short description for people using screen readers. The first photo is
  * the cover; arrow buttons reorder them.
  */
-export function PhotoUploader({ photos, update, error, altError, onDiscard }: Props) {
+export function PhotoUploader({ photos, update, error, onDiscard }: Props) {
   const inputId = useId()
   const errorId = useId()
   const input = useRef<HTMLInputElement>(null)
@@ -144,7 +142,6 @@ export function PhotoUploader({ photos, update, error, altError, onDiscard }: Pr
           {error}
         </p>
       )}
-      {altError && !error && <p className="mt-2 font-medium text-danger">{altError}</p>}
 
       <p role="status" className="sr-only">
         {announcement}
@@ -177,19 +174,7 @@ export function PhotoUploader({ photos, update, error, altError, onDiscard }: Pr
                     {p.state === 'preparing' ? ': preparing…' : p.state === 'uploading' ? ': uploading…' : ''}
                   </span>
                 </p>
-                {p.state === 'failed' ? (
-                  <p className="mt-1 font-medium text-danger">{p.error}</p>
-                ) : (
-                  <TextField
-                    className="mt-2"
-                    label={`Describe photo ${i + 1}`}
-                    hint="A few words, e.g. “Camera with lens attached, front view”."
-                    value={p.alt}
-                    maxLength={LISTING_LIMITS.altMax}
-                    error={altError && p.state === 'ready' && p.alt.trim().length < LISTING_LIMITS.altMin ? 'Describe this photo in a few words.' : undefined}
-                    onChange={(e) => set(p.id, { alt: e.target.value })}
-                  />
-                )}
+                {p.state === 'failed' && <p className="mt-1 font-medium text-danger">{p.error}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     size="sm"
