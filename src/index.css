@@ -64,29 +64,6 @@
   --tone-default: #c9bfa8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --bg: #1c1b19;
-    --surface: #262522;
-    --surface-sunken: #161616;
-    --line: #3a3833;
-    --line-strong: #8a8880;
-    --text: #ffffff;
-    --muted: #b9b6ae;
-    --accent-text: var(--brand-yellow);
-    --accent-edge: transparent;
-    --ink: var(--page-bg);
-    --on-ink: var(--brand-ink);
-    --wordmark: var(--page-bg);
-    --panel: var(--dark);
-    --danger: #ff8a7a;
-    --success: #6fd48e;
-    --focus: var(--brand-yellow);
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -12px rgb(0 0 0 / 0.6);
-  }
-}
-
 :root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #1c1b19;
@@ -178,14 +155,6 @@
 }
 .light-scope .on-light-only {
   display: block;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .on-light-only {
-    display: none;
-  }
-  :root:not([data-theme='light']) .on-dark-only {
-    display: block;
-  }
 }
 
 /* A white card on the page: white fill, warm hairline border. */

@@ -79,6 +79,20 @@ for (const fn of [backend.saveListingFn, backend.deleteAccountFn]) {
 // person's own folder (the browser has no write access to the bucket).
 backend.saveListingFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:PutObject'], resources: [bucket.arnForObjects('listing-photos/*')] }))
 
+// Original bills: private in listing-receipts/<user sub>/ (no public read, no
+// browser access at all; RentiGoo opens them in the AWS console). saveListing
+// signs uploads, checks a file is there and deletes replaced ones;
+// deleteMyAccount deletes the person's whole bill folder.
+const receiptObjects = bucket.arnForObjects('listing-receipts/*')
+const receiptList = new PolicyStatement({ actions: ['s3:ListBucket'], resources: [bucket.bucketArn], conditions: { StringLike: { 's3:prefix': ['listing-receipts/*'] } } })
+backend.saveListingFn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:PutObject', 's3:GetObject', 's3:DeleteObject'], resources: [receiptObjects] }))
+backend.saveListingFn.resources.lambda.addToRolePolicy(receiptList)
+// The daily cleanup deletes bills uploaded but never saved with a listing.
+for (const fn of [backend.deleteAccountFn, backend.purgeConditionReportsFn]) {
+  fn.resources.lambda.addToRolePolicy(new PolicyStatement({ actions: ['s3:DeleteObject'], resources: [receiptObjects] }))
+  fn.resources.lambda.addToRolePolicy(receiptList)
+}
+
 // Pickup and return check photos: private (no public read; only signed links that
 // expire), in condition-photos/<user sub>/. The condition-reports function signs
 // uploads and view links; the daily purge and account deletion remove them.

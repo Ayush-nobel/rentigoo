@@ -79,7 +79,8 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>
-          Deposits are capped by kind of item: for example, at most {rupees(DEPOSIT_CAPS.cameras!)} for a camera. The listing shows the deposit before you ask.
+          A deposit can be at most {POLICY.depositPctOfValue}% of what the item cost new, and never more than the cap for that kind of item (for example,{' '}
+          {rupees(DEPOSIT_CAPS.cameras!)} for a camera). The listing shows the deposit before you ask.
         </li>
         <li>
           When the item comes back in the same condition (apart from normal wear), the owner returns the full deposit within {POLICY.depositReturnHours} hours of the

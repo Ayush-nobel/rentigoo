@@ -13,7 +13,7 @@ const BOARD_AREAS = ['mp-nagar', 'arera-colony', 'new-market', 'shahpura', 'kola
 /**
  * The request board: writes a WhatsApp message to us with what, when, where and
  * who. Nothing is sent to or stored by RentiGoo's site; the person sends it
- * from their own WhatsApp, and we find someone nearby who has it.
+ * from their own WhatsApp, and we try to find someone nearby who has it.
  */
 
 export function RequestForm({ intro, defaultWhat = '' }: { intro?: string; defaultWhat?: string }) {
@@ -47,10 +47,10 @@ export function RequestForm({ intro, defaultWhat = '' }: { intro?: string; defau
   return (
     <section aria-labelledby="need-title" className="card rounded-[24px] p-5 sm:p-8">
       <h2 id="need-title" className="text-2xl sm:text-3xl">
-        Can’t find it? Tell us what you need.
+        Need something that isn’t listed yet?
       </h2>
       <p className="mt-2 max-w-xl text-muted">
-        {intro ?? `Rent anything in ${LAUNCH_CITY}. If it’s not listed yet, we’ll find someone who has it within ${POLICY.requestReplyHours} hours.`}
+        {intro ?? `Tell us what you’re looking for in ${LAUNCH_CITY}, and we’ll try to find an owner for you within ${POLICY.requestReplyHours} hours.`}
       </p>
       <form noValidate onSubmit={send} className="mt-6 grid gap-4 sm:grid-cols-2">
         <TextField

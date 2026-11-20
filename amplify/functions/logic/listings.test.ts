@@ -21,8 +21,48 @@ const listing = {
   pickupOptions: ['pickup'],
   blockedDates: [],
   rules: [],
+  itemValue: 5000,
   status: 'active',
 }
+
+const bill = (n: number, owner = 'owner') => `listing-receipts/${owner}/3f2b6d1e-1a2b-4c3d-8e9f-0a1b2c3d4e5${n}.pdf`
+
+describe('original bills', () => {
+  const pricey = { ...listing, itemValue: 20_000 }
+
+  it('needs an uploaded bill for an item that cost more than ₹5,000, and keeps it private', async () => {
+    const { store, uploadedReceipts, receipts } = memoryStore()
+    await expect(saveListing(store, { listing: pricey }, 'owner', TODAY)).rejects.toThrow(/original bill/)
+    // A key that was never uploaded is refused.
+    await expect(saveListing(store, { listing: { ...pricey, receiptKey: bill(1) } }, 'owner', TODAY)).rejects.toThrow(/didn’t upload/)
+    uploadedReceipts.add(bill(1))
+    const saved = await saveListing(store, { listing: { ...pricey, receiptKey: bill(1) } }, 'owner', TODAY)
+    expect(saved.hasReceipt).toBe(true)
+    expect(saved).not.toHaveProperty('receiptKey')
+    expect(receipts.get(saved.id)).toEqual({ ownerId: 'owner', key: bill(1) })
+  })
+
+  it('refuses someone else’s bill', async () => {
+    const { store, uploadedReceipts } = memoryStore()
+    uploadedReceipts.add(bill(1, 'stranger'))
+    await expect(saveListing(store, { listing: { ...pricey, receiptKey: bill(1, 'stranger') } }, 'owner', TODAY)).rejects.toThrow(/didn’t upload/)
+  })
+
+  it('keeps the bill on file across edits, replaces it with a new one, and deletes it with the listing', async () => {
+    const { store, uploadedReceipts, receipts, deletedPhotos } = memoryStore()
+    uploadedReceipts.add(bill(1))
+    uploadedReceipts.add(bill(2))
+    const saved = await saveListing(store, { listing: { ...pricey, receiptKey: bill(1) } }, 'owner', TODAY)
+    const edited = await saveListing(store, { id: saved.id, listing: { deposit: 1000 } }, 'owner', TODAY)
+    expect(edited.hasReceipt).toBe(true)
+    await saveListing(store, { id: saved.id, listing: { receiptKey: bill(2) } }, 'owner', TODAY)
+    expect(deletedPhotos).toContain(bill(1))
+    expect(receipts.get(saved.id)?.key).toBe(bill(2))
+    await deleteMyListing(store, saved.id, 'owner')
+    expect(deletedPhotos).toContain(bill(2))
+    expect(receipts.has(saved.id)).toBe(false)
+  })
+})
 
 describe('saveListing', () => {
   it('creates a listing owned by the caller, ignoring fields the owner may not set', async () => {
@@ -64,7 +104,7 @@ describe('saveListing', () => {
     await saveListing(m.store, { listing }, 'owner', TODAY)
     await deleteMyAccount(m.store, 'owner')
     expect(m.forgottenPhones).toEqual(['owner'])
-    expect(m.deletedPhotos).toEqual([`${folder}/`, 'condition-photos/owner/'])
+    expect(m.deletedPhotos).toEqual([`${folder}/`, 'condition-photos/owner/', 'listing-receipts/owner/'])
     expect(m.listings.size).toBe(0)
   })
 
@@ -88,7 +128,7 @@ describe('saveListing', () => {
     expect(m.deletedPhotos).toEqual([])
 
     await deleteMyAccount(m.store, 'attacker')
-    expect(m.deletedPhotos).toEqual(['listing-photos/attacker/', 'condition-photos/attacker/'])
+    expect(m.deletedPhotos).toEqual(['listing-photos/attacker/', 'condition-photos/attacker/', 'listing-receipts/attacker/'])
   })
 })
 

@@ -1,4 +1,6 @@
 import { LAUNCH_CITY } from '@shared/areas'
+import { POLICY } from '@shared/policy'
+import { rupees } from '@/lib/format'
 import { ID_CHECK_LIVE } from '@/lib/features'
 import { LEGAL, MIN_AGE } from '@shared/legal'
 import { BusinessContact, L, LegalPage, type LegalSection } from '@/components/legal/LegalPage'
@@ -63,9 +65,17 @@ const sections: LegalSection[] = [
               <tr>
                 <td>Your listings</td>
                 <td>
-                  To show your items to renters: title, description, photos, prices, deposit and the days they’re free. Listing photos are public
-                  files, like the listing itself. Before a photo is uploaded, your browser resizes it and removes its hidden details, such as the
-                  GPS location phones save in pictures.
+                  To show your items to renters: title, description, photos, prices, deposit, what the item cost new (which sets the deposit limit) and
+                  the days they’re free. Listing photos are public files, like the listing itself. Before a photo is uploaded, your browser resizes it and
+                  removes its hidden details, such as the GPS location phones save in pictures.
+                </td>
+              </tr>
+              <tr>
+                <td>Original bill (owners, items over {rupees(POLICY.receiptAbove)})</td>
+                <td>
+                  A photo or PDF of the bill or receipt, so we can value the item fairly if a renter and owner disagree about damage. It may show your name,
+                  address or how you paid. It’s a private file: renters and other visitors can never see it, and only RentiGoo staff can open it. Photos are
+                  resized in your browser first, which also removes location details; PDFs are kept as you upload them.
                 </td>
               </tr>
               <tr>
@@ -149,6 +159,7 @@ const sections: LegalSection[] = [
         <ul>
           <li>
             <strong>Anyone visiting RentiGoo</strong> can see your public name, area, profile bio and languages, your listings, your rating, and reviews about you.
+            They can’t see the bills you upload for your listings.
           </li>
           <li>
             <strong>The other person in a booking</strong> can see the booking details and the messages between you.
@@ -191,6 +202,10 @@ const sections: LegalSection[] = [
       <ul>
         <li>Your account, profile, listings, messages and reviews: until you delete your account.</li>
         <li>Listing photos: until you take them off the listing, delete the listing, or delete your account.</li>
+        <li>
+          Original bills: until you replace the bill, delete the listing, or delete your account. A bill uploaded but never saved with a listing is deleted
+          automatically after a day.
+        </li>
         <li>Pickup and return checks and their photos: deleted automatically 30 days after the rental ends, or sooner if you delete your account.</li>
         <li>Phone check: the fingerprint until you remove the check or delete your account; a count of codes sent to a number, for two days.</li>
         <li>

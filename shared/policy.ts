@@ -13,13 +13,19 @@ export const POLICY = {
   depositReturnHours: 24,
   /** Damage must be reported to RentiGoo within this many hours of the return. */
   damageReportHours: 24,
-  /** If a renter's request isn't listed, we aim to find someone who has it within this many hours (request board). */
+  /** If a renter's request isn't listed, we try to find someone who has it within this many hours (request board). An aim, not a promise. */
   requestReplyHours: 24,
+  /** A deposit may be at most this share of what the item cost new (and never above its category's cap). */
+  depositPctOfValue: 30,
+  /** Items that cost more than this new need the original bill or receipt, uploaded privately when listing. */
+  receiptAbove: 5_000,
 } as const
 
 /**
  * The most an owner may ask as a deposit, per category (about 12% of a typical
- * new price, rounded; approved 2026-11-18). Enforced by the listing form and the server.
+ * new price, rounded; approved 2026-11-18). The actual limit for a listing is
+ * the lower of this and 30% of the item's original price (approved 2026-11-20).
+ * Enforced by the listing form and the server.
  */
 export const DEPOSIT_CAPS: Record<string, number> = {
   cameras: 10_000,
@@ -35,4 +41,17 @@ export const DEPOSIT_CAPS: Record<string, number> = {
 }
 
 /** The deposit cap for a category (the general maximum if it has none). */
-export const depositCap = (categoryId: string | undefined, fallback = 500_000) => (categoryId && DEPOSIT_CAPS[categoryId]) || fallback
+export const categoryDepositCap = (categoryId: string | undefined, fallback = 500_000) => (categoryId && DEPOSIT_CAPS[categoryId]) || fallback
+
+/**
+ * The standard limit for one listing: 30% of what it cost new, rounded down to
+ * ₹10, and never above the category cap. Without a price, just the category cap.
+ */
+export function depositCap(categoryId: string | undefined, itemValue?: number, fallback = 500_000): number {
+  const byCategory = categoryDepositCap(categoryId, fallback)
+  if (itemValue === undefined || !Number.isFinite(itemValue) || itemValue <= 0) return byCategory
+  return Math.min(byCategory, Math.floor((itemValue * POLICY.depositPctOfValue) / 100 / 10) * 10)
+}
+
+/** Whether an item worth this much needs its original bill uploaded. */
+export const needsReceipt = (itemValue: number | undefined) => itemValue !== undefined && itemValue > POLICY.receiptAbove

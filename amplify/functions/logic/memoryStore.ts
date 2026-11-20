@@ -15,6 +15,9 @@ export function memoryStore(
   const profiles = new Set(seed.profiles ?? [])
   const logins = new Set(seed.profiles ?? [])
   const deletedPhotos: string[] = []
+  /** Bill records by listing id, and the bill files "uploaded". */
+  const receipts = new Map<string, { ownerId: string; key: string }>()
+  const uploadedReceipts = new Set<string>()
   const rebuilds = { count: 0 }
   const forgottenPhones: string[] = []
   let n = 0
@@ -81,7 +84,20 @@ export function memoryStore(
       return [...listings.values()].filter((l) => l.ownerId === userId).map((l) => structuredClone(l))
     },
     async deleteListing(id) {
+      receipts.delete(id)
       listings.delete(id)
+    },
+    async receiptExists(key) {
+      return uploadedReceipts.has(key)
+    },
+    async getReceiptKey(listingId) {
+      return receipts.get(listingId)?.key ?? null
+    },
+    async setReceipt(listingId, ownerId, key) {
+      receipts.set(listingId, { ownerId, key })
+    },
+    async deleteReceipt(listingId) {
+      receipts.delete(listingId)
     },
     async createListing(l) {
       const created: StoredListing = { ...l, id: `l${++n}`, bookedDates: [], ratingAvg: 0, ratingCount: 0, createdAt: new Date().toISOString() }
@@ -133,5 +149,5 @@ export function memoryStore(
       logins.delete(id)
     },
   }
-  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds, forgottenPhones }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds, forgottenPhones, receipts, uploadedReceipts }
 }

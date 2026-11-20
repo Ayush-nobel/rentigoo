@@ -27,7 +27,7 @@ describe('seed listings follow the listing rules', () => {
     const { listingErrors } = await import('@shared/listingRules')
     const { todayIST } = await import('@/lib/format')
     for (const l of LISTINGS) {
-      const errs = listingErrors({ ...l, blockedDates: [] }, { today: todayIST(), allowPlaceholders: true })
+      const errs = listingErrors({ ...l, blockedDates: [] }, { today: todayIST(), allowPlaceholders: true, hasReceipt: l.hasReceipt })
       expect({ id: l.id, errs }).toEqual({ id: l.id, errs: {} })
     }
   })

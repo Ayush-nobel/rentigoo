@@ -1,4 +1,6 @@
 import { addDays } from '@shared/pricing'
+import { getCategory } from '@shared/categories'
+import { needsReceipt, POLICY } from '@shared/policy'
 import type { Condition, Listing, PickupOption } from '@shared/types'
 import { todayIST } from '@/lib/format'
 import { DEMO_USER_ID } from './users'
@@ -518,6 +520,11 @@ const seeds: Seed[] = [
   },
 ]
 
+function demoValue(s: Seed): number {
+  const typical = getCategory(s.categoryId)?.avgPurchasePrice ?? 0
+  return Math.max(typical, Math.ceil((s.deposit * 100) / POLICY.depositPctOfValue / 10) * 10)
+}
+
 export const LISTINGS: Listing[] = seeds.map((s) => ({
   id: s.id,
   ownerId: s.ownerId,
@@ -536,6 +543,9 @@ export const LISTINGS: Listing[] = seeds.map((s) => ({
   ...(s.deliveryFee !== undefined ? { deliveryFee: s.deliveryFee } : {}),
   blockedDates: s.blockedDates ?? [],
   rules: s.rules,
+  // Demo only: a typical new price (at least enough for the deposit to be within 30%), with a bill "on file" when one is needed.
+  itemValue: demoValue(s),
+  hasReceipt: needsReceipt(demoValue(s)),
   ratingAvg: 0,
   ratingCount: 0,
   status: s.status ?? 'active',

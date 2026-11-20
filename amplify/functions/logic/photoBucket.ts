@@ -1,4 +1,4 @@
-import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 
@@ -36,7 +36,7 @@ export function photoBucket(cacheControl = 'public, max-age=31536000, immutable'
     async deletePhotoFolders(prefixes: string[]) {
       if (!Bucket) throw new Error('PHOTO_BUCKET missing')
       for (const Prefix of prefixes) {
-        if (!/^(listing|condition)-photos\/[\w-]{1,64}\/$/.test(Prefix)) continue // never anything wider than one person's folder
+        if (!/^((listing|condition)-photos|listing-receipts)\/[\w-]{1,64}\/$/.test(Prefix)) continue // never anything wider than one person's folder
         let token: string | undefined
         do {
           const page = await s3.send(new ListObjectsV2Command({ Bucket, Prefix, ContinuationToken: token }))
@@ -45,6 +45,34 @@ export function photoBucket(cacheControl = 'public, max-age=31536000, immutable'
           token = page.NextContinuationToken
         } while (token)
       }
+    },
+  }
+}
+
+/** Original bills: private files nobody can read from the browser. */
+export function receiptBucket() {
+  const Bucket = process.env.PHOTO_BUCKET
+  return {
+    ...photoBucket('private, no-store'),
+    async receiptExists(key: string) {
+      if (!Bucket) throw new Error('PHOTO_BUCKET missing')
+      try {
+        await s3.send(new HeadObjectCommand({ Bucket, Key: key }))
+        return true
+      } catch {
+        return false
+      }
+    },
+    async listReceiptFiles() {
+      if (!Bucket) throw new Error('PHOTO_BUCKET missing')
+      const out: { key: string; uploadedAt: Date }[] = []
+      let token: string | undefined
+      do {
+        const page = await s3.send(new ListObjectsV2Command({ Bucket, Prefix: 'listing-receipts/', ContinuationToken: token }))
+        for (const o of page.Contents ?? []) if (o.Key) out.push({ key: o.Key, uploadedAt: o.LastModified ?? new Date() })
+        token = page.NextContinuationToken
+      } while (token)
+      return out
     },
   }
 }

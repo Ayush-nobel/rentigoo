@@ -1,14 +1,11 @@
 import { Link } from 'react-router'
 import { BUSINESS, whatsappUrl } from '@/config/business'
-import { POLICY } from '@shared/policy'
 import { ID_CHECK_LIVE } from '@/lib/features'
 
 const wa = whatsappUrl()
 
 const POINTS = [
   ...(ID_CHECK_LIVE ? [{ title: 'ID checked through DigiLocker', body: 'Owners and renters can check their ID and show an “ID checked” badge. We keep only that it was checked.' }] : []),
-  { title: 'Photos at pickup and return', body: 'Owner and renter record the item’s condition on the booking, together. If there’s a dispute, that’s what we look at.' },
-  { title: 'Deposits capped, back in a day', body: `Capped by kind of item and shown before you ask. Back within ${POLICY.depositReturnHours} hours of the return, unless damage is reported with photos.` },
   { title: 'Reviews from both sides', body: 'Renters and owners review each other. Only people who rented can review.' },
 ]
 
@@ -39,6 +36,10 @@ export function TrustStrip() {
             call us on{' '}
             <a href={`tel:${BUSINESS.supportPhone?.replace(/\s/g, '')}`} className="font-semibold whitespace-nowrap text-text underline underline-offset-4">
               {BUSINESS.supportPhone}
+            </a>
+            , or email{' '}
+            <a href={`mailto:${BUSINESS.supportEmail}`} className="font-semibold break-all text-text underline underline-offset-4">
+              {BUSINESS.supportEmail}
             </a>
             . We reply to complaints within 24 hours.
           </p>

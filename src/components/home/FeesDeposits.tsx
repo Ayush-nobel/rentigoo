@@ -1,10 +1,11 @@
 import { Link } from 'react-router'
-import { DEPOSIT_CAPS, POLICY } from '@shared/policy'
+import { POLICY } from '@shared/policy'
 import { BUSINESS, whatsappUrl } from '@/config/business'
 import { BOOKING_FEE_LIVE, ID_CHECK_LIVE } from '@/lib/features'
 import { rupees } from '@/lib/format'
 
 const WHATSAPP = whatsappUrl()
+const EMAIL = BUSINESS.supportEmail
 
 /**
  * "What you pay": the booking fee, free listing, rental shops, and the deposit
@@ -19,40 +20,54 @@ export function FeesDeposits() {
       who: 'Renting something',
       price: BOOKING_FEE_LIVE ? `${fee} booking fee` : 'Free to book',
       text: BOOKING_FEE_LIVE
-        ? `Paid online only after the owner accepts. It covers ${covers}. Rent and deposit go straight to the owner at pickup.`
-        : 'No booking fee while we’re starting out. Rent and deposit go straight to the owner at pickup.',
+        ? `Paid online only after the owner accepts. It covers ${covers}. Rent and deposit are paid directly to the owner at pickup.`
+        : 'No booking fee while we’re starting out. Rent and deposit are paid directly to the owner at pickup.',
       highlight: true,
     },
-    { who: 'Listing your things', price: 'Free', text: 'No listing fee and no commission while we’re starting out. You set your own price, and a deposit up to our limit.' },
+    { who: 'Listing your things', price: 'Free', text: 'No listing fee and no commission while we’re starting out. You set your own price, and a deposit up to the standard limit.' },
     {
       who: 'Rental shops',
       price: 'Talk to us',
       text: (
         <>
-          Run a rental shop in Bhopal?{' '}
-          {WHATSAPP ? (
-            <a href={WHATSAPP} rel="noopener noreferrer" className="font-semibold text-text underline underline-offset-4">
-              WhatsApp us
-            </a>
-          ) : (
-            'Get in touch'
+          Run a rental shop in Bhopal? Partner with us to reach customers online. Email{' '}
+          <a href={`mailto:${EMAIL}`} className="font-semibold break-all text-text underline underline-offset-4">
+            {EMAIL}
+          </a>
+          {WHATSAPP && (
+            <>
+              {' '}
+              or{' '}
+              <a href={WHATSAPP} rel="noopener noreferrer" className="font-semibold text-text underline underline-offset-4">
+                message us on WhatsApp
+              </a>
+            </>
           )}{' '}
-          about listing your stock.
+          to list your stock.
         </>
       ),
     },
   ]
   const rules = [
-    { title: 'Capped by item', text: `Owners can’t ask more than our limit for that kind of item: for example, ${rupees(DEPOSIT_CAPS.cameras!)} at most for a camera.` },
-    { title: `Back within ${POLICY.depositReturnHours} hours`, text: `The full deposit comes back within ${POLICY.depositReturnHours} hours of the return, unless damage is reported with photos.` },
-    { title: 'Photos settle it', text: 'The pickup and return photos are the record, and RentiGoo decides from them. Anyone who breaks the rules is rated down or removed.' },
+    {
+      title: 'Standard deposit limit',
+      text: `Owners can ask for a refundable deposit of up to ${POLICY.depositPctOfValue}% of what the item cost new, within the limit for its category. Items that cost more than ${rupees(POLICY.receiptAbove)} need the original bill, which only RentiGoo sees.`,
+    },
+    {
+      title: `Back within ${POLICY.depositReturnHours} hours`,
+      text: `The owner returns the deposit within ${POLICY.depositReturnHours} hours of the return, minus only damage that was reported with photos.`,
+    },
+    {
+      title: 'Pickup and return photos',
+      text: 'Owner and renter both photograph the item at pickup and return. These dated photos are the condition record if there’s a dispute. Anyone who breaks the rules can be suspended or removed.',
+    },
   ]
   return (
     <section aria-labelledby="fees-title" className="mx-auto max-w-7xl px-4 sm:px-6">
       <h2 id="fees-title" className="text-3xl sm:text-5xl">
         What you pay
       </h2>
-      <p className="mt-3 max-w-2xl text-lg text-muted">Listing is free. Everything you pay is shown before you confirm: koi chhupa charge nahi.</p>
+      <p className="mt-3 max-w-2xl text-lg text-muted">No hidden fees. Listing is free, and everything you pay is shown before you confirm.</p>
 
       <ul className="mt-8 grid gap-4 md:grid-cols-3">
         {cards.map((c) => (
@@ -87,6 +102,10 @@ export function FeesDeposits() {
         call{' '}
         <a href={`tel:${BUSINESS.supportPhone?.replace(/\s/g, '')}`} className="font-semibold whitespace-nowrap text-text underline underline-offset-4">
           {BUSINESS.supportPhone}
+        </a>
+        , or email{' '}
+        <a href={`mailto:${EMAIL}`} className="font-semibold break-all text-text underline underline-offset-4">
+          {EMAIL}
         </a>
         . Full details are in our{' '}
         <Link to="/terms" className="font-semibold text-text underline underline-offset-4">

@@ -3,6 +3,7 @@ import { AREAS } from '@shared/areas'
 import { CATEGORIES } from '@shared/categories'
 import { LEGAL } from '@shared/legal'
 import { BUSINESS } from '@/config/business'
+import { BOOKING_FEE_LIVE } from '@/lib/features'
 import { Logo } from './Logo'
 
 const YEAR = new Date().getFullYear()
@@ -49,6 +50,8 @@ export function Footer() {
         <div>
           <Logo size="md" variant="dark" />
           <p className="mt-3 text-sm text-muted">Rent anything, anywhere</p>
+          {/* Only once online payments are switched on (Razorpay keys set). */}
+          {BOOKING_FEE_LIVE && <p className="mt-4 text-sm text-muted">Online payments secured by Razorpay</p>}
           <p className="mt-4 max-w-xs text-muted">
             Rent things from people in Bhopal, or earn from the things you don’t use often.
           </p>

@@ -114,6 +114,10 @@ export interface Listing {
   /** Only the days the owner blocked themselves (for the edit form). Absent in mock data. */
   ownerBlockedDates?: ISODate[]
   rules: string[]
+  /** What the item cost new, in rupees. Sets the deposit limit; absent on older listings. */
+  itemValue?: number
+  /** The owner uploaded the original bill (kept private: only RentiGoo can see the file). Set by the server. */
+  hasReceipt?: boolean
   ratingAvg: number
   ratingCount: number
   status: ListingStatus

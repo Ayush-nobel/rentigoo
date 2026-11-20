@@ -8,7 +8,10 @@ const fee = rupees(POLICY.bookingFee)
 const STEPS = [
   { title: 'Request', body: 'Pick your dates and send a request. Nothing to pay yet.' },
   { title: 'Owner accepts', body: BOOKING_FEE_LIVE ? `Then you pay the ${fee} booking fee online to lock in the dates.` : 'Those dates are now yours. Still nothing to pay.' },
-  { title: 'Pickup', body: 'Show the owner your ID and photograph the item together. Then pay the owner the rent and deposit.' },
+  {
+    title: 'Pickup or delivery',
+    body: 'Collect it from the owner, or have it delivered for the owner’s delivery fee. Show your ID, photograph the item together, then pay the rent and deposit at handover.',
+  },
   { title: 'Return', body: `Photograph it again. The owner returns your deposit within ${POLICY.depositReturnHours} hours.` },
 ]
 

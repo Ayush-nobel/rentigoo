@@ -53,7 +53,9 @@ export interface RentiGooApi {
   uploadListingPhoto(photo: { blob: Blob; ext: 'webp' | 'jpg' }): Promise<string>
   /** Deletes the listing and its photos; open requests are declined. Refused while it's booked. */
   deleteListing(id: string): Promise<{ declinedRequests: number }>
-  /** Deletes photos uploaded this session that didn't end up on a listing. Best effort. */
+  /** Uploads an original bill (photo or PDF) privately: only RentiGoo can open it. Returns its key. */
+  uploadListingReceipt(file: { blob: Blob; ext: 'webp' | 'jpg' | 'pdf' }): Promise<string>
+  /** Deletes photos and bills uploaded this session that didn't end up on a listing. Best effort. */
   discardListingPhotos(keys: string[]): Promise<void>
 
   // People and reviews

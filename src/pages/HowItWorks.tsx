@@ -39,8 +39,14 @@ export default function HowItWorks() {
                 ),
               },
               {
-                title: 'Pick it up and pay',
-                body: <p>Show the owner a government photo ID, check the item together and add the pickup check with photos to the booking. Then pay the rent and deposit to the owner directly, by UPI or cash.</p>,
+                title: 'Pick it up, or have it delivered, and pay',
+                body: (
+                  <p>
+                    Collect it from the owner, or, if the listing offers delivery, have it brought to you for the owner’s delivery fee (shown on the listing). Show the
+                    owner a government photo ID, check the item together and add the pickup check with photos to the booking. Then pay the rent and deposit to the
+                    owner directly, by UPI or cash.
+                  </p>
+                ),
               },
               { title: 'Bring it back', body: <p>Return it on time, in the condition you got it, and add the return check with photos. The owner gives the deposit back within {POLICY.depositReturnHours} hours, unless they report damage with photos.</p> },
               { title: 'Review each other', body: <p>Once it’s returned, you can both leave a review. Only people who actually completed a rental can review it.</p> },
@@ -76,7 +82,8 @@ export default function HowItWorks() {
                 body: (
                   <p>
                     Add up to {LISTING_LIMITS.photosMax} photos and a clear description. Choose whether people rent it by the day, by the month, or both, and set your
-                    prices, a deposit and how long they can have it. Block any days you need it yourself.
+                    prices, a deposit and how long they can have it. Block any days you need it yourself. Tell us what it cost new: the deposit can be up to{' '}
+                    {POLICY.depositPctOfValue}% of that, and for anything over {rupees(POLICY.receiptAbove)} you add the original bill, which only RentiGoo sees.
                   </p>
                 ),
               },

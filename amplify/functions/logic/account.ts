@@ -3,7 +3,7 @@
  * the law makes us keep (a minimal record of past transactions) stays, with
  * free-text notes wiped. Each step is safe to re-run if a later step fails.
  */
-import { photoFolder } from '../../../shared/listingRules'
+import { photoFolder, receiptFolder } from '../../../shared/listingRules'
 import { conditionPhotoFolder } from '../../../shared/conditionReports'
 import { occupiedDates } from '../../../shared/pricing'
 import type { Review } from '../../../shared/types'
@@ -73,9 +73,9 @@ export async function deleteMyAccount(store: AccountStore, userId: string): Prom
     await store.setListingBookedDates(listingId, [...new Set(left.flatMap((b) => occupiedDates(b.start, b.end)))].sort())
   }
 
-  // 3. Their listings, and their whole photo folder (so photos uploaded but never saved go too).
-  //    Only their own folder: never one a listing merely points at.
-  await store.deletePhotoFolders([photoFolder(userId), conditionPhotoFolder(userId)])
+  // 3. Their listings, and their whole photo and bill folders (so files uploaded but never saved go too).
+  //    Only their own folders: never one a listing merely points at. Bill records go with each listing.
+  await store.deletePhotoFolders([photoFolder(userId), conditionPhotoFolder(userId), receiptFolder(userId)])
   await store.deleteConditionReportsBy(userId)
   for (const l of owned) await store.deleteListing(l.id)
   if (owned.some((l) => l.status === 'active')) await store.publicListingsChanged()

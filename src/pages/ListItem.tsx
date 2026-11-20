@@ -7,7 +7,7 @@ import { CATEGORIES, categoryName, getCategory } from '@shared/categories'
 import { FEES } from '@shared/fees'
 import { CONDITIONS, LISTING_LIMITS, type ListingErrors } from '@shared/listingRules'
 import { bestRent } from '@shared/pricing'
-import { depositCap, POLICY } from '@shared/policy'
+import { depositCap, needsReceipt, POLICY } from '@shared/policy'
 import type { Listing, ListingStatus } from '@shared/types'
 import { PageLoading } from '@/components/layout/AppShell'
 import { Seo } from '@/components/layout/Seo'
@@ -18,6 +18,7 @@ import { Button, ButtonLink } from '@/components/ui/Button'
 import { Checkbox, Radio } from '@/components/ui/Checkbox'
 import { EmptyState } from '@/components/ui/Feedback'
 import { SelectField, TextAreaField, TextField } from '@/components/ui/Field'
+import { ReceiptField } from '@/components/listItem/ReceiptField'
 import { ListingImage } from '@/components/ui/ListingImage'
 import { useAuth } from '@/context/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
@@ -414,6 +415,7 @@ function PriceStep({ form, edit, errors }: StepProps) {
   const daily = form.byDay ? n(form.daily) : undefined
   const weekly = form.byDay ? n(form.weekly) : undefined
   const monthly = n(form.monthly)
+  const value = n(form.itemValue)
   const examples = daily
     ? [3, ...(weekly ? [7] : [])].map((days) => {
         try {
@@ -553,12 +555,27 @@ function PriceStep({ form, edit, errors }: StepProps) {
       )}
 
       <TextField
+        label="What it cost new"
+        prefix="₹"
+        {...numberProps}
+        value={form.itemValue}
+        error={errors.itemValue}
+        hint={`Roughly what you paid, or what it costs new today. It sets the most you can ask as a deposit: ${POLICY.depositPctOfValue}% of this.`}
+        onChange={(e) => edit({ itemValue: e.target.value })}
+      />
+      {needsReceipt(value) && (
+        <ReceiptField receipt={form.receipt} hasReceipt={form.hasReceipt} error={errors.receipt} onChange={(receipt) => edit({ receipt })} />
+      )}
+
+      <TextField
         label="Refundable deposit"
         prefix="₹"
         {...numberProps}
         value={form.deposit}
         error={errors.deposit}
-        hint={`The renter pays it at pickup. Give it all back within ${POLICY.depositReturnHours} hours of the return unless you report damage with photos. Up to ${rupees(depositCap(form.categoryId))} for this kind of item; ₹0 for none.`}
+        hint={`The renter pays it at pickup. Give it all back within ${POLICY.depositReturnHours} hours of the return unless you report damage with photos. ${
+          value ? `Up to ${rupees(depositCap(form.categoryId, value))}` : `Up to ${POLICY.depositPctOfValue}% of what it cost new`
+        }, within the limit for this kind of item; ₹0 for none.`}
         onChange={(e) => edit({ deposit: e.target.value })}
       />
     </>

@@ -44,7 +44,7 @@ export default function CategoryPage() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <RequestForm defaultWhat={category.name} intro={`Nothing in ${category.name.toLowerCase()} is listed yet. Tell us what you need on WhatsApp and we’ll find someone nearby who has it.`} />
+          <RequestForm defaultWhat={category.name} intro={`Nothing in ${category.name.toLowerCase()} is listed yet. Tell us what you need on WhatsApp and we’ll try to find someone nearby who has it.`} />
         ) : (
           <>
             <h2 className="sr-only">{items.length} to rent</h2>

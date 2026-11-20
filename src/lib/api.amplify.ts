@@ -76,6 +76,8 @@ function listingFromDb(l: any): Listing {
     blockedDates: [...new Set([...own, ...clean(l.bookedDates)])].sort(),
     ownerBlockedDates: own,
     rules: clean(l.rules),
+    ...(l.itemValue != null ? { itemValue: l.itemValue } : {}),
+    hasReceipt: Boolean(l.hasReceipt),
     ratingAvg: l.ratingAvg ?? 0,
     ratingCount: l.ratingCount ?? 0,
     status: l.status,
@@ -189,7 +191,7 @@ export const amplifyApi: RentiGooApi = {
   async updateListing(id, patch) {
     me()
     // An explicit undefined (e.g. monthly rentals switched off) is sent as null, which clears it.
-    const body = JSON.stringify(patch, (k, v) => (v === undefined && (k === 'months' || k === 'deliveryFee') ? null : v))
+    const body = JSON.stringify(patch, (k, v) => (v === undefined && (k === 'months' || k === 'deliveryFee' || k === 'itemValue') ? null : v))
     const saved = check(await client().mutations.saveListing({ id, listing: body }))
     if (!saved) throw new ApiError('Your changes weren’t saved. Please try again.', 'conflict')
     listingCache = null
@@ -214,6 +216,20 @@ export const amplifyApi: RentiGooApi = {
     body.append('file', blob) // the file must come last
     const res = await fetch(form.url, { method: 'POST', body })
     if (!res.ok) throw new ApiError('That photo didn’t upload. Check your connection and try again.', 'conflict')
+    return form.key
+  },
+
+  async uploadListingReceipt({ blob, ext }) {
+    me()
+    // Same signed one-file form as photos, into a private folder nobody can read from the browser.
+    const form = check(await client().mutations.listingReceiptUpload({ ext }))
+    if (!form) throw new ApiError('The bill didn’t upload. Please try again.', 'conflict')
+    const fields = (typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields) as Record<string, string>
+    const body = new FormData()
+    for (const [k, v] of Object.entries(fields)) body.append(k, v)
+    body.append('file', blob) // the file must come last
+    const res = await fetch(form.url, { method: 'POST', body })
+    if (!res.ok) throw new ApiError('The bill didn’t upload. It must be a photo, or a PDF under 5 MB.', 'conflict')
     return form.key
   },
 

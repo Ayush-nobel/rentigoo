@@ -64,6 +64,8 @@ export function listingFromDb(l: any): StoredListing {
     rules: (l.rules ?? []).filter(Boolean),
     pricing: { ...(l.pricing.daily != null ? { daily: l.pricing.daily } : {}), ...(l.pricing.weekly ? { weekly: l.pricing.weekly } : {}), ...(l.pricing.monthly ? { monthly: l.pricing.monthly } : {}) },
     months: l.months ?? undefined,
+    itemValue: l.itemValue ?? undefined,
+    hasReceipt: l.hasReceipt ?? false,
     ratingAvg: l.ratingAvg ?? 0,
     ratingCount: l.ratingCount ?? 0,
   }
@@ -162,6 +164,7 @@ export function amplifyStore(client: Client): Store {
 }
 
 type Photos = Pick<DeleteListingStore, 'deletePhotos'> & Pick<AccountStore, 'deletePhotoFolders'>
+type Receipts = Photos & Pick<DeleteListingStore, 'receiptExists'>
 
 const listingToDb = (l: ListingDraft) => ({
   ...l,
@@ -173,7 +176,7 @@ const listingToDb = (l: ListingDraft) => ({
 })
 
 /** Store for saveListing and deleteMyListing. */
-export function listingStore(client: Client, base: Store, photos: Photos): DeleteListingStore {
+export function listingStore(client: Client, base: Store, photos: Receipts): DeleteListingStore {
   const m = client.models
   return {
     getListing: base.getListing,
@@ -188,6 +191,18 @@ export function listingStore(client: Client, base: Store, photos: Photos): Delet
       return listingFromDb(updated)
     },
     deletePhotos: photos.deletePhotos,
+    receiptExists: photos.receiptExists,
+    async getReceiptKey(listingId) {
+      return check(await m.ListingReceipt.get({ id: listingId }))?.key ?? null
+    },
+    async setReceipt(listingId, ownerId, key) {
+      const exists = check(await m.ListingReceipt.get({ id: listingId }))
+      if (exists) check(await m.ListingReceipt.update({ id: listingId, ownerId, key }))
+      else check(await m.ListingReceipt.create({ id: listingId, ownerId, key }))
+    },
+    async deleteReceipt(listingId) {
+      check(await m.ListingReceipt.delete({ id: listingId }))
+    },
     publicListingsChanged: () => requestRebuild('a listing was published, edited, paused or deleted'),
     listBookingsForListing: base.listBookingsForListing,
     setBookingStatus: base.setBookingStatus,
@@ -210,6 +225,8 @@ export function accountStore(client: Client, deleteLogin: (id: string) => Promis
       return (await all((nextToken) => m.Listing.listListingsByOwner({ ownerId: userId }, { nextToken }))).map(listingFromDb)
     },
     async deleteListing(id) {
+      // The bill's file goes with the person's whole folder; its record goes here.
+      if (check(await m.ListingReceipt.get({ id }))) check(await m.ListingReceipt.delete({ id }))
       check(await m.Listing.delete({ id }))
     },
     deletePhotoFolders: photos.deletePhotoFolders,
@@ -359,13 +376,16 @@ export function phoneStore(client: Client): PhoneStore {
 }
 
 /** Store for listing photo uploads (startPhotoUpload, discardPhotos). */
-export function photoUploadStore(client: Client, photos: Omit<PhotoUploadStore, 'photosOnListings'>): PhotoUploadStore {
+export function photoUploadStore(client: Client, photos: Omit<PhotoUploadStore, 'photosOnListings' | 'receiptsOnListings'>): PhotoUploadStore {
   const m = client.models
   return {
     ...photos,
     async photosOnListings(userId) {
       const owned = await all((nextToken) => m.Listing.listListingsByOwner({ ownerId: userId }, { nextToken }))
       return owned.flatMap((l) => listingFromDb(l).photos.map((p) => p.key))
+    },
+    async receiptsOnListings(userId) {
+      return (await all((nextToken) => m.ListingReceipt.listListingReceiptsByOwner({ ownerId: userId }, { nextToken }))).map((r) => r.key)
     },
   }
 }
@@ -457,4 +477,9 @@ export function feeStore(client: Client): FeeStore {
       return (await all((nextToken) => m.Booking.list({ filter: { feeStatus: { eq: 'refund_due' } }, nextToken }))).map(bookingFromDb)
     },
   }
+}
+
+/** Every bill key a saved listing uses (for the daily cleanup of unused uploads). */
+export async function receiptKeysInUse(client: Client): Promise<string[]> {
+  return (await all((nextToken) => client.models.ListingReceipt.list({ nextToken }))).map((r) => r.key)
 }

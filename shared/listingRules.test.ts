@@ -17,8 +17,43 @@ const good: ListingDraft = {
   pickupOptions: ['pickup'],
   blockedDates: [],
   rules: ['No use in rain'],
+  itemValue: 45_000,
+  receiptKey: 'listing-receipts/owner/3f2b6d1e-1a2b-4c3d-8e9f-0a1b2c3d4e5f.pdf',
   status: 'active',
 }
+
+describe('item value, bill and the deposit limit', () => {
+  it('needs what it cost new before publishing, but not for a paused listing', () => {
+    const { itemValue: _v, ...noValue } = good
+    expect(listingErrors(noValue, { today: TODAY }).itemValue).toMatch(/cost new/)
+    expect(listingErrors({ ...noValue, status: 'paused' }, { today: TODAY })).toEqual({})
+  })
+
+  it('caps the deposit at 30% of the value, and never above the category cap', () => {
+    expect(listingErrors({ ...good, itemValue: 10_000, deposit: 3_000 }, { today: TODAY })).toEqual({})
+    expect(listingErrors({ ...good, itemValue: 10_000, deposit: 3_010 }, { today: TODAY }).deposit).toMatch(/₹3,000: 30%/)
+    // ₹1,00,000 camera: 30% is ₹30,000, but cameras are capped at ₹10,000.
+    expect(listingErrors({ ...good, itemValue: 100_000, deposit: 10_500 }, { today: TODAY }).deposit).toMatch(/₹10,000/)
+  })
+
+  it('needs the original bill above ₹5,000 only', () => {
+    const { receiptKey: _k, ...noBill } = good
+    expect(listingErrors(noBill, { today: TODAY }).receipt).toMatch(/original bill/)
+    expect(listingErrors(noBill, { today: TODAY, hasReceipt: true })).toEqual({})
+    expect(listingErrors({ ...noBill, itemValue: 5_000, deposit: 1_500 }, { today: TODAY })).toEqual({})
+  })
+
+  it('refuses a bill key that isn’t the owner’s own upload', () => {
+    const other = 'listing-receipts/someone/3f2b6d1e-1a2b-4c3d-8e9f-0a1b2c3d4e5f.pdf'
+    expect(listingErrors({ ...good, receiptKey: other }, { today: TODAY, ownerId: 'owner' }).receipt).toMatch(/didn’t upload/)
+    expect(listingErrors({ ...good, receiptKey: 'listing-photos/owner/x.pdf' }, { today: TODAY }).receipt).toMatch(/didn’t upload/)
+  })
+
+  it('never stores the bill key on the listing', () => {
+    expect(cleanDraft(good, TODAY)).not.toHaveProperty('receiptKey')
+    expect(cleanDraft(good, TODAY).itemValue).toBe(45_000)
+  })
+})
 
 describe('listingErrors', () => {
   it('accepts a complete listing', () => {

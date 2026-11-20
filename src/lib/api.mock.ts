@@ -11,7 +11,7 @@ import { searchListings } from './search'
 import { getSessionUserId } from './session'
 import { readJSON, writeJSON } from './storage'
 import { rememberLocalPhoto } from './photos'
-import { cleanDraft, listingErrors, photoFolder, type ListingDraft } from '@shared/listingRules'
+import { cleanDraft, listingErrors, photoFolder, receiptFolder, type ListingDraft } from '@shared/listingRules'
 import { POLICY } from '@shared/policy'
 import { conditionPhotoFolder, conditionProblem, conditionReportProblem, type ConditionReport, type ConditionReportView } from '@shared/conditionReports'
 import { ownerStatsFrom } from '@shared/earnings'
@@ -76,11 +76,12 @@ function asSeenBy(u: UserProfile): UserProfile {
   return u.id === getSessionUserId() ? u : { ...u, name: publicName(u.name), consent: null }
 }
 
-function checkedDraft(d: ListingDraft, knownKeys?: string[]): ListingDraft {
+function checkedDraft(d: ListingDraft, knownKeys?: string[], hasReceipt = false): ListingDraft & { hasReceipt: boolean } {
   const today = todayIST()
-  const first = Object.values(listingErrors(d, { today, knownKeys }))[0]
+  const first = Object.values(listingErrors(d, { today, knownKeys, hasReceipt }))[0]
   if (first) throw new ApiError(first, 'invalid')
-  return cleanDraft(d, today)
+  // Demo mode keeps no bill file; it only remembers that one was added.
+  return { ...cleanDraft(d, today), hasReceipt: hasReceipt || Boolean(d.receiptKey) }
 }
 
 // Demo phone checks: no text is sent; the code is always 246810.
@@ -131,7 +132,7 @@ export const mockApi: RentiGooApi = {
   async updateListing(listingId, patch) {
     const l = findListing(listingId)
     if (l.ownerId !== me()) throw new ApiError('That listing wasn’t found.', 'not-found')
-    const next = checkedDraft({ ...l, ...patch }, l.photos.map((p) => p.key))
+    const next = checkedDraft({ ...l, ...patch }, l.photos.map((p) => p.key), Boolean(l.hasReceipt))
     delete l.deliveryFee
     Object.assign(l, next)
     save()
@@ -144,6 +145,11 @@ export const mockApi: RentiGooApi = {
     const key = `${photoFolder(me())}${crypto.randomUUID()}.${ext}`
     rememberLocalPhoto(key, blob)
     return delay(key, 400)
+  },
+
+  async uploadListingReceipt({ ext }) {
+    // Demo mode: nothing is kept, only a key of the real shape.
+    return delay(`${receiptFolder(me())}${crypto.randomUUID()}.${ext}`, 400)
   },
 
   async discardListingPhotos() {},

@@ -16,6 +16,14 @@ export interface FormPhoto {
   fresh?: boolean
 }
 
+/** The original bill being added in this visit (the file itself is never shown again). */
+export interface FormReceipt {
+  name: string
+  key?: string
+  state: 'uploading' | 'ready' | 'failed'
+  error?: string
+}
+
 /** What the form holds. Numbers stay as typed text until saving. */
 export interface ListingForm {
   title: string
@@ -33,6 +41,12 @@ export interface ListingForm {
   minMonths: string
   maxMonths: string
   deposit: string
+  /** What it cost new, as typed. */
+  itemValue: string
+  /** A bill added in this visit. */
+  receipt: FormReceipt | null
+  /** The saved listing already has a bill on file. */
+  hasReceipt: boolean
   minDays: string
   maxDays: string
   pickup: boolean
@@ -45,7 +59,7 @@ export interface ListingForm {
 export const STEPS = [
   { id: 'details', name: 'What it is', fields: ['title', 'categoryId', 'condition', 'description', 'areaId'] },
   { id: 'photos', name: 'Photos', fields: ['photos'] },
-  { id: 'price', name: 'Price and deposit', fields: ['term', 'pricing', 'weekly', 'monthly', 'months', 'deposit', 'minDays', 'maxDays'] },
+  { id: 'price', name: 'Price and deposit', fields: ['term', 'pricing', 'weekly', 'monthly', 'months', 'itemValue', 'receipt', 'deposit', 'minDays', 'maxDays'] },
   { id: 'pickup', name: 'Pickup and dates', fields: ['pickupOptions', 'deliveryFee', 'rules', 'blockedDates'] },
   { id: 'review', name: 'Check and publish', fields: [] },
 ] as const satisfies readonly { id: string; name: string; fields: readonly (keyof ListingErrors)[] }[]
@@ -68,6 +82,9 @@ export function emptyForm(areaId: string): ListingForm {
     minMonths: '1',
     maxMonths: '12',
     deposit: '0',
+    itemValue: '',
+    receipt: null,
+    hasReceipt: false,
     minDays: '1',
     maxDays: '14',
     pickup: true,
@@ -96,6 +113,9 @@ export function formFromListing(l: Listing): ListingForm {
     minMonths: text(l.months?.min ?? 1),
     maxMonths: text(l.months?.max ?? 12),
     deposit: text(l.deposit),
+    itemValue: text(l.itemValue),
+    receipt: null,
+    hasReceipt: Boolean(l.hasReceipt),
     minDays: text(l.minDays),
     maxDays: text(l.maxDays),
     pickup: l.pickupOptions.includes('pickup'),
@@ -128,6 +148,9 @@ export function toDraft(f: ListingForm, status: ListingStatus): ListingDraft {
     condition: (f.condition || 'good') as Condition,
     pricing: { ...(daily !== undefined ? { daily } : {}), ...(weekly !== undefined ? { weekly } : {}), ...(monthly !== undefined ? { monthly } : {}) },
     deposit: num(f.deposit) ?? 0,
+    // Explicitly undefined when empty, so an edit can clear it.
+    itemValue: num(f.itemValue),
+    ...(f.receipt?.state === 'ready' && f.receipt.key ? { receiptKey: f.receipt.key } : {}),
     minDays: num(f.minDays) ?? Number.NaN,
     maxDays: num(f.maxDays) ?? Number.NaN,
     // Explicitly undefined when off, so an edit switches monthly rentals off.
@@ -142,8 +165,10 @@ export function toDraft(f: ListingForm, status: ListingStatus): ListingDraft {
 
 /** Problems on one step (as if publishing), plus form-only checks. */
 export function stepErrors(f: ListingForm, step: StepId, today: ISODate, knownKeys: string[]): ListingErrors {
-  const all = listingErrors(toDraft(f, 'active'), { today, knownKeys })
+  const all = listingErrors(toDraft(f, 'active'), { today, knownKeys, hasReceipt: f.hasReceipt })
   if (!f.condition) all.condition = 'Choose the condition.'
+  if (f.receipt?.state === 'uploading') all.receipt = 'Wait for the bill to finish uploading.'
+  else if (f.receipt?.state === 'failed') all.receipt = f.receipt.error ?? 'The bill didn’t upload. Try again.'
   if (f.photos.some((p) => p.state === 'preparing' || p.state === 'uploading')) all.photos = 'Wait for your photos to finish uploading.'
   else if (f.photos.some((p) => p.state === 'failed')) all.photos = 'Some photos didn’t upload. Remove them or try again.'
   const fields = STEPS.find((s) => s.id === step)!.fields as readonly (keyof ListingErrors)[]

@@ -56,6 +56,10 @@ const sections: LegalSection[] = [
           <li>It’s yours, or you have the right to rent it out.</li>
           <li>It’s safe, legal to rent, works as described, and the photos and description are honest and up to date.</li>
           <li>The price, deposit and rules you set are the ones you’ll stick to.</li>
+          <li>
+            What you enter as the item’s cost new is honest. For anything that cost more than {rupees(POLICY.receiptAbove)}, you upload the original bill or
+            receipt when you list it. Only RentiGoo sees it, and we use it to value the item fairly if there’s a damage dispute.
+          </li>
         </ul>
         <h3>Things you can’t list</h3>
         <ul>
@@ -156,8 +160,8 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>
-          The owner sets the deposit, up to RentiGoo’s cap for that kind of item (for example {rupees(DEPOSIT_CAPS.cameras!)} for a camera), and it’s shown before
-          you request.
+          The owner sets the deposit, up to the standard limit: {POLICY.depositPctOfValue}% of what the item cost new, and never more than RentiGoo’s cap for
+          that kind of item (for example {rupees(DEPOSIT_CAPS.cameras!)} for a camera). It’s shown before you request.
         </li>
         <li>
           At pickup, the renter shows the owner a government photo ID, and both of you check the item and add photos to the booking (the pickup check). Do the

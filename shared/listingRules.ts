@@ -1,12 +1,16 @@
-import { depositCap } from './policy'
+import { depositCap, needsReceipt, POLICY } from './policy'
 import { getArea } from './areas'
 import { getCategory } from './categories'
 import { parseISODate } from './pricing'
 import type { Condition, ISODate, Listing, ListingStatus, PickupOption } from './types'
 
 
-/** What an owner fills in for a listing. Everything else is set by the server. */
-export type ListingDraft = Pick<
+/**
+ * What an owner fills in for a listing. Everything else is set by the server.
+ * `receiptKey` is a newly uploaded bill; it's never stored on the listing itself.
+ */
+export type ListingDraft = ListingFields & { receiptKey?: string | null }
+type ListingFields = Pick<
   Listing,
   | 'title'
   | 'description'
@@ -23,6 +27,7 @@ export type ListingDraft = Pick<
   | 'deliveryFee'
   | 'blockedDates'
   | 'rules'
+  | 'itemValue'
   | 'status'
 >
 
@@ -45,6 +50,8 @@ export const LISTING_LIMITS = {
   rulesMax: 8,
   ruleMax: 120,
   blockedDaysMax: 366,
+  itemValueMin: 100,
+  itemValueMax: 5_000_000,
 } as const
 
 export const CONDITIONS: { id: Condition; name: string; hint: string }[] = [
@@ -72,9 +79,18 @@ export const photoOwner = (key: string): string | null => PHOTO_KEY.exec(key)?.[
 export const photoFolder = (userId: string) => `listing-photos/${userId}/`
 /** Only the keys in this person's own folder: the server never deletes anyone else's files. */
 export const ownPhotos = (keys: string[], userId: string) => keys.filter((k) => photoOwner(k) === userId)
+
+/**
+ * Original bills: listing-receipts/<owner's user ID>/<uuid>.<webp|jpg|pdf>.
+ * Private: nobody can read them from the browser, not even the owner; only
+ * RentiGoo can open them. Deleted with the listing or the account.
+ */
+export const RECEIPT_KEY = /^listing-receipts\/([\w-]{1,64})\/[0-9a-f-]{36}\.(webp|jpg|pdf)$/
+export const receiptOwner = (key: string): string | null => RECEIPT_KEY.exec(key)?.[1] ?? null
+export const receiptFolder = (userId: string) => `listing-receipts/${userId}/`
 const PLACEHOLDER_KEY = /^ph:[a-z-]+:\d+$/
 
-export type ListingErrors = Partial<Record<keyof ListingDraft | 'weekly' | 'monthly' | 'photoAlt' | 'term', string>>
+export type ListingErrors = Partial<Record<keyof ListingDraft | 'weekly' | 'monthly' | 'photoAlt' | 'term' | 'receipt', string>>
 
 const whole = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n)
 
@@ -94,6 +110,8 @@ export function listingErrors(
     allowPlaceholders?: boolean
     /** On the server: new photos must be in this person's own folder. */
     ownerId?: string
+    /** The listing already has a bill on file (editing). */
+    hasReceipt?: boolean
   },
 ): ListingErrors {
   const e: ListingErrors = {}
@@ -129,6 +147,12 @@ export function listingErrors(
     } catch {
       e.blockedDates = 'Some blocked days aren’t real dates. Pick them again.'
     }
+  }
+  if (d.itemValue !== undefined && (!whole(d.itemValue) || d.itemValue < L.itemValueMin || d.itemValue > L.itemValueMax)) {
+    e.itemValue = `Enter what it cost new, in whole rupees (₹${L.itemValueMin} to ₹50,00,000).`
+  }
+  if (d.receiptKey != null && (typeof d.receiptKey !== 'string' || !RECEIPT_KEY.test(d.receiptKey) || (opts.ownerId !== undefined && receiptOwner(d.receiptKey) !== opts.ownerId))) {
+    e.receipt = 'The bill didn’t upload properly. Add it again.'
   }
   if (!Array.isArray(d.pickupOptions) || d.pickupOptions.some((p) => !PICKUP.includes(p))) e.pickupOptions = 'Choose pickup, delivery or both.'
   if (!CONDITIONS.some((c) => c.id === d.condition)) e.condition = 'Choose the condition.'
@@ -184,9 +208,22 @@ export function listingErrors(
       e.monthly = 'A month should cost more than a week.'
     }
   }
-  const cap = depositCap(d.categoryId, L.depositMax)
+  // Live listings need what it cost new (it sets the deposit limit), and the
+  // original bill above ₹5,000. Paused listings saved before this rule keep working.
+  const active = d.status === 'active'
+  if (active && !e.itemValue && d.itemValue === undefined) e.itemValue = 'Enter what it cost new. It sets the most you can ask as a deposit.'
+  if (active && !e.itemValue && !e.receipt && needsReceipt(d.itemValue) && !d.receiptKey && !opts.hasReceipt) {
+    e.receipt = `Add a photo or PDF of the original bill. It’s needed for items that cost more than ₹${POLICY.receiptAbove.toLocaleString('en-IN')}, and only RentiGoo sees it.`
+  }
+  const value = e.itemValue ? undefined : d.itemValue
+  const cap = depositCap(d.categoryId, value, L.depositMax)
   if (!whole(d.deposit) || d.deposit < 0) e.deposit = 'Set a deposit in whole rupees, or ₹0 for none.'
-  else if (d.deposit > cap) e.deposit = `The most a deposit can be for this kind of item is ₹${cap.toLocaleString('en-IN')}.`
+  else if (d.deposit > cap) {
+    e.deposit =
+      value !== undefined
+        ? `The most this deposit can be is ₹${cap.toLocaleString('en-IN')}: ${POLICY.depositPctOfValue}% of what it cost new, within the limit for this kind of item.`
+        : `The most a deposit can be for this kind of item is ₹${cap.toLocaleString('en-IN')}.`
+  }
 
   if (!whole(d.minDays) || d.minDays < 1) e.minDays = 'The shortest rental is at least 1 day.'
   if (!whole(d.maxDays) || d.maxDays > L.maxDaysCap) e.maxDays = `The longest rental can be up to ${L.maxDaysCap} days.`
@@ -236,6 +273,7 @@ export function cleanDraft(d: ListingDraft, today: ISODate): ListingDraft {
     ...(delivery && d.deliveryFee !== undefined ? { deliveryFee: d.deliveryFee } : {}),
     // Past days no longer matter.
     blockedDates: [...new Set(d.blockedDates)].filter((day) => day >= today).sort(),
+    ...(d.itemValue !== undefined ? { itemValue: d.itemValue } : {}),
     rules: d.rules.map((r) => r.trim()).filter(Boolean),
     status: d.status,
   }

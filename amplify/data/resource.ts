@@ -142,6 +142,8 @@ const schema = a
         blockedDates: a.string().required().array(), // days the owner keeps for themselves
         bookedDates: a.string().array().authorization(readOnlyForPeople), // maintained by the booking functions
         rules: a.string().required().array(),
+        itemValue: a.integer(), // what it cost new; sets the deposit limit
+        hasReceipt: a.boolean().authorization(readOnlyForPeople), // the bill itself is in ListingReceipt, private
         ratingAvg: a.float().authorization(readOnlyForPeople),
         ratingCount: a.integer().authorization(readOnlyForPeople),
         status: a.ref('ListingStatus').required(),
@@ -152,6 +154,13 @@ const schema = a
         allow.guest().to(['read']),
         allow.authenticated().to(['read']),
       ]),
+
+    // Which file is a listing's original bill (id = the listing's id). Only the
+    // functions can read it; the file itself is private in listing-receipts/<owner>/.
+    ListingReceipt: a
+      .model({ ownerId: a.string().required(), key: a.string().required() })
+      .secondaryIndexes((index) => [index('ownerId').queryField('listListingReceiptsByOwner')])
+      .authorization(functionsOnly),
 
     // ---------- bookings (written only by functions) ----------
     Booking: a
@@ -403,6 +412,13 @@ const schema = a
     // for one small image in its own folder, and asks here to delete unused uploads.
     ListingPhotoUpload: a.customType({ key: a.string().required(), url: a.string().required(), fields: a.json().required() }),
     listingPhotoUpload: a
+      .mutation()
+      .arguments({ ext: a.string().required() })
+      .returns(a.ref('ListingPhotoUpload'))
+      .authorization((allow) => [allow.authenticated()])
+      .handler(a.handler.function(saveListingFn)),
+    // The original bill for an item that cost more than ₹5,000: a photo or a PDF, private.
+    listingReceiptUpload: a
       .mutation()
       .arguments({ ext: a.string().required() })
       .returns(a.ref('ListingPhotoUpload'))
