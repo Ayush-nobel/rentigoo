@@ -2,6 +2,7 @@
  * Booking and review rules, independent of AWS so they can be unit tested.
  * Each Lambda handler supplies a Store backed by the Amplify data client.
  */
+import { ID_NEEDED } from '../../../shared/idCheck'
 import { bookingProblem, canTransition } from '../../../shared/bookingRules'
 import { FEES } from '../../../shared/fees'
 import { ownerStatsFrom } from '../../../shared/earnings'
@@ -30,6 +31,8 @@ export interface Store {
   listReviewsForUser(userId: string): Promise<Review[]>
   createReview(r: Omit<Review, 'id' | 'createdAt'>): Promise<Review>
   setUserRating(userId: string, avg: number, count: number): Promise<void>
+  /** Whether this person has checked their ID through DigiLocker. */
+  isIdChecked(userId: string): Promise<boolean>
 }
 
 /** A problem the person can fix; the handler turns it into a GraphQL error. */
@@ -59,9 +62,11 @@ export interface RequestBookingInput {
   months?: number | null
 }
 
-export async function requestBooking(store: Store, input: RequestBookingInput, actorId: string, today: ISODate): Promise<StoredBooking> {
+export async function requestBooking(store: Store, input: RequestBookingInput, actorId: string, today: ISODate, opts: { requireId?: boolean } = {}): Promise<StoredBooking> {
   const listing = await store.getListing(input.listingId)
   if (!listing) throw new RuleError('That listing doesn’t exist any more.')
+  // With ID checks switched on, only people with a checked ID can ask to rent.
+  if (opts.requireId && listing.ownerId !== actorId && !(await store.isIdChecked(actorId))) throw new RuleError(ID_NEEDED.rent)
 
   // Availability is checked against fresh bookings, not the cached calendar.
   const monthly = input.months != null

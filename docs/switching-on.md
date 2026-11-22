@@ -14,7 +14,8 @@ Built and tested in the sandbox (test mode). Off in production until the keys ar
    - `SETU_PRODUCT_INSTANCE_ID`
    - Optionally `SETU_BASE_URL=https://dg-sandbox.setu.co` to try Setu's sandbox first. Leave it unset for production.
 4. In **Hosting → Secrets**, add `SETU_CLIENT_SECRET`.
-5. **Before redeploying:** bump `privacy.version` in `shared/legal.ts`. The Privacy Policy gains its ID-check row and Setu as a processor once these are set.
+5. **Before redeploying:** bump `privacy.version` **and `terms.version`** in `shared/legal.ts`. The Privacy Policy gains its ID-check row and Setu as a processor, and the Terms gain the rule that a checked ID is needed to publish a listing or send a rental request.
+   - From this deploy on, **publishing a listing and sending a rental request need a checked ID** (`ID_REQUIRED` on save-listing and request-booking, set by backend.ts when the Setu keys are there). Drafts, pausing, browsing and messaging don't. Listings already live stay live; their owners are asked to check their ID the next time they save one.
 6. Redeploy main. The Account page shows "ID check", the trust pages describe it, and owners can earn the "ID checked (DigiLocker)" badge.
 
 Cost: about ₹4 per successful check on Setu's starter plan (confirm with them).

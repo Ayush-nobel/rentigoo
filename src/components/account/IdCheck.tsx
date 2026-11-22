@@ -70,8 +70,8 @@ export function IdCheck() {
       ) : (
         <div className="mt-3">
           <p className="text-muted">
-            Optional. Share your Aadhaar from DigiLocker, the government’s document app, and get an “ID checked” badge. Owners lending expensive things often look for
-            it. We check the name matches your profile, then keep only that it was checked. Never your Aadhaar number, date of birth, address or photo.
+            Needed before you publish a listing or send a rental request. Share your Aadhaar from DigiLocker, the government’s document app, and get an “ID
+            checked” badge. We check the name matches your profile, then keep only that it was checked. Never your Aadhaar number, date of birth, address or photo.
           </p>
           <Button className="mt-4" onClick={() => void start()} disabled={busy}>
             {busy ? 'Opening DigiLocker…' : 'Check my ID with DigiLocker'}

@@ -157,6 +157,10 @@ export function amplifyStore(client: Client): Store {
       if (!created) throw new Error('Review was not saved')
       return reviewFromDb(created)
     },
+    async isIdChecked(userId) {
+      const u = check(await m.UserProfile.get({ id: userId }))
+      return Boolean((u as { verifiedGovtId?: boolean } | null)?.verifiedGovtId)
+    },
     async setUserRating(userId, avg, count) {
       check(await m.UserProfile.update({ id: userId, ratingAvg: avg, ratingCount: count } as never))
     },
@@ -192,6 +196,7 @@ export function listingStore(client: Client, base: Store, photos: Receipts): Del
     },
     deletePhotos: photos.deletePhotos,
     receiptExists: photos.receiptExists,
+    isIdChecked: base.isIdChecked,
     async getReceiptKey(listingId) {
       return check(await m.ListingReceipt.get({ id: listingId }))?.key ?? null
     },

@@ -23,6 +23,10 @@ export const handler = (event: Event) =>
     const store = listingStore(client, amplifyStore(client), { ...photoBucket(), receiptExists: receiptBucket().receiptExists })
     if (event.fieldName === 'deleteMyListing') return deleteMyListing(store, event.arguments.id!, actorId)
     // Demo pictures are allowed only on test backends (set in backend.ts; never on the production branch).
-    const saved = await saveListing(store, { id: event.arguments.id, listing: event.arguments.listing }, actorId, todayIST(), { allowPlaceholders: process.env.ALLOW_PLACEHOLDER_PHOTOS === 'true' })
+    const saved = await saveListing(store, { id: event.arguments.id, listing: event.arguments.listing }, actorId, todayIST(), {
+      allowPlaceholders: process.env.ALLOW_PLACEHOLDER_PHOTOS === 'true',
+      // Set in backend.ts: true only when ID checks are switched on (Setu keys).
+      requireId: process.env.ID_REQUIRED === 'true',
+    })
     return { ...saved, condition: saved.condition.replace(/-/g, '_') }
   })

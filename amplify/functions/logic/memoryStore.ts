@@ -18,6 +18,8 @@ export function memoryStore(
   /** Bill records by listing id, and the bill files "uploaded". */
   const receipts = new Map<string, { ownerId: string; key: string }>()
   const uploadedReceipts = new Set<string>()
+  /** People who have checked their ID. */
+  const idChecked = new Set<string>()
   const rebuilds = { count: 0 }
   const forgottenPhones: string[] = []
   let n = 0
@@ -87,6 +89,9 @@ export function memoryStore(
       receipts.delete(id)
       listings.delete(id)
     },
+    async isIdChecked(userId) {
+      return idChecked.has(userId)
+    },
     async receiptExists(key) {
       return uploadedReceipts.has(key)
     },
@@ -149,5 +154,5 @@ export function memoryStore(
       logins.delete(id)
     },
   }
-  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds, forgottenPhones, receipts, uploadedReceipts }
+  return { store, listings, bookings, reviews, userRatings, messages, profiles, logins, deletedPhotos, rebuilds, forgottenPhones, receipts, uploadedReceipts, idChecked }
 }

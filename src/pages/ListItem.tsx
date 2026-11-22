@@ -1,3 +1,5 @@
+import { IdGate } from '@/components/account/IdGate'
+import { useIdNeeded } from '@/hooks/useIdNeeded'
 import { motion } from 'framer-motion'
 import { AlertCircle, Check, Plus, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
@@ -74,6 +76,7 @@ function Editor({ listing, defaultArea, session }: { listing: Listing | null; de
   const [flagged, setErrors] = useState<ListingErrors>({})
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState<ListingStatus | null>(null)
+  const idNeeded = useIdNeeded()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState<Listing | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -197,6 +200,8 @@ function Editor({ listing, defaultArea, session }: { listing: Listing | null; de
   // An edit keeps a paused listing paused; anything else is published.
   const publishStatus: ListingStatus = listing?.status === 'paused' ? 'paused' : 'active'
   const publishLabel = !listing || listing.status === 'draft' ? 'Publish listing' : 'Save changes'
+  // With ID checks on, a live listing needs a checked ID; drafts and paused listings don't.
+  const idBlocks = idNeeded && publishStatus === 'active'
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:py-14">
@@ -241,6 +246,9 @@ function Editor({ listing, defaultArea, session }: { listing: Listing | null; de
           {current.id === 'price' && <PriceStep form={form} edit={edit} errors={errors} />}
           {current.id === 'pickup' && <PickupStep form={form} edit={edit} errors={errors} today={today} booked={booked} />}
           {current.id === 'review' && <Review form={form} onChange={(id) => goTo(STEPS.findIndex((s) => s.id === id))} />}
+          {current.id === 'review' && idBlocks && (
+            <IdGate reason="list" note={!listing || listing.status === 'draft' ? 'You can save it as a draft meanwhile.' : undefined} className="mt-8" />
+          )}
         </div>
 
         <div className="mt-10 flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center">
@@ -256,7 +264,7 @@ function Editor({ listing, defaultArea, session }: { listing: Listing | null; de
               </Button>
             )}
             {current.id === 'review' ? (
-              <Button size="lg" onClick={() => void save(publishStatus)} disabled={saving !== null}>
+              <Button size="lg" onClick={() => void save(publishStatus)} disabled={saving !== null || idBlocks}>
                 {saving && saving !== 'draft' ? 'Saving…' : publishLabel}
               </Button>
             ) : (

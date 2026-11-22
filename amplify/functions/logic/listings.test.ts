@@ -64,6 +64,25 @@ describe('original bills', () => {
   })
 })
 
+describe('ID check before publishing', () => {
+  it('lets anyone save a draft or pause, but publishing needs a checked ID when checks are on', async () => {
+    const { store, idChecked } = memoryStore()
+    const draft = await saveListing(store, { listing: { ...listing, status: 'draft' } }, 'owner', TODAY, { requireId: true })
+    expect(draft.status).toBe('draft')
+    await expect(saveListing(store, { id: draft.id, listing: { status: 'active' } }, 'owner', TODAY, { requireId: true })).rejects.toThrow(/Check your ID with DigiLocker before publishing/)
+    idChecked.add('owner')
+    const live = await saveListing(store, { id: draft.id, listing: { status: 'active' } }, 'owner', TODAY, { requireId: true })
+    expect(live.status).toBe('active')
+    idChecked.delete('owner')
+    await expect(saveListing(store, { id: draft.id, listing: { status: 'paused' } }, 'owner', TODAY, { requireId: true })).resolves.toMatchObject({ status: 'paused' })
+  })
+
+  it('asks nobody while ID checks are switched off', async () => {
+    const { store } = memoryStore()
+    await expect(saveListing(store, { listing }, 'owner', TODAY)).resolves.toMatchObject({ status: 'active' })
+  })
+})
+
 describe('saveListing', () => {
   it('creates a listing owned by the caller, ignoring fields the owner may not set', async () => {
     const { store } = memoryStore()

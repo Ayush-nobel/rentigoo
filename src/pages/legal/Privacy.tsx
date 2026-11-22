@@ -84,9 +84,9 @@ const sections: LegalSection[] = [
               </tr>
               {ID_CHECK_LIVE && (
                 <tr>
-                  <td>ID check (optional)</td>
+                  <td>ID check (needed to list or rent)</td>
                   <td>
-                    Only if you choose to check your ID through DigiLocker. Our provider, Setu, passes us the name, date of birth and last 4 digits of your Aadhaar once;
+                    When you check your ID through DigiLocker, which you need to do before publishing a listing or sending a rental request. Our provider, Setu, passes us the name, date of birth and last 4 digits of your Aadhaar once;
                     we check the name matches your profile and keep only that your ID was checked, when, and a coded fingerprint so one ID can’t check many accounts.
                     We never keep your Aadhaar number, date of birth, address or photo, and we end our access to your DigiLocker straight away.
                   </td>

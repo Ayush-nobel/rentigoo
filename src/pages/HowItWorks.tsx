@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 import { LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
 import { POLICY } from '@shared/policy'
-import { BOOKING_FEE_LIVE } from '@/lib/features'
+import { BOOKING_FEE_LIVE, ID_CHECK_LIVE } from '@/lib/features'
 import { rupees } from '@/lib/format'
 import { LISTING_LIMITS } from '@shared/listingRules'
 import { ContentPage, Section, Steps } from '@/components/content/Content'
@@ -28,7 +28,12 @@ export default function HowItWorks() {
               { title: 'Find it', body: <p>Search by what you need, your area and your dates. Each listing shows the price per day, any weekly or monthly price, the deposit and the owner’s rules.</p> },
               {
                 title: 'Send a request',
-                body: <p>Pick your dates and you’ll see the full breakdown: rent, any delivery fee and the refundable deposit. Sending a request costs nothing. You can message the owner first if you have questions.</p>,
+                body: (
+                  <p>
+                    Pick your dates and you’ll see the full breakdown: rent, any delivery fee and the refundable deposit. Sending a request costs nothing. You can
+                    message the owner first if you have questions.{ID_CHECK_LIVE && ' The first time, you check your ID through DigiLocker (about a minute).'}
+                  </p>
+                ),
               },
               {
                 title: 'The owner says yes (or no)',
@@ -82,7 +87,7 @@ export default function HowItWorks() {
                 body: (
                   <p>
                     Add up to {LISTING_LIMITS.photosMax} photos and a clear description. Choose whether people rent it by the day, by the month, or both, and set your
-                    prices, a deposit and how long they can have it. Block any days you need it yourself. Tell us what it cost new: the deposit can be up to{' '}
+                    prices, a deposit and how long they can have it. Block any days you need it yourself.{ID_CHECK_LIVE && ' Before your first listing goes live, you check your ID through DigiLocker.'} Tell us what it cost new: the deposit can be up to{' '}
                     {POLICY.depositPctOfValue}% of that, and for anything over {rupees(POLICY.receiptAbove)} you add the original bill, which only RentiGoo sees.
                   </p>
                 ),

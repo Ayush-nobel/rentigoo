@@ -5,6 +5,16 @@
  * can't check many accounts. Never the Aadhaar number, date of birth, address or photo.
  */
 
+/**
+ * When ID checks are switched on (Setu keys set), a checked ID is needed to
+ * publish a listing and to send a rental request. Browsing, signing up and
+ * saving drafts never need one.
+ */
+export const ID_NEEDED = {
+  list: 'Check your ID with DigiLocker before publishing a listing. It takes about a minute.',
+  rent: 'Check your ID with DigiLocker before sending a rental request. It takes about a minute.',
+} as const
+
 const words = (s: string) =>
   s
     .normalize('NFKD')

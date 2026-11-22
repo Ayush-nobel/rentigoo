@@ -5,6 +5,7 @@
  */
 import { cleanDraft, listingErrors, ownPhotos, receiptOwner, type ListingDraft } from '../../../shared/listingRules'
 import type { ISODate } from '../../../shared/types'
+import { ID_NEEDED } from '../../../shared/idCheck'
 import { RuleError, type Store, type StoredListing } from './bookings'
 
 export interface ListingStore {
@@ -20,6 +21,8 @@ export interface ListingStore {
   setReceipt(listingId: string, ownerId: string, key: string): Promise<void>
   /** Removes the record only (the file goes through deletePhotos). */
   deleteReceipt(listingId: string): Promise<void>
+  /** Whether this person has checked their ID through DigiLocker. */
+  isIdChecked(userId: string): Promise<boolean>
   /** A public listing appeared, changed or went away: rebuild the site's pages. Never throws. */
   publicListingsChanged(): Promise<void>
 }
@@ -44,7 +47,7 @@ function pick(raw: unknown): ListingDraft {
   return out as unknown as ListingDraft
 }
 
-export async function saveListing(store: ListingStore, input: SaveListingInput, actorId: string, today: ISODate, opts: { allowPlaceholders?: boolean } = {}): Promise<StoredListing> {
+export async function saveListing(store: ListingStore, input: SaveListingInput, actorId: string, today: ISODate, opts: { allowPlaceholders?: boolean; requireId?: boolean } = {}): Promise<StoredListing> {
   const existing = input.id ? await store.getListing(input.id) : null
   if (input.id && (!existing || existing.ownerId !== actorId)) throw new RuleError('That listing wasn’t found.')
 
@@ -67,6 +70,8 @@ export async function saveListing(store: ListingStore, input: SaveListingInput, 
   })
   const first = Object.values(errors)[0]
   if (first) throw new RuleError(first)
+  // With ID checks switched on, only people with a checked ID can have a live listing (drafts and pausing are fine).
+  if (opts.requireId && draft.status === 'active' && !(await store.isIdChecked(actorId))) throw new RuleError(ID_NEEDED.list)
   // A new bill must be the caller's own upload, and actually uploaded.
   const receiptKey = draft.receiptKey ?? undefined
   if (receiptKey && (receiptOwner(receiptKey) !== actorId || !(await store.receiptExists(receiptKey)))) {

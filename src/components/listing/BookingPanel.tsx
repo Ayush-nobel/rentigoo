@@ -1,3 +1,5 @@
+import { IdGate } from '@/components/account/IdGate'
+import { useIdNeeded } from '@/hooks/useIdNeeded'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CircleCheck, Truck } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
@@ -62,6 +64,7 @@ export function BookingPanel({ listing, onBooked }: Props) {
         : (problem ?? `${dateRange(range.from, range.to)}, ${plural(rentalDays(range.from, range.to), 'day')}.`)
 
   const isOwner = user?.id === listing.ownerId
+  const idNeeded = useIdNeeded()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -206,6 +209,8 @@ export function BookingPanel({ listing, onBooked }: Props) {
 
       {isOwner ? (
         <p className="mt-5 rounded-field bg-sunken p-3">This is your listing. Renters will see this panel.</p>
+      ) : user && idNeeded ? (
+        <IdGate reason="rent" framed={false} className="mt-5 border-t border-line pt-5" />
       ) : user ? (
         <>
           <label className="mt-5 block">

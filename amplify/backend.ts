@@ -155,6 +155,8 @@ backend.data.resources.cfnResources.amplifyDynamoDbTables['PhoneSendCount']!.tim
 const setuReady = Boolean(process.env.SETU_CLIENT_ID && process.env.SETU_PRODUCT_INSTANCE_ID)
 const idMode = !process.env.AWS_BRANCH ? 'test' : setuReady ? 'setu' : 'off'
 backend.idCheckFn.addEnvironment('ID_CHECK_MODE', idMode)
+// Once real ID checks are on, a checked ID is needed to publish a listing or send a rental request.
+for (const fn of [backend.requestBookingFn, backend.saveListingFn]) fn.addEnvironment('ID_REQUIRED', String(idMode === 'setu'))
 const siteUrl = (process.env.VITE_SITE_URL ?? 'https://www.rentigoo.in').replace(/\/$/, '')
 backend.idCheckFn.addEnvironment('ID_RETURN_ORIGINS', idMode === 'test' ? `${siteUrl},http://localhost:*,http://127.0.0.1:*` : siteUrl)
 if (idMode === 'setu') {

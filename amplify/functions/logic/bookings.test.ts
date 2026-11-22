@@ -40,6 +40,16 @@ describe('requestBooking', () => {
     expect(b.quote.totalDue).toBe(900 + fee + Math.round((fee * FEES.gstOnFeePct) / 100) + 2500)
   })
 
+  it('needs a checked ID only when ID checks are switched on', async () => {
+    const { store, idChecked } = memoryStore({ listings: [listing] })
+    await expect(requestBooking(store, ask(), 'renter', TODAY, { requireId: true })).rejects.toThrow(/Check your ID with DigiLocker before sending a rental request/)
+    idChecked.add('renter')
+    await expect(requestBooking(store, ask(), 'renter', TODAY, { requireId: true })).resolves.toMatchObject({ status: 'requested' })
+    // Switched off (no Setu keys yet): nobody is asked.
+    const off = memoryStore({ listings: [listing] })
+    await expect(requestBooking(off.store, ask(), 'renter', TODAY)).resolves.toMatchObject({ status: 'requested' })
+  })
+
   it('refuses the owner, past dates and owner-blocked days', async () => {
     const { store } = memoryStore({ listings: [listing] })
     await expect(requestBooking(store, ask(), 'owner', TODAY)).rejects.toThrow(/own listing/)

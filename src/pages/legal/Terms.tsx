@@ -1,5 +1,5 @@
 import { rupees } from '@/lib/format'
-import { BOOKING_FEE_LIVE } from '@/lib/features'
+import { BOOKING_FEE_LIVE, ID_CHECK_LIVE } from '@/lib/features'
 import { DEPOSIT_CAPS, POLICY } from '@shared/policy'
 import { LAUNCH_CITY } from '@shared/areas'
 import { FEES } from '@shared/fees'
@@ -40,6 +40,12 @@ const sections: LegalSection[] = [
         <li>You must be {MIN_AGE} or older.</li>
         <li>Use your real name and keep your details accurate. One account per person.</li>
         <li>Keep your password private. You’re responsible for what happens under your account.</li>
+        {ID_CHECK_LIVE && (
+          <li>
+            Before you publish a listing or send a rental request, you check your ID through DigiLocker, and the name on it must match your profile. Browsing,
+            messaging and saving drafts don’t need it.
+          </li>
+        )}
         <li>
           You can delete your account at any time from <L to="/account">Account</L>.
         </li>
